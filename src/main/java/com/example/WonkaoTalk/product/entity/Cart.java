@@ -21,6 +21,9 @@ public class Cart {
   // TODO: User Entity가 만들어 지면 타입 변경 필요
   private Long userId;
 
+  @Column(name = "created_at", nullable = false)
+  private LocalDateTime createdAt;
+
   @Column(name = "updated_at", nullable = false)
   private LocalDateTime updatedAt;
 }
