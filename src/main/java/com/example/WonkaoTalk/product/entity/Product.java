@@ -51,7 +51,7 @@ public class Product {
   private SaleStatus status;
 
   @Column(name = "like_count", nullable = false)
-  private Integer likeCount;
+  private Integer likeCount = 0;
 
   @Column(name = "created_at", nullable = false)
   private LocalDateTime createdAt;
