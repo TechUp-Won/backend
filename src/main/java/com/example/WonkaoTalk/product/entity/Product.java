@@ -43,7 +43,7 @@ public class Product {
   @Column(name = "price", nullable = false)
   private Integer price;
 
-  @Formula("price * (100 - discount_rate) / 100") // price와 discount_rate에서 계산되는 파생값
+  @Formula("price * (100 - COALESCE(discount_rate, 0)) / 100") // price와 discount_rate에서 계산되는 파생값
   private Integer discountedPrice;
 
   @Enumerated(EnumType.STRING)
