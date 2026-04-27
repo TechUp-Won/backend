@@ -1,0 +1,5 @@
+# .gemini/config.yaml
+code_review:
+  comment_severity_threshold: MEDIUM  # LOW, MEDIUM, HIGH
+  pull_requests:
+    enabled: true
