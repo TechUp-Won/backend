@@ -1,4 +1,4 @@
-package com.example.WonkaoTalk.product.entity;
+package com.example.WonkaoTalk.domain.product.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,23 +12,20 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "product_option_group")
-public class ProductOptionGroup {
+@Table(name = "product_detail")
+public class ProductDetail {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "product_option_group_id")
-  private Long productOptionGroupId;
+  @Column(name = "product_detail_id")
+  private Long productDetailId;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "product_id", nullable = false)
   private Product product;
 
-  @Column(name = "name", nullable = false)
-  private String name;
-
-  @Column(name = "sort_order", nullable = false)
-  private Integer sortOrder;
+  @Column(name = "detail_content", nullable = false, columnDefinition = "TEXT")
+  private String detailContent;
 
   @Column(name = "created_at", nullable = false)
   private LocalDateTime createdAt;
