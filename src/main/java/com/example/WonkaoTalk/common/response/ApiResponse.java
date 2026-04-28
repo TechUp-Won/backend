@@ -1,5 +1,6 @@
 package com.example.WonkaoTalk.common.response;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -8,7 +9,9 @@ import lombok.Getter;
 
 @Getter
 @Builder
+@JsonPropertyOrder({"status", "message", "data", "error", "timestamp"})
 public class ApiResponse<T> {
+
   private final String status;
   private final String message;
   private final T data;
