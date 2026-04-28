@@ -49,10 +49,10 @@ public class ProductRepositoryCustomImpl implements ProductRepositoryCustom {
       predicates.add(cb.equal(p.get("storeId"), storeId));
     }
     if (minPrice != null) {
-      predicates.add(cb.greaterThanOrEqualTo(p.get("price"), minPrice));
+      predicates.add(cb.greaterThanOrEqualTo(p.get("discountedPrice"), minPrice));
     }
     if (maxPrice != null) {
-      predicates.add(cb.lessThanOrEqualTo(p.get("price"), maxPrice));
+      predicates.add(cb.lessThanOrEqualTo(p.get("discountedPrice"), maxPrice));
     }
     if (lastId != null && lastSortValue != null) {
       predicates.add(buildCursorPredicate(cb, p, sortType, lastId, lastSortValue));
@@ -83,15 +83,15 @@ public class ProductRepositoryCustomImpl implements ProductRepositoryCustom {
       case PRICE_DESC -> {
         int lastPrice = lastSortValue.intValue();
         yield cb.or(
-            cb.lessThan(p.<Integer>get("price"), lastPrice),
-            cb.and(cb.equal(p.get("price"), lastPrice), tieBreak)
+            cb.lessThan(p.<Integer>get("discountedPrice"), lastPrice),
+            cb.and(cb.equal(p.get("discountedPrice"), lastPrice), tieBreak)
         );
       }
       case PRICE_ASC -> {
         int lastPrice = lastSortValue.intValue();
         yield cb.or(
-            cb.greaterThan(p.<Integer>get("price"), lastPrice),
-            cb.and(cb.equal(p.get("price"), lastPrice), tieBreak)
+            cb.greaterThan(p.<Integer>get("discountedPrice"), lastPrice),
+            cb.and(cb.equal(p.get("discountedPrice"), lastPrice), tieBreak)
         );
       }
       case LATEST -> {
@@ -110,8 +110,8 @@ public class ProductRepositoryCustomImpl implements ProductRepositoryCustom {
     return switch (sortType) {
       case POPULAR -> List.of(cb.desc(p.get("likeCount")), byId);
       case LATEST -> List.of(cb.desc(p.get("createdAt")), byId);
-      case PRICE_ASC -> List.of(cb.asc(p.get("price")), byId);
-      case PRICE_DESC -> List.of(cb.desc(p.get("price")), byId);
+      case PRICE_ASC -> List.of(cb.asc(p.get("discountedPrice")), byId);
+      case PRICE_DESC -> List.of(cb.desc(p.get("discountedPrice")), byId);
     };
   }
 }

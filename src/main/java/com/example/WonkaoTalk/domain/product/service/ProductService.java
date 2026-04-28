@@ -86,7 +86,7 @@ public class ProductService {
     return switch (sortType) {
       case POPULAR -> (long) product.getLikeCount();
       case LATEST -> product.getCreatedAt().toInstant(ZoneOffset.UTC).toEpochMilli();
-      case PRICE_ASC, PRICE_DESC -> (long) product.getPrice();
+      case PRICE_ASC, PRICE_DESC -> (long) product.getDiscountedPrice();
     };
   }
 
