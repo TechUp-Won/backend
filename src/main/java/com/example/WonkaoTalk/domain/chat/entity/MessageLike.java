@@ -30,14 +30,14 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "message_like", uniqueConstraints = {
+@Table(name = "message_likes", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"message_id", "user_id"})
 })
 public class MessageLike {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "like_id")
+  @Column(name = "id")
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)

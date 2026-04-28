@@ -27,12 +27,12 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "chat_room")
+@Table(name = "chat_rooms")
 public class ChatRoom {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "chat_room_id")
+  @Column(name = "id")
   private Long id;
 
   @Enumerated(EnumType.STRING)
