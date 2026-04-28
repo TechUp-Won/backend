@@ -3,6 +3,7 @@ package com.example.WonkaoTalk.domain.product.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import lombok.Getter;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -14,6 +15,7 @@ import jakarta.persistence.UniqueConstraint;
 @Entity
 @Table(name = "variant_option_maps",
     uniqueConstraints = @UniqueConstraint(columnNames = {"variant_id", "product_option_id"}))
+@Getter
 public class VariantOptionMap {
 
   @Id
