@@ -2,6 +2,7 @@ package com.example.WonkaoTalk.domain.chat.dto;
 
 import com.example.WonkaoTalk.domain.chat.entity.ChatRoom;
 import com.example.WonkaoTalk.domain.chat.enums.RoomType;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.Builder;
 
@@ -10,7 +11,7 @@ public record ChatRoomResponse(
     Long chatRoomId,
     RoomType roomType,
     List<ParticipantDto> participants,
-    String createdAt
+    LocalDateTime createdAt
 ) {
 
   public static ChatRoomResponse from(ChatRoom room, List<ParticipantDto> participants) {
@@ -18,7 +19,7 @@ public record ChatRoomResponse(
         .chatRoomId(room.getId())
         .roomType(room.getRoomType())
         .participants(participants)
-        .createdAt(room.getCreatedAt().toString())
+        .createdAt(room.getCreatedAt())
         .build();
   }
 

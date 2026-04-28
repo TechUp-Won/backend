@@ -20,7 +20,7 @@ public class ChatRoomController {
 
   @PostMapping
   public ResponseEntity<ApiResponse<ChatRoomResponse>> createChatRoom(
-      @RequestBody ChatRoomCreateRequest request
+      @jakarta.validation.Valid @RequestBody ChatRoomCreateRequest request
       // @AuthenticationPrincipal CustomUserDetails userDetails
   ) { // TODO 연동 전 임시로 ID넣어둠
     Long myId = 1L;
