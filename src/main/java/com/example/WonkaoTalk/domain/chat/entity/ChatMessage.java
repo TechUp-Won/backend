@@ -30,12 +30,12 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "chat_message")
+@Table(name = "chat_messages")
 public class ChatMessage {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "message_id")
+  @Column(name = "id")
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -46,7 +46,7 @@ public class ChatMessage {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "answer_message_id")
-  private ChatMessage answerMessage; // 답장 (Self-reference)
+  private ChatMessage answerMessage;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false, length = 20)

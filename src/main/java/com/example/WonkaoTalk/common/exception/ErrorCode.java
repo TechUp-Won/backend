@@ -22,7 +22,8 @@ public enum ErrorCode {
   // 주문 도메인
 
   // 채팅 도메인
-  ROOM_NOT_FOUND(404, "CHAT-NOTFOUND-ROOM", "존재하지 않는 채팅방입니다.");
+  ROOM_NOT_FOUND(404, "CHAT-NOTFOUND-ROOM", "존재하지 않는 채팅방입니다."),
+  CANNOT_CHAT_SELF(400, "CHAT-INVALID-SELF", "자기 자신과는 채팅방을 생성할 수 없습니다.");
 
   private final int httpStatus;
   private final String code;

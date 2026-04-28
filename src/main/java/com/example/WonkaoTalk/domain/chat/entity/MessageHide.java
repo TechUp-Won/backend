@@ -26,14 +26,14 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "message_hide", uniqueConstraints = {
+@Table(name = "message_hides", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"message_id", "user_id"})
 })
 public class MessageHide {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "hide_id")
+  @Column(name = "id")
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
