@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface VariantOptionMapRepository extends JpaRepository<VariantOptionMap, Long> {
 
   List<VariantOptionMap> findByProductVariant_Id(Long variantId);
+
+  List<VariantOptionMap> findByProductVariant_IdIn(List<Long> variantIds);
 }

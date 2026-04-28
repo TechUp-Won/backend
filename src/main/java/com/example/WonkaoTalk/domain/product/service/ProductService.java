@@ -13,8 +13,10 @@ import com.example.WonkaoTalk.domain.product.dto.ProductListResponse;
 import com.example.WonkaoTalk.domain.product.dto.ProductListResponse.ProductSummary;
 import com.example.WonkaoTalk.domain.product.entity.Category;
 import com.example.WonkaoTalk.domain.product.entity.Product;
+import com.example.WonkaoTalk.domain.product.entity.ProductOption;
 import com.example.WonkaoTalk.domain.product.entity.ProductOptionGroup;
 import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
+import com.example.WonkaoTalk.domain.product.entity.VariantOptionMap;
 import com.example.WonkaoTalk.domain.product.enums.ProductSortType;
 import com.example.WonkaoTalk.domain.product.repo.CategoryRepository;
 import com.example.WonkaoTalk.domain.product.repo.ProductDetailRepository;
@@ -27,6 +29,8 @@ import com.example.WonkaoTalk.domain.product.repo.VariantOptionMapRepository;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -122,14 +126,29 @@ public class ProductService {
         .map(d -> DetailInfo.builder().content(d.getContent()).build())
         .orElse(null);
 
-    List<OptionGroupInfo> optionGroups = productOptionGroupRepository.findByProduct_Id(productId)
+    List<ProductOptionGroup> groups = productOptionGroupRepository.findByProduct_Id(productId);
+    List<Long> groupIds = groups.stream().map(ProductOptionGroup::getId).toList();
+    Map<Long, List<ProductOption>> optionsByGroup = productOptionRepository
+        .findByProductOptionGroup_IdIn(groupIds)
         .stream()
-        .map(this::toOptionGroupInfo)
+        .collect(Collectors.groupingBy(opt -> opt.getProductOptionGroup().getId()));
+
+    List<OptionGroupInfo> optionGroups = groups.stream()
+        .map(group -> toOptionGroupInfo(group, optionsByGroup))
         .toList();
 
-    List<VariantInfo> variants = productVariantRepository.findByProduct_Id(productId)
+    List<ProductVariant> variantList = productVariantRepository.findByProduct_Id(productId);
+    List<Long> variantIds = variantList.stream().map(ProductVariant::getId).toList();
+    Map<Long, List<Long>> combinationIdsByVariant = variantOptionMapRepository
+        .findByProductVariant_IdIn(variantIds)
         .stream()
-        .map(this::toVariantInfo)
+        .collect(Collectors.groupingBy(
+            map -> map.getProductVariant().getId(),
+            Collectors.mapping(map -> map.getProductOption().getId(), Collectors.toList())
+        ));
+
+    List<VariantInfo> variants = variantList.stream()
+        .map(variant -> toVariantInfo(variant, combinationIdsByVariant))
         .toList();
 
     return ProductDetailResponse.builder()
@@ -149,8 +168,9 @@ public class ProductService {
         .build();
   }
 
-  private OptionGroupInfo toOptionGroupInfo(ProductOptionGroup group) {
-    List<OptionInfo> options = productOptionRepository.findByProductOptionGroup_Id(group.getId())
+  private OptionGroupInfo toOptionGroupInfo(ProductOptionGroup group,
+      Map<Long, List<ProductOption>> optionsByGroup) {
+    List<OptionInfo> options = optionsByGroup.getOrDefault(group.getId(), List.of())
         .stream()
         .map(opt -> OptionInfo.builder()
             .productOptionId(opt.getId())
@@ -165,11 +185,9 @@ public class ProductService {
         .build();
   }
 
-  private VariantInfo toVariantInfo(ProductVariant variant) {
-    List<Long> combinationIds = variantOptionMapRepository.findByProductVariant_Id(variant.getId())
-        .stream()
-        .map(map -> map.getProductOption().getId())
-        .toList();
+  private VariantInfo toVariantInfo(ProductVariant variant,
+      Map<Long, List<Long>> combinationIdsByVariant) {
+    List<Long> combinationIds = combinationIdsByVariant.getOrDefault(variant.getId(), List.of());
 
     return VariantInfo.builder()
         .variantId(variant.getId())

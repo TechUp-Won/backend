@@ -295,15 +295,17 @@ class ProductServiceTest {
     when(option2.getId()).thenReturn(301L);
 
     VariantOptionMap map1 = mock(VariantOptionMap.class);
+    when(map1.getProductVariant()).thenReturn(variant);
     when(map1.getProductOption()).thenReturn(option1);
     VariantOptionMap map2 = mock(VariantOptionMap.class);
+    when(map2.getProductVariant()).thenReturn(variant);
     when(map2.getProductOption()).thenReturn(option2);
-    when(variantOptionMapRepository.findByProductVariant_Id(10L)).thenReturn(List.of(map1, map2));
+    when(variantOptionMapRepository.findByProductVariant_IdIn(List.of(10L))).thenReturn(List.of(map1, map2));
 
     ProductDetailResponse response = productService.getProductDetail(1L);
 
     assertThat(response.getVariants()).hasSize(1);
-    assertThat(response.getVariants().get(0).getCombinationIds()).containsExactly(201L, 301L);
+    assertThat(response.getVariants().get(0).getCombinationIds()).containsExactlyInAnyOrder(201L, 301L);
   }
 
   // ── 헬퍼 ────────────────────────────────────────────────────────────────────
