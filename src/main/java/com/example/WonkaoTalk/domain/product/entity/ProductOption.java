@@ -1,4 +1,4 @@
-package com.example.WonkaoTalk.product.entity;
+package com.example.WonkaoTalk.domain.product.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,21 +11,18 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "category")
-public class Category {
+@Table(name = "product_option")
+public class ProductOption {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "category_id")
-  private Long categoryId;
+  @Column(name = "product_option_id")
+  private Long productOptionId;
 
-  @Column(name = "category_name", nullable = false)
-  private String categoryName;
-
-  @Column(name = "depth", nullable = false)
-  private Integer depth;
+  @Column(name = "option_name", nullable = false)
+  private String optionName;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "parent_category_id")
-  private Category parentCategory;
+  @JoinColumn(name = "product_option_group_id", nullable = false)
+  private ProductOptionGroup productOptionGroup;
 }

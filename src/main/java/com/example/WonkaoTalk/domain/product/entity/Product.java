@@ -1,4 +1,4 @@
-package com.example.WonkaoTalk.product.entity;
+package com.example.WonkaoTalk.domain.product.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

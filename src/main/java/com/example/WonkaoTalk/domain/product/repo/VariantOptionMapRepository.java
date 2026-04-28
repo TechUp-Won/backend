@@ -1,7 +1,8 @@
-package com.example.WonkaoTalk.product.repo;
+package com.example.WonkaoTalk.domain.product.repo;
 
-import com.example.WonkaoTalk.product.entity.VariantOptionMap;
+import com.example.WonkaoTalk.domain.product.entity.VariantOptionMap;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface VariantOptionMapRepository extends JpaRepository<VariantOptionMap, Long> {
+
 }
