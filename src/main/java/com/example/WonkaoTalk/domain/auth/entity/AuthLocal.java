@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "auth_local")
+@Table(name = "auth_locals")
 public class AuthLocal {
 
   @Id

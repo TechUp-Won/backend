@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "auth_social")
+@Table(name = "auth_socials")
 public class AuthSocial {
 
   @Id

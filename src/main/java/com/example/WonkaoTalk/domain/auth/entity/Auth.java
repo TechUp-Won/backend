@@ -23,7 +23,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "auth")
+@Table(name = "auths")
 public class Auth {
 
   @Id
