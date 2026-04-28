@@ -11,6 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -57,6 +58,9 @@ public class ChatRoom {
   @Builder.Default
   @Column(nullable = false, length = 20)
   private RoomStatus roomStatus = RoomStatus.ACTIVE;
+
+  @Version
+  private Long version;
 
   @CreatedDate
   @Column(nullable = false, updatable = false)

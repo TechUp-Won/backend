@@ -45,7 +45,9 @@ public class ChatParticipant {
   @Column(columnDefinition = "TEXT")
   private String roomImage;
 
-  private Long lastReadMessageId;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "last_read_message_id")
+  private ChatMessage lastReadMessage;
 
   @Builder.Default
   private boolean isAlarmOn = true;
