@@ -1,15 +1,16 @@
-package com.example.WonkaoTalk.domain.product.repo;
+package com.example.WonkaoTalk.domain.product.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.WonkaoTalk.config.TestContainerConfig;
 import com.example.WonkaoTalk.domain.product.entity.Category;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.enums.ProductSortType;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
+import com.example.WonkaoTalk.domain.product.repo.ProductRepository;
 import jakarta.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.util.List;
-import com.example.WonkaoTalk.config.TestContainerConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -205,7 +206,7 @@ class ProductRepositoryCustomImplTest {
   }
 
   private void flushAndClear() {
-    em.flush();  // SQL을 DB에 전송
-    em.clear();  // 1차 캐시 제거 → 이후 조회 시 @Formula 포함해 DB에서 새로 로드
+    em.flush();
+    em.clear();
   }
 }
