@@ -60,5 +60,6 @@ public class MessageLike {
   @Column(nullable = false)
   private LocalDateTime updatedAt;
 
+  @Column
   private LocalDateTime canceledAt;
 }

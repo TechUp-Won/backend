@@ -65,5 +65,7 @@ public class ChatRoom {
   @LastModifiedDate
   @Column(nullable = false)
   private LocalDateTime updatedAt;
+
+  @Column
   private LocalDateTime deletedAt;
 }

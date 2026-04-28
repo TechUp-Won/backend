@@ -65,5 +65,6 @@ public class ChatMessage {
   @Column(nullable = false, updatable = false)
   private LocalDateTime createdAt;
 
+  @Column
   private LocalDateTime deletedAt;
 }
