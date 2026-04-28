@@ -14,7 +14,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.Getter;
-import org.hibernate.annotations.Formula;
 
 @Entity
 @Table(name = "products")
@@ -46,7 +45,7 @@ public class Product {
   @Column(name = "price", nullable = false)
   private Integer price;
 
-  @Formula("price * (100 - COALESCE(discount_rate, 0)) / 100") // price와 discount_rate에서 계산되는 파생값
+  @Column(name = "discounted_price", nullable = false)
   private Integer discountedPrice;
 
   @Enumerated(EnumType.STRING)

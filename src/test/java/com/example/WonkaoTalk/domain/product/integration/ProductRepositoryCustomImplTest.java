@@ -190,12 +190,14 @@ class ProductRepositoryCustomImplTest {
 
   private Product saveProduct(Long storeId, Category cat, int price, Integer discountRate,
       int likeCount, LocalDateTime deletedAt) {
+    int discountedPrice = discountRate != null ? price * (100 - discountRate) / 100 : price;
     Product product = new Product();
     ReflectionTestUtils.setField(product, "storeId", storeId);
     ReflectionTestUtils.setField(product, "name", "상품-" + price);
     ReflectionTestUtils.setField(product, "category", cat);
     ReflectionTestUtils.setField(product, "price", price);
     ReflectionTestUtils.setField(product, "discountRate", discountRate);
+    ReflectionTestUtils.setField(product, "discountedPrice", discountedPrice);
     ReflectionTestUtils.setField(product, "likeCount", likeCount);
     ReflectionTestUtils.setField(product, "status", SaleStatus.ON_SALE);
     ReflectionTestUtils.setField(product, "createdAt", LocalDateTime.now());

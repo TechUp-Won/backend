@@ -143,6 +143,7 @@ class ProductDetailIntegrationTest {
     ReflectionTestUtils.setField(p, "name", "테스트상품");
     ReflectionTestUtils.setField(p, "category", cat);
     ReflectionTestUtils.setField(p, "price", 10000);
+    ReflectionTestUtils.setField(p, "discountedPrice", 10000);
     ReflectionTestUtils.setField(p, "likeCount", 0);
     ReflectionTestUtils.setField(p, "status", SaleStatus.ON_SALE);
     ReflectionTestUtils.setField(p, "createdAt", LocalDateTime.now());
