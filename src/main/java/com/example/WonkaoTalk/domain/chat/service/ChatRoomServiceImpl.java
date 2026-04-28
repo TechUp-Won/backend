@@ -1,5 +1,7 @@
 package com.example.WonkaoTalk.domain.chat.service;
 
+import com.example.WonkaoTalk.common.exception.BusinessException;
+import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.chat.dto.ChatRoomCreateRequest;
 import com.example.WonkaoTalk.domain.chat.dto.ChatRoomResponse;
 import com.example.WonkaoTalk.domain.chat.entity.ChatParticipant;
@@ -24,10 +26,14 @@ public class ChatRoomServiceImpl implements ChatRoomService {
   public ChatRoomResponse createChatRoom(Long myId, ChatRoomCreateRequest request) {
     Long receiverId = request.receiverId();
 
+    if (myId.equals(receiverId)) {
+      throw new BusinessException(ErrorCode.CANNOT_CHAT_SELF);
+    }
+
     return chatParticipantRepository.findChatRoomByUsers(myId, receiverId)
         .map(room -> ChatRoomResponse.from(room, createTempParticipants(myId, receiverId)))
         .orElseGet(() -> {
-          ChatRoom newRoom = chatRoomRepository.saveAndFlush(
+          ChatRoom newRoom = chatRoomRepository.save(
               ChatRoom.builder()
                   .roomType(RoomType.SINGLE)
                   .participantCount(2)
