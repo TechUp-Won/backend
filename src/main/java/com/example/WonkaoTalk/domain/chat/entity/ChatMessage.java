@@ -14,6 +14,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -56,6 +57,9 @@ public class ChatMessage {
 
   @Builder.Default
   private int likeCount = 0;
+
+  @Version
+  private Long version;
 
   @Enumerated(EnumType.STRING)
   @Builder.Default
