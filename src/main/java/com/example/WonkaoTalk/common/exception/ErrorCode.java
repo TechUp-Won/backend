@@ -18,6 +18,11 @@ public enum ErrorCode {
   USER_NOT_FOUND(404, "USER-NOTFOUND-ID", "해당 사용자 ID를 찾을 수 없습니다."),
 
   // 상품 도메인
+  PROD_INVALID_PRICE_RANGE(400, "PROD_INVALID_PRICE_RANGE", "최소 가격은 최대 가격보다 클 수 없습니다."),
+  PROD_INVALID_SORT(400, "PROD_INVALID_SORT", "허용되지 않는 정렬 기준입니다."),
+  PROD_INVALID_PAGE_SIZE(400, "PROD_INVALID_PAGE_SIZE", "조회 개수는 1 이상 100 이하여야 합니다."),
+  PROD_CATEGORY_NOT_FOUND(404, "PROD_CATEGORY_NOT_FOUND", "존재하지 않는 카테고리입니다."),
+  PROD_STORE_NOT_FOUND(404, "PROD_STORE_NOT_FOUND", "존재하지 않는 스토어입니다."),
 
   // 주문 도메인
 

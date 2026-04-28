@@ -1,5 +1,6 @@
 package com.example.WonkaoTalk.domain.product.entity;
 
+import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,10 +13,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import lombok.Getter;
 import org.hibernate.annotations.Formula;
 
 @Entity
 @Table(name = "product")
+@Getter
 public class Product {
 
   @Id
@@ -24,7 +27,7 @@ public class Product {
   private Long productId;
 
   @Column(name = "store_id", nullable = false)
-  // TODO: Store Entity가 만들어 지면 타입 변경 필요
+  // TODO: Store 엔티티 구현 시 @ManyToOne 관계로 변경 및 연관관계 매핑 필요
   private Long storeId;
 
   @Column(name = "product_name", nullable = false)

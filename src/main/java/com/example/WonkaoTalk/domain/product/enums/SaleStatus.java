@@ -1,4 +1,4 @@
-package com.example.WonkaoTalk.domain.product.entity;
+package com.example.WonkaoTalk.domain.product.enums;
 
 public enum SaleStatus {
   ON_SALE,      // 판매중

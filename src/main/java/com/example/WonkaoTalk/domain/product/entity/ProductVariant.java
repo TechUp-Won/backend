@@ -1,5 +1,6 @@
 package com.example.WonkaoTalk.domain.product.entity;
 
+import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
