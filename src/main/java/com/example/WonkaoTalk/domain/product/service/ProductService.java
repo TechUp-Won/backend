@@ -10,6 +10,7 @@ import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.enums.ProductSortType;
 import com.example.WonkaoTalk.domain.product.repo.CategoryRepository;
 import com.example.WonkaoTalk.domain.product.repo.ProductRepository;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -52,12 +53,21 @@ public class ProductService {
         request.getMaxPrice(),
         sortType,
         request.getLastProductId(),
+        request.getLastSortValue(),
         size
     );
 
     boolean hasNext = products.size() > size;
     if (hasNext) {
       products = products.subList(0, size);
+    }
+
+    Long nextCursorProductId = null;
+    Long nextCursorSortValue = null;
+    if (hasNext) {
+      Product lastItem = products.get(products.size() - 1);
+      nextCursorProductId = lastItem.getProductId();
+      nextCursorSortValue = toSortValue(lastItem, sortType);
     }
 
     List<ProductSummary> summaries = products.stream()
@@ -67,7 +77,17 @@ public class ProductService {
     return ProductListResponse.builder()
         .products(summaries)
         .hasNext(hasNext)
+        .nextCursorProductId(nextCursorProductId)
+        .nextCursorSortValue(nextCursorSortValue)
         .build();
+  }
+
+  private Long toSortValue(Product product, ProductSortType sortType) {
+    return switch (sortType) {
+      case POPULAR -> (long) product.getLikeCount();
+      case LATEST -> product.getCreatedAt().toInstant(ZoneOffset.UTC).toEpochMilli();
+      case PRICE_ASC, PRICE_DESC -> (long) product.getPrice();
+    };
   }
 
   private List<Long> getAllCategoryIds(Long categoryId) {

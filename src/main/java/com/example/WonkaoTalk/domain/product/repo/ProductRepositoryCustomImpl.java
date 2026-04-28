@@ -9,6 +9,9 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Repository;
@@ -27,6 +30,7 @@ public class ProductRepositoryCustomImpl implements ProductRepositoryCustom {
       Integer maxPrice,
       ProductSortType sortType,
       Long lastProductId,
+      Long lastSortValue,
       int size
   ) {
     CriteriaBuilder cb = em.getCriteriaBuilder();
@@ -50,8 +54,8 @@ public class ProductRepositoryCustomImpl implements ProductRepositoryCustom {
     if (maxPrice != null) {
       predicates.add(cb.lessThanOrEqualTo(p.get("price"), maxPrice));
     }
-    if (lastProductId != null) {
-      predicates.add(cb.lessThan(p.get("productId"), lastProductId));
+    if (lastProductId != null && lastSortValue != null) {
+      predicates.add(buildCursorPredicate(cb, p, sortType, lastProductId, lastSortValue));
     }
 
     cq.where(predicates.toArray(new Predicate[0]));
@@ -62,12 +66,52 @@ public class ProductRepositoryCustomImpl implements ProductRepositoryCustom {
         .getResultList();
   }
 
-  private Order buildOrder(CriteriaBuilder cb, Root<Product> p, ProductSortType sortType) {
+  private Predicate buildCursorPredicate(
+      CriteriaBuilder cb, Root<Product> p,
+      ProductSortType sortType, Long lastProductId, Long lastSortValue
+  ) {
+    Predicate tieBreak = cb.lessThan(p.get("productId"), lastProductId);
+
     return switch (sortType) {
-      case LATEST -> cb.desc(p.get("createdAt"));
-      case PRICE_ASC -> cb.asc(p.get("price"));
-      case PRICE_DESC -> cb.desc(p.get("price"));
-      case POPULAR -> cb.desc(p.get("likeCount"));
+      case POPULAR -> {
+        int lastLikeCount = lastSortValue.intValue();
+        yield cb.or(
+            cb.lessThan(p.<Integer>get("likeCount"), lastLikeCount),
+            cb.and(cb.equal(p.get("likeCount"), lastLikeCount), tieBreak)
+        );
+      }
+      case PRICE_DESC -> {
+        int lastPrice = lastSortValue.intValue();
+        yield cb.or(
+            cb.lessThan(p.<Integer>get("price"), lastPrice),
+            cb.and(cb.equal(p.get("price"), lastPrice), tieBreak)
+        );
+      }
+      case PRICE_ASC -> {
+        int lastPrice = lastSortValue.intValue();
+        yield cb.or(
+            cb.greaterThan(p.<Integer>get("price"), lastPrice),
+            cb.and(cb.equal(p.get("price"), lastPrice), tieBreak)
+        );
+      }
+      case LATEST -> {
+        LocalDateTime lastCreatedAt = Instant.ofEpochMilli(lastSortValue)
+            .atOffset(ZoneOffset.UTC).toLocalDateTime();
+        yield cb.or(
+            cb.lessThan(p.<LocalDateTime>get("createdAt"), lastCreatedAt),
+            cb.and(cb.equal(p.get("createdAt"), lastCreatedAt), tieBreak)
+        );
+      }
+    };
+  }
+
+  private List<Order> buildOrder(CriteriaBuilder cb, Root<Product> p, ProductSortType sortType) {
+    Order byProductId = cb.desc(p.get("productId"));
+    return switch (sortType) {
+      case POPULAR -> List.of(cb.desc(p.get("likeCount")), byProductId);
+      case LATEST -> List.of(cb.desc(p.get("createdAt")), byProductId);
+      case PRICE_ASC -> List.of(cb.asc(p.get("price")), byProductId);
+      case PRICE_DESC -> List.of(cb.desc(p.get("price")), byProductId);
     };
   }
 }

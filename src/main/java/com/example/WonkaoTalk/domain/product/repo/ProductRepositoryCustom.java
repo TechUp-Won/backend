@@ -13,6 +13,7 @@ public interface ProductRepositoryCustom {
       Integer maxPrice,
       ProductSortType sortType,
       Long lastProductId,
+      Long lastSortValue,
       int size
   );
 }

@@ -10,6 +10,8 @@ public class ProductListResponse {
 
   private List<ProductSummary> products;
   private boolean hasNext;
+  private Long nextCursorProductId;
+  private Long nextCursorSortValue;
 
   @Getter
   @Builder
