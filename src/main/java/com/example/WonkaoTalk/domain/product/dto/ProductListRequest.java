@@ -12,7 +12,7 @@ public class ProductListRequest {
   private Integer minPrice;
   private Integer maxPrice;
   private String sort = "popular";
-  private Long lastProductId;
+  private Long lastId;
   private Long lastSortValue;
   private Integer size = 20;
 }

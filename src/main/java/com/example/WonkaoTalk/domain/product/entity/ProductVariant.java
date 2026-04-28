@@ -15,13 +15,13 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "product_variant")
+@Table(name = "product_variants")
 public class ProductVariant {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "variant_id")
-  private Long variantId;
+  @Column(name = "id")
+  private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "product_id", nullable = false)
@@ -30,8 +30,8 @@ public class ProductVariant {
   @Column(name = "stock", nullable = false)
   private Integer stock;
 
-  @Column(name = "variant_name")
-  private String variantName;
+  @Column(name = "name")
+  private String name;
 
   @Enumerated(EnumType.STRING)
   @Column(name = "status", nullable = false)

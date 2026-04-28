@@ -52,7 +52,7 @@ public class ProductService {
         request.getMinPrice(),
         request.getMaxPrice(),
         sortType,
-        request.getLastProductId(),
+        request.getLastId(),
         request.getLastSortValue(),
         size
     );
@@ -62,11 +62,11 @@ public class ProductService {
       products = products.subList(0, size);
     }
 
-    Long nextCursorProductId = null;
+    Long nextCursorId = null;
     Long nextCursorSortValue = null;
     if (hasNext) {
       Product lastItem = products.get(products.size() - 1);
-      nextCursorProductId = lastItem.getProductId();
+      nextCursorId = lastItem.getId();
       nextCursorSortValue = toSortValue(lastItem, sortType);
     }
 
@@ -77,7 +77,7 @@ public class ProductService {
     return ProductListResponse.builder()
         .products(summaries)
         .hasNext(hasNext)
-        .nextCursorProductId(nextCursorProductId)
+        .nextCursorId(nextCursorId)
         .nextCursorSortValue(nextCursorSortValue)
         .build();
   }
@@ -98,17 +98,17 @@ public class ProductService {
   }
 
   private void collectChildIds(Long parentId, List<Long> result) {
-    List<Category> children = categoryRepository.findByParentCategory_CategoryId(parentId);
+    List<Category> children = categoryRepository.findByParentCategory_Id(parentId);
     for (Category child : children) {
-      result.add(child.getCategoryId());
-      collectChildIds(child.getCategoryId(), result);
+      result.add(child.getId());
+      collectChildIds(child.getId(), result);
     }
   }
 
   private ProductSummary toSummary(Product product) {
     return ProductSummary.builder()
-        .productId(product.getProductId())
-        .productName(product.getProductName())
+        .id(product.getId())
+        .name(product.getName())
         .thumbnail(product.getThumbnail())
         .price(product.getPrice())
         .discountedPrice(product.getDiscountedPrice())

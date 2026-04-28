@@ -29,7 +29,7 @@ public class ProductRepositoryCustomImpl implements ProductRepositoryCustom {
       Integer minPrice,
       Integer maxPrice,
       ProductSortType sortType,
-      Long lastProductId,
+      Long lastId,
       Long lastSortValue,
       int size
   ) {
@@ -43,7 +43,7 @@ public class ProductRepositoryCustomImpl implements ProductRepositoryCustom {
     // TODO: Store 엔티티 구현 시, N+1 문제 방지를 위해 fetch join(p.fetch("store")) 검토 필요
 
     if (categoryIds != null && !categoryIds.isEmpty()) {
-      predicates.add(p.get("category").get("categoryId").in(categoryIds));
+      predicates.add(p.get("category").get("id").in(categoryIds));
     }
     if (storeId != null) {
       predicates.add(cb.equal(p.get("storeId"), storeId));
@@ -54,8 +54,8 @@ public class ProductRepositoryCustomImpl implements ProductRepositoryCustom {
     if (maxPrice != null) {
       predicates.add(cb.lessThanOrEqualTo(p.get("price"), maxPrice));
     }
-    if (lastProductId != null && lastSortValue != null) {
-      predicates.add(buildCursorPredicate(cb, p, sortType, lastProductId, lastSortValue));
+    if (lastId != null && lastSortValue != null) {
+      predicates.add(buildCursorPredicate(cb, p, sortType, lastId, lastSortValue));
     }
 
     cq.where(predicates.toArray(new Predicate[0]));
@@ -68,9 +68,9 @@ public class ProductRepositoryCustomImpl implements ProductRepositoryCustom {
 
   private Predicate buildCursorPredicate(
       CriteriaBuilder cb, Root<Product> p,
-      ProductSortType sortType, Long lastProductId, Long lastSortValue
+      ProductSortType sortType, Long lastId, Long lastSortValue
   ) {
-    Predicate tieBreak = cb.lessThan(p.get("productId"), lastProductId);
+    Predicate tieBreak = cb.lessThan(p.get("id"), lastId);
 
     return switch (sortType) {
       case POPULAR -> {
@@ -106,12 +106,12 @@ public class ProductRepositoryCustomImpl implements ProductRepositoryCustom {
   }
 
   private List<Order> buildOrder(CriteriaBuilder cb, Root<Product> p, ProductSortType sortType) {
-    Order byProductId = cb.desc(p.get("productId"));
+    Order byId = cb.desc(p.get("id"));
     return switch (sortType) {
-      case POPULAR -> List.of(cb.desc(p.get("likeCount")), byProductId);
-      case LATEST -> List.of(cb.desc(p.get("createdAt")), byProductId);
-      case PRICE_ASC -> List.of(cb.asc(p.get("price")), byProductId);
-      case PRICE_DESC -> List.of(cb.desc(p.get("price")), byProductId);
+      case POPULAR -> List.of(cb.desc(p.get("likeCount")), byId);
+      case LATEST -> List.of(cb.desc(p.get("createdAt")), byId);
+      case PRICE_ASC -> List.of(cb.asc(p.get("price")), byId);
+      case PRICE_DESC -> List.of(cb.desc(p.get("price")), byId);
     };
   }
 }

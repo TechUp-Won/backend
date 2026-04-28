@@ -13,18 +13,18 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "category")
+@Table(name = "categories")
 @Getter
 @NoArgsConstructor
 public class Category {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "category_id")
-  private Long categoryId;
+  @Column(name = "id")
+  private Long id;
 
-  @Column(name = "category_name", nullable = false)
-  private String categoryName;
+  @Column(name = "name", nullable = false)
+  private String name;
 
   @Column(name = "depth", nullable = false)
   private Integer depth;

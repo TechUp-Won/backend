@@ -10,14 +10,14 @@ public class ProductListResponse {
 
   private List<ProductSummary> products;
   private boolean hasNext;
-  private Long nextCursorProductId;
+  private Long nextCursorId;
   private Long nextCursorSortValue;
 
   @Getter
   @Builder
   public static class ProductSummary {
-    private Long productId;
-    private String productName;
+    private Long id;
+    private String name;
     private String thumbnail;
     private Integer price;
     private Integer discountedPrice;

@@ -12,7 +12,7 @@ public interface ProductRepositoryCustom {
       Integer minPrice,
       Integer maxPrice,
       ProductSortType sortType,
-      Long lastProductId,
+      Long lastId,
       Long lastSortValue,
       int size
   );

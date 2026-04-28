@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CategoryRepository extends JpaRepository<Category, Long> {
 
-  List<Category> findByParentCategory_CategoryId(Long parentId);
+  List<Category> findByParentCategory_Id(Long parentId);
 }

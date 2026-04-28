@@ -17,21 +17,21 @@ import lombok.Getter;
 import org.hibernate.annotations.Formula;
 
 @Entity
-@Table(name = "product")
+@Table(name = "products")
 @Getter
 public class Product {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "product_id")
-  private Long productId;
+  @Column(name = "id")
+  private Long id;
 
   @Column(name = "store_id", nullable = false)
   // TODO: Store 엔티티 구현 시 @ManyToOne 관계로 변경 및 연관관계 매핑 필요
   private Long storeId;
 
-  @Column(name = "product_name", nullable = false)
-  private String productName;
+  @Column(name = "name", nullable = false)
+  private String name;
 
   @Column(name = "thumbnail")
   private String thumbnail;
