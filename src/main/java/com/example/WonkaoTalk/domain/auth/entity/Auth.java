@@ -33,7 +33,7 @@ public class Auth {
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
-  private AccountStatus status;
+  private AccountStatus status = AccountStatus.ACTIVE;
 
   @Column(name = "refresh_token")
   private String refreshToken;

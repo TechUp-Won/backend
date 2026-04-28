@@ -34,8 +34,8 @@ public class AuthLocal {
   @Column(name = "password_hash", nullable = false)
   private String passwordHash;
 
-  @Column(name = "failed_attemps_count")
-  private int failedAttempsCount = 0;
+  @Column(name = "failed_attempts_count")
+  private int failedAttemptsCount = 0;
 
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
