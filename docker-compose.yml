@@ -16,7 +16,7 @@ services:
     image: redis:7.4
     container_name: wonkao-talk-redis
     ports:
-      - "6739:6379"
+      - "6379:6379"
 
   #카프카 설정은 나중에 수정해주세요!
   kafka:
