@@ -3,6 +3,7 @@ package com.example.WonkaoTalk.domain.chat.service;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.chat.dto.ChatRoomCreateRequest;
+import com.example.WonkaoTalk.domain.chat.dto.ChatRoomListResponse;
 import com.example.WonkaoTalk.domain.chat.dto.ChatRoomResponse;
 import com.example.WonkaoTalk.domain.chat.entity.ChatParticipant;
 import com.example.WonkaoTalk.domain.chat.entity.ChatRoom;
@@ -11,6 +12,8 @@ import com.example.WonkaoTalk.domain.chat.repo.ChatParticipantRepository;
 import com.example.WonkaoTalk.domain.chat.repo.ChatRoomRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,6 +63,29 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
           return ChatRoomResponse.from(newRoom, createTempParticipants(myId, receiverId));
         });
+  }
+
+  public ChatRoomListResponse getChatRoomList(Long myId, Long cursorId, int size) {
+    PageRequest pageRequest = PageRequest.of(0, size);
+
+    Slice<ChatRoom> roomSlice = chatRoomRepository.findMyChatRooms(myId, cursorId, pageRequest);
+
+    List<ChatRoomListResponse.ChatRoomInfo> roomSummaries = roomSlice.getContent().stream()
+        .map(room -> {
+          // TODO: 추후 last_read_message_id 기준으로 count 쿼리 연동
+          Integer unreadCount = 0;
+          return ChatRoomListResponse.ChatRoomInfo.from(room, unreadCount);
+        })
+        .toList();
+
+    Long nextCursorId = roomSummaries.isEmpty() ? null :
+        roomSummaries.get(roomSummaries.size() - 1).chatRoomId();
+
+    return ChatRoomListResponse.builder()
+        .rooms(roomSummaries)
+        .hasNext(roomSlice.hasNext())
+        .nextCursorId(roomSlice.hasNext() ? nextCursorId : null)
+        .build();
   }
 
   // TODO: 유저 연동 전 임시 데이터임
