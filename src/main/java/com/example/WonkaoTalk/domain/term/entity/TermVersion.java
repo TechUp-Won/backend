@@ -26,7 +26,7 @@ public class TermVersion {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private int id;
+  private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "term_id", nullable = false)
@@ -39,10 +39,10 @@ public class TermVersion {
   @Column(nullable = false)
   private String content;
 
-  @Column(name = "is_Active", nullable = false)
+  @Column(name = "is_active", nullable = false)
   private boolean isActive = true;
 
   @Column(name = "effective_at", nullable = false)
   private LocalDateTime effectiveAt;
-  
+
 }
