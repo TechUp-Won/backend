@@ -1,5 +1,6 @@
 package com.example.WonkaoTalk.domain.product.entity;
 
+import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,23 +13,24 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
-import org.hibernate.annotations.Formula;
+import lombok.Getter;
 
 @Entity
-@Table(name = "product")
+@Table(name = "products")
+@Getter
 public class Product {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "product_id")
-  private Long productId;
+  @Column(name = "id")
+  private Long id;
 
   @Column(name = "store_id", nullable = false)
-  // TODO: Store Entity가 만들어 지면 타입 변경 필요
+  // TODO: Store 엔티티 구현 시 @ManyToOne 관계로 변경 및 연관관계 매핑 필요
   private Long storeId;
 
-  @Column(name = "product_name", nullable = false)
-  private String productName;
+  @Column(name = "name", nullable = false)
+  private String name;
 
   @Column(name = "thumbnail")
   private String thumbnail;
@@ -43,7 +45,7 @@ public class Product {
   @Column(name = "price", nullable = false)
   private Integer price;
 
-  @Formula("price * (100 - COALESCE(discount_rate, 0)) / 100") // price와 discount_rate에서 계산되는 파생값
+  @Column(name = "discounted_price", nullable = false)
   private Integer discountedPrice;
 
   @Enumerated(EnumType.STRING)

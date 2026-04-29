@@ -10,17 +10,20 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import lombok.Getter;
+
 @Entity
-@Table(name = "product_option")
+@Table(name = "product_options")
+@Getter
 public class ProductOption {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "product_option_id")
-  private Long productOptionId;
+  @Column(name = "id")
+  private Long id;
 
-  @Column(name = "option_name", nullable = false)
-  private String optionName;
+  @Column(name = "name", nullable = false)
+  private String name;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "product_option_group_id", nullable = false)

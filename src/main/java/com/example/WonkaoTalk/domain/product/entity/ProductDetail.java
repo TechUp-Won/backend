@@ -10,22 +10,24 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import lombok.Getter;
 
 @Entity
-@Table(name = "product_detail")
+@Table(name = "product_details")
+@Getter
 public class ProductDetail {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "product_detail_id")
-  private Long productDetailId;
+  @Column(name = "id")
+  private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "product_id", nullable = false)
   private Product product;
 
-  @Column(name = "detail_content", nullable = false, columnDefinition = "TEXT")
-  private String detailContent;
+  @Column(name = "content", nullable = false, columnDefinition = "TEXT")
+  private String content;
 
   @Column(name = "created_at", nullable = false)
   private LocalDateTime createdAt;

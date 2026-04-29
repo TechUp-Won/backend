@@ -9,13 +9,13 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "cart")
+@Table(name = "carts")
 public class Cart {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "cart_id")
-  private Long cartId;
+  @Column(name = "id")
+  private Long id;
 
   @Column(name = "user_id", nullable = false)
   // TODO: User Entity가 만들어 지면 타입 변경 필요
