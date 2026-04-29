@@ -61,13 +61,8 @@ public class CartService {
         .map(this::toCartItemInfo)
         .toList();
 
-    int originalTotal = cartItems.stream()
-        .mapToInt(ci -> ci.getProductVariant().getProduct().getPrice() * ci.getQuantity())
-        .sum();
-
-    int discountTotal = cartItems.stream()
-        .mapToInt(ci -> ci.getProductVariant().getProduct().getDiscountedPrice() * ci.getQuantity())
-        .sum();
+    int originalTotal = calculateOriginalTotal(cartItems);
+    int discountTotal = calculateDiscountTotal(cartItems);
 
     return CartResponse.builder()
         .cartId(cart.getId())
@@ -159,12 +154,8 @@ public class CartService {
     cartItem.updateQuantity(request.getQuantity());
 
     List<CartItem> allItems = cartItemRepository.findAllWithVariantAndProductByCartId(cart.getId());
-    int originalTotal = allItems.stream()
-        .mapToInt(ci -> ci.getProductVariant().getProduct().getPrice() * ci.getQuantity())
-        .sum();
-    int discountTotal = allItems.stream()
-        .mapToInt(ci -> ci.getProductVariant().getProduct().getDiscountedPrice() * ci.getQuantity())
-        .sum();
+    int originalTotal = calculateOriginalTotal(allItems);
+    int discountTotal = calculateDiscountTotal(allItems);
 
     Product product = variant.getProduct();
     String updatedAt = cartItem.getUpdatedAt()
@@ -240,12 +231,8 @@ public class CartService {
     }
 
     List<CartItem> allItems = cartItemRepository.findAllWithVariantAndProductByCartId(cart.getId());
-    int originalTotal = allItems.stream()
-        .mapToInt(ci -> ci.getProductVariant().getProduct().getPrice() * ci.getQuantity())
-        .sum();
-    int discountTotal = allItems.stream()
-        .mapToInt(ci -> ci.getProductVariant().getProduct().getDiscountedPrice() * ci.getQuantity())
-        .sum();
+    int originalTotal = calculateOriginalTotal(allItems);
+    int discountTotal = calculateDiscountTotal(allItems);
 
     Product product = targetVariant.getProduct();
     String updatedAt = resultItem.getUpdatedAt()
@@ -306,6 +293,18 @@ public class CartService {
 
     cartItemRepository.deleteAll(items);
     return CartDeleteResponse.builder().cartId(cart.getId()).build();
+  }
+
+  private int calculateOriginalTotal(List<CartItem> items) {
+    return items.stream()
+        .mapToInt(ci -> ci.getProductVariant().getProduct().getPrice() * ci.getQuantity())
+        .sum();
+  }
+
+  private int calculateDiscountTotal(List<CartItem> items) {
+    return items.stream()
+        .mapToInt(ci -> ci.getProductVariant().getProduct().getDiscountedPrice() * ci.getQuantity())
+        .sum();
   }
 
   private CartItemInfo toCartItemInfo(CartItem cartItem) {
