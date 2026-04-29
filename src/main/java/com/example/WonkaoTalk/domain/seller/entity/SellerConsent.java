@@ -28,7 +28,8 @@ public class SellerConsent {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(name = "terms_version_id", nullable = false)
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "terms_version_id", nullable = false)
   private Long termsVersionId;
 
   @ManyToOne(fetch = FetchType.LAZY)
