@@ -1,4 +1,4 @@
-package com.example.WonkaoTalk.domain.chat.entity;
+package com.example.WonkaoTalk.domain.auth.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,47 +12,40 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Getter
-@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "chat_participants")
-public class ChatParticipant {
+@Table(name = "auth_locals")
+public class AuthLocal {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "id")
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "chat_room_id", nullable = false)
-  private ChatRoom chatRoom;
+  @JoinColumn(name = "auth_id", nullable = false)
+  private Auth auth;
 
-  @Column(nullable = false)
-  private Long userId;
+  @Column(nullable = false, unique = true)
+  private String email;
 
-  private String roomTitle;
+  @Column(name = "password_hash", nullable = false)
+  private String passwordHash;
 
-  @Column(columnDefinition = "TEXT")
-  private String roomImage;
+  @Column(name = "failed_attempts_count")
+  private int failedAttemptsCount = 0;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "last_read_message_id")
-  private ChatMessage lastReadMessage;
+  @Column(name = "password_updated_at")
+  private LocalDateTime passwordUpdatedAt;
 
-  @Builder.Default
-  private boolean isAlarmOn = true;
+  @LastModifiedDate
+  @Column(name = "updated_at")
+  private LocalDateTime updatedAt;
 
-  @CreatedDate
-  @Column(nullable = false, updatable = false)
-  private LocalDateTime createdAt;
 }

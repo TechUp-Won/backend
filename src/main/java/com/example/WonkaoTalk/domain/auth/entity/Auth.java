@@ -1,23 +1,21 @@
-package com.example.WonkaoTalk.domain.chat.entity;
+package com.example.WonkaoTalk.domain.auth.entity;
 
-import com.example.WonkaoTalk.domain.chat.enums.LikeStatus;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
@@ -26,40 +24,36 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Getter
-@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "message_likes", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"message_id", "user_id"})
-})
-public class MessageLike {
+@Table(name = "auths")
+public class Auth {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "id")
   private Long id;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "message_id", nullable = false)
-  private ChatMessage chatMessage;
-
-  @Column(nullable = false)
-  private Long userId;
-
   @Enumerated(EnumType.STRING)
-  @Builder.Default
-  @Column(nullable = false, length = 20)
-  private LikeStatus likeStatus = LikeStatus.ACTIVE;
+  @Column(nullable = false)
+  private AccountStatus status = AccountStatus.ACTIVE;
+
+  @Column(name = "refresh_token")
+  private String refreshToken;
 
   @CreatedDate
-  @Column(nullable = false, updatable = false)
+  @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;
 
   @LastModifiedDate
-  @Column(nullable = false)
+  @Column(name = "updated_at")
   private LocalDateTime updatedAt;
 
-  @Column
-  private LocalDateTime canceledAt;
+  @Column(name = "deleted_at")
+  private LocalDateTime deletedAt;
+
+  @OneToMany(mappedBy = "auth", cascade = CascadeType.ALL)
+  private List<AuthLocal> authLocals = new ArrayList<>();
+
+  @OneToMany(mappedBy = "auth", cascade = CascadeType.ALL)
+  private List<AuthSocial> authSocials = new ArrayList<>();
 }
