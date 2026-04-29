@@ -1,6 +1,7 @@
 package com.example.WonkaoTalk.domain.auth.entity;
 
 
+import com.example.WonkaoTalk.domain.auth.enums.AccountStatus;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
