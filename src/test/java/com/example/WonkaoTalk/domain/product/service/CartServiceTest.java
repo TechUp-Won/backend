@@ -545,6 +545,28 @@ class CartServiceTest {
   // ── updateCartItemOption - Update ────────────────────────────────────────────
 
   @Test
+  @DisplayName("현재 아이템과 동일한 variant를 선택하면 삭제 없이 isMerged=false로 반환된다")
+  void updateOption_noChange_whenSameVariantSelected() {
+    Cart cart = mockCart(1L, 1L);
+    ProductVariant sameVariant = mockVariant(1L, mockProductWithId(1L), 10, SaleStatus.ON_SALE, null);
+    CartItem currentItem = mockCartItem(1L, cart, sameVariant, 2);
+    when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(currentItem));
+    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(productVariantRepository.findById(1L)).thenReturn(Optional.of(sameVariant));
+    when(cartItemRepository.findByCart_IdAndProductVariant_Id(1L, 1L))
+        .thenReturn(Optional.of(currentItem)); // 자기 자신을 반환
+    when(cartItemRepository.findAllWithVariantAndProductByCartId(1L)).thenReturn(List.of(currentItem));
+
+    CartOptionUpdateResponse response =
+        cartService.updateCartItemOption(1L, 1L, mockOptionUpdateRequest(1L));
+
+    assertThat(response.isMerged()).isFalse();
+    verify(cartItemRepository, never()).delete(any());
+    assertThat(response.getCartItem().getCartItemId()).isEqualTo(1L);
+    assertThat(response.getCartItem().getQuantity()).isEqualTo(2);
+  }
+
+  @Test
   @DisplayName("동일한 variant가 없으면 isMerged=false이고 updateVariant가 호출된다")
   void updateOption_updatesVariant_whenNoDuplicateExists() {
     Cart cart = mockCart(1L, 1L);

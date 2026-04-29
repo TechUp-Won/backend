@@ -198,7 +198,7 @@ public class CartService {
     CartItem resultItem;
     boolean isMerged;
 
-    if (duplicateOpt.isPresent()) {
+    if (duplicateOpt.isPresent() && !duplicateOpt.get().getId().equals(currentItem.getId())) {
       CartItem duplicateItem = duplicateOpt.get();
       int mergedQuantity = duplicateItem.getQuantity() + currentItem.getQuantity();
       if (mergedQuantity > targetVariant.getStock()) {
