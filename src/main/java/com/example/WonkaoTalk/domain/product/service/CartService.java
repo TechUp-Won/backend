@@ -76,11 +76,6 @@ public class CartService {
 
   @Transactional
   public CartAddResponse addToCart(Long userId, CartAddRequest request) {
-    if (request.getProductId() == null || request.getVariantId() == null
-        || request.getQuantity() == null || request.getQuantity() < 1) {
-      throw new BusinessException(ErrorCode.BAD_REQUEST);
-    }
-
     productRepository.findById(request.getProductId())
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
@@ -128,10 +123,6 @@ public class CartService {
   @Transactional
   public CartQuantityUpdateResponse updateCartItemQuantity(Long userId, Long cartItemId,
       CartQuantityUpdateRequest request) {
-    if (request.getQuantity() == null || request.getQuantity() < 1) {
-      throw new BusinessException(ErrorCode.PROD_INVALID_QUANTITY);
-    }
-
     CartItem cartItem = cartItemRepository.findWithVariantAndProductById(cartItemId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
@@ -184,10 +175,6 @@ public class CartService {
   @Transactional
   public CartOptionUpdateResponse updateCartItemOption(Long userId, Long cartItemId,
       CartOptionUpdateRequest request) {
-    if (request.getVariantId() == null) {
-      throw new BusinessException(ErrorCode.BAD_REQUEST);
-    }
-
     CartItem currentItem = cartItemRepository.findWithVariantAndProductById(cartItemId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 

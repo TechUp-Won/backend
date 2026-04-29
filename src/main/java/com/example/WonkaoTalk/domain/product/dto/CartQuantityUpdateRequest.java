@@ -1,5 +1,7 @@
 package com.example.WonkaoTalk.domain.product.dto;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -7,5 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CartQuantityUpdateRequest {
 
-  private Integer quantity;
+  @NotNull @Min(1) private Integer quantity;
 }

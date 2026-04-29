@@ -1,5 +1,6 @@
 package com.example.WonkaoTalk.domain.product.dto;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -7,5 +8,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CartOptionUpdateRequest {
 
-  private Long variantId;
+  @NotNull private Long variantId;
 }

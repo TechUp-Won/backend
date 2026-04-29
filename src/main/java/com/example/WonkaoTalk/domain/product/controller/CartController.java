@@ -10,6 +10,7 @@ import com.example.WonkaoTalk.domain.product.dto.CartQuantityUpdateRequest;
 import com.example.WonkaoTalk.domain.product.dto.CartQuantityUpdateResponse;
 import com.example.WonkaoTalk.domain.product.dto.CartResponse;
 import com.example.WonkaoTalk.domain.product.service.CartService;
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -44,7 +45,7 @@ public class CartController {
   public ResponseEntity<ApiResponse<CartAddResponse>> addToCart(
       // TODO: 사용자 인증 구현 시 Bearer Token에서 userId를 추출하도록 변경
       @RequestHeader("X-User-Id") Long userId,
-      @RequestBody CartAddRequest request) {
+      @Valid @RequestBody CartAddRequest request) {
     CartAddResponse response = cartService.addToCart(userId, request);
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success("장바구니에 상품이 추가되었습니다.", response));
@@ -55,8 +56,9 @@ public class CartController {
       // TODO: 사용자 인증 구현 시 Bearer Token에서 userId를 추출하도록 변경
       @RequestHeader("X-User-Id") Long userId,
       @PathVariable Long cartItemId,
-      @RequestBody CartQuantityUpdateRequest request) {
-    CartQuantityUpdateResponse response = cartService.updateCartItemQuantity(userId, cartItemId, request);
+      @Valid @RequestBody CartQuantityUpdateRequest request) {
+    CartQuantityUpdateResponse response = cartService.updateCartItemQuantity(userId, cartItemId,
+        request);
     return ResponseEntity.ok(ApiResponse.success("수정이 완료되었습니다", response));
   }
 
@@ -65,8 +67,9 @@ public class CartController {
       // TODO: 사용자 인증 구현 시 Bearer Token에서 userId를 추출하도록 변경
       @RequestHeader("X-User-Id") Long userId,
       @PathVariable Long cartItemId,
-      @RequestBody CartOptionUpdateRequest request) {
-    CartOptionUpdateResponse response = cartService.updateCartItemOption(userId, cartItemId, request);
+      @Valid @RequestBody CartOptionUpdateRequest request) {
+    CartOptionUpdateResponse response = cartService.updateCartItemOption(userId, cartItemId,
+        request);
     return ResponseEntity.ok(ApiResponse.success("수정이 완료되었습니다", response));
   }
 
