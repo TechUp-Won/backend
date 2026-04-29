@@ -54,7 +54,8 @@ public class CartService {
     }
 
     Cart cart = cartOpt.get();
-    List<CartItem> cartItems = cartItemRepository.findAllWithVariantAndProductByCartId(cart.getId());
+    List<CartItem> cartItems = cartItemRepository.findAllWithVariantAndProductByCartId(
+        cart.getId());
 
     List<CartItemInfo> cartItemInfos = cartItems.stream()
         .map(this::toCartItemInfo)
@@ -272,7 +273,8 @@ public class CartService {
   }
 
   @Transactional
-  public CartDeleteResponse deleteFromCart(Long userId, List<Long> cartItemIds, boolean isAllDelete) {
+  public CartDeleteResponse deleteFromCart(Long userId, List<Long> cartItemIds,
+      boolean isAllDelete) {
     Cart cart = cartRepository.findByUserId(userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
