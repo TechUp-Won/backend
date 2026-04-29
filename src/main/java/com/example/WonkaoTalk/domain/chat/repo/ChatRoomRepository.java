@@ -10,10 +10,10 @@ import org.springframework.data.repository.query.Param;
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
   @Query("""
-      SELECT p.chatRoom FROM ChatParticipant p 
-      JOIN p.chatRoom r 
-      WHERE p.userId = :myId 
-      AND (:cursorId IS NULL OR r.id < :cursorId) 
+      SELECT p.chatRoom FROM ChatParticipant p
+      JOIN p.chatRoom r
+      WHERE p.userId = :myId
+      AND (:cursorId IS NULL OR r.id < :cursorId)
       ORDER BY r.lastMessageAt DESC, r.id DESC
       """)
   Slice<ChatRoom> findMyChatRooms(@Param("myId") Long myId,
