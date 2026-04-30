@@ -17,6 +17,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
@@ -25,6 +27,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Getter
+@Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "auths")
@@ -34,6 +38,7 @@ public class Auth {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @Builder.Default
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private AccountStatus status = AccountStatus.ACTIVE;
@@ -52,9 +57,11 @@ public class Auth {
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
 
+  @Builder.Default
   @OneToMany(mappedBy = "auth", cascade = CascadeType.ALL)
   private List<AuthLocal> authLocals = new ArrayList<>();
 
+  @Builder.Default
   @OneToMany(mappedBy = "auth", cascade = CascadeType.ALL)
   private List<AuthSocial> authSocials = new ArrayList<>();
 }

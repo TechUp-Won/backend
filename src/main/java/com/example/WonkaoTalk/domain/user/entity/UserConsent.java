@@ -1,5 +1,6 @@
 package com.example.WonkaoTalk.domain.user.entity;
 
+import com.example.WonkaoTalk.domain.term.entity.TermVersion;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -30,7 +31,7 @@ public class UserConsent {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "terms_version_id", nullable = false)
-  private Long termsVersionId;
+  private TermVersion termsVersionId;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id")

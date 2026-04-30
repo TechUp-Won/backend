@@ -1,12 +1,15 @@
 package com.example.WonkaoTalk.domain.seller.entity;
 
 
+import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
@@ -33,8 +36,9 @@ public class Seller {
   @Column(nullable = false)
   private String phone;
 
-  @Column(name = "auth_id", nullable = false)
-  private Long authId;
+  @OneToOne
+  @JoinColumn(name = "auth_id", nullable = false)
+  private Auth authId;
 
   @CreatedDate
   @Column(name = "created_at", nullable = false, updatable = false)

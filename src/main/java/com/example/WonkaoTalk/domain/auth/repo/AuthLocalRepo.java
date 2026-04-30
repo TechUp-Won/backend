@@ -5,4 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AuthLocalRepo extends JpaRepository<AuthLocal, Long> {
 
+  boolean existsByEmail(String email);
 }
