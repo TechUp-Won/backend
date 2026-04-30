@@ -38,15 +38,20 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class CartServiceTest {
 
-  @Mock private CartRepository cartRepository;
-  @Mock private CartItemRepository cartItemRepository;
-  @Mock private ProductRepository productRepository;
-  @Mock private ProductVariantRepository productVariantRepository;
+  @Mock
+  private CartRepository cartRepository;
+  @Mock
+  private CartItemRepository cartItemRepository;
+  @Mock
+  private ProductRepository productRepository;
+  @Mock
+  private ProductVariantRepository productVariantRepository;
 
   @InjectMocks
   private CartService cartService;
@@ -217,7 +222,7 @@ class CartServiceTest {
     when(productVariantRepository.findById(1L)).thenReturn(Optional.of(variant));
 
     Cart cart = mockCart(1L, 1L);
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUserIdWithLock(1L)).thenReturn(Optional.of(cart));
     when(cartItemRepository.findByCart_IdAndProductVariant_Id(1L, 1L)).thenReturn(Optional.empty());
 
     BusinessException ex = assertThrows(BusinessException.class,
@@ -261,7 +266,7 @@ class CartServiceTest {
     when(productVariantRepository.findById(1L)).thenReturn(Optional.of(variant));
 
     Cart cart = mockCart(1L, 1L);
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUserIdWithLock(1L)).thenReturn(Optional.of(cart));
 
     CartItem existingItem = mockCartItem(5L, cart, variant, 3);
     when(cartItemRepository.findByCart_IdAndProductVariant_Id(1L, 1L))
@@ -284,7 +289,7 @@ class CartServiceTest {
     when(productVariantRepository.findById(1L)).thenReturn(Optional.of(variant));
 
     Cart cart = mockCart(1L, 1L);
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUserIdWithLock(1L)).thenReturn(Optional.of(cart));
 
     CartItem existingItem = mockCartItem(5L, cart, variant, 4); // 기존 4 + 요청 3 = 7 > stock 5
     when(cartItemRepository.findByCart_IdAndProductVariant_Id(1L, 1L))
@@ -294,6 +299,31 @@ class CartServiceTest {
         () -> cartService.addToCart(1L, mockAddRequest(1L, 1L, 3)));
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_STOCK_INSUFFICIENT);
+  }
+
+  @Test
+  @DisplayName("Cart 저장 시 동시 요청으로 DataIntegrityViolationException이 발생하면 기존 Cart를 재조회하여 사용한다")
+  void addToCart_usesExistingCart_whenDataIntegrityViolationOccurs() {
+    Product product = mockProductWithId(1L);
+    when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+
+    ProductVariant variant = mockVariant(1L, product, 10, SaleStatus.ON_SALE, null);
+    when(productVariantRepository.findById(1L)).thenReturn(Optional.of(variant));
+
+    Cart existingCart = mockCart(1L, 1L);
+    when(cartRepository.findByUserIdWithLock(1L))
+        .thenReturn(Optional.empty())
+        .thenReturn(Optional.of(existingCart));
+    when(cartRepository.save(any(Cart.class)))
+        .thenThrow(new DataIntegrityViolationException("duplicate key"));
+    when(cartItemRepository.findByCart_IdAndProductVariant_Id(1L, 1L)).thenReturn(Optional.empty());
+
+    CartItem savedItem = mockCartItem(10L, existingCart, variant, 2);
+    when(cartItemRepository.save(any(CartItem.class))).thenReturn(savedItem);
+
+    CartAddResponse response = cartService.addToCart(1L, mockAddRequest(1L, 1L, 2));
+
+    assertThat(response.getCartItemId()).isEqualTo(10L);
   }
 
   // ── updateCartItemQuantity - 입력 검증 ──────────────────────────────────────
@@ -385,7 +415,8 @@ class CartServiceTest {
     when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
 
     BusinessException ex = assertThrows(BusinessException.class,
-        () -> cartService.updateCartItemQuantity(1L, 1L, mockQuantityUpdateRequest(5))); // 5 > stock 3
+        () -> cartService.updateCartItemQuantity(1L, 1L,
+            mockQuantityUpdateRequest(5))); // 5 > stock 3
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_STOCK_INSUFFICIENT);
   }
@@ -484,7 +515,8 @@ class CartServiceTest {
     when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(cartItem));
     when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
 
-    ProductVariant targetVariant = mockVariant(2L, mockProductWithId(2L), 10, SaleStatus.STOP_SALE, null);
+    ProductVariant targetVariant = mockVariant(2L, mockProductWithId(2L), 10, SaleStatus.STOP_SALE,
+        null);
     when(productVariantRepository.findById(2L)).thenReturn(Optional.of(targetVariant));
 
     BusinessException ex = assertThrows(BusinessException.class,
@@ -503,7 +535,8 @@ class CartServiceTest {
     when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(currentItem));
     when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
 
-    ProductVariant targetVariant = mockVariant(2L, mockProductWithId(2L), 4, SaleStatus.ON_SALE, null);
+    ProductVariant targetVariant = mockVariant(2L, mockProductWithId(2L), 4, SaleStatus.ON_SALE,
+        null);
     when(productVariantRepository.findById(2L)).thenReturn(Optional.of(targetVariant));
 
     CartItem duplicateItem = mockCartItem(2L, cart, targetVariant, 3); // 기존 3 + 현재 3 = 6 > stock 4
@@ -524,7 +557,8 @@ class CartServiceTest {
     when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(currentItem));
     when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
 
-    ProductVariant targetVariant = mockVariant(2L, mockProductWithId(2L), 10, SaleStatus.ON_SALE, null);
+    ProductVariant targetVariant = mockVariant(2L, mockProductWithId(2L), 10, SaleStatus.ON_SALE,
+        null);
     when(productVariantRepository.findById(2L)).thenReturn(Optional.of(targetVariant));
 
     CartItem duplicateItem = mockCartItem(2L, cart, targetVariant, 3);
@@ -548,14 +582,16 @@ class CartServiceTest {
   @DisplayName("현재 아이템과 동일한 variant를 선택하면 삭제 없이 isMerged=false로 반환된다")
   void updateOption_noChange_whenSameVariantSelected() {
     Cart cart = mockCart(1L, 1L);
-    ProductVariant sameVariant = mockVariant(1L, mockProductWithId(1L), 10, SaleStatus.ON_SALE, null);
+    ProductVariant sameVariant = mockVariant(1L, mockProductWithId(1L), 10, SaleStatus.ON_SALE,
+        null);
     CartItem currentItem = mockCartItem(1L, cart, sameVariant, 2);
     when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(currentItem));
     when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
     when(productVariantRepository.findById(1L)).thenReturn(Optional.of(sameVariant));
     when(cartItemRepository.findByCart_IdAndProductVariant_Id(1L, 1L))
         .thenReturn(Optional.of(currentItem)); // 자기 자신을 반환
-    when(cartItemRepository.findAllWithVariantAndProductByCartId(1L)).thenReturn(List.of(currentItem));
+    when(cartItemRepository.findAllWithVariantAndProductByCartId(1L)).thenReturn(
+        List.of(currentItem));
 
     CartOptionUpdateResponse response =
         cartService.updateCartItemOption(1L, 1L, mockOptionUpdateRequest(1L));
@@ -574,10 +610,12 @@ class CartServiceTest {
     when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(currentItem));
     when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
 
-    ProductVariant targetVariant = mockVariant(2L, mockProductWithId(2L), 10, SaleStatus.ON_SALE, null);
+    ProductVariant targetVariant = mockVariant(2L, mockProductWithId(2L), 10, SaleStatus.ON_SALE,
+        null);
     when(productVariantRepository.findById(2L)).thenReturn(Optional.of(targetVariant));
     when(cartItemRepository.findByCart_IdAndProductVariant_Id(1L, 2L)).thenReturn(Optional.empty());
-    when(cartItemRepository.findAllWithVariantAndProductByCartId(1L)).thenReturn(List.of(currentItem));
+    when(cartItemRepository.findAllWithVariantAndProductByCartId(1L)).thenReturn(
+        List.of(currentItem));
 
     CartOptionUpdateResponse response =
         cartService.updateCartItemOption(1L, 1L, mockOptionUpdateRequest(2L));
@@ -595,12 +633,14 @@ class CartServiceTest {
     when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(currentItem));
     when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
 
-    ProductVariant targetVariant = mockVariant(2L, mockProductWithId(2L), 3, SaleStatus.ON_SALE, null); // stock=3
+    ProductVariant targetVariant = mockVariant(2L, mockProductWithId(2L), 3, SaleStatus.ON_SALE,
+        null); // stock=3
     when(productVariantRepository.findById(2L)).thenReturn(Optional.of(targetVariant));
     when(cartItemRepository.findByCart_IdAndProductVariant_Id(1L, 2L)).thenReturn(Optional.empty());
 
     BusinessException ex = assertThrows(BusinessException.class,
-        () -> cartService.updateCartItemOption(1L, 1L, mockOptionUpdateRequest(2L))); // quantity 5 > stock 3
+        () -> cartService.updateCartItemOption(1L, 1L,
+            mockOptionUpdateRequest(2L))); // quantity 5 > stock 3
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_STOCK_INSUFFICIENT);
   }

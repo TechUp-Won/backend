@@ -26,6 +26,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -95,8 +96,18 @@ public class CartService {
       throw new BusinessException(ErrorCode.PROD_VARIANT_UNAVAILABLE);
     }
 
-    Cart cart = cartRepository.findByUserId(userId)
-        .orElseGet(() -> cartRepository.save(Cart.builder().userId(userId).build()));
+    Cart cart;
+    Optional<Cart> cartOpt = cartRepository.findByUserIdWithLock(userId);
+    if (cartOpt.isPresent()) {
+      cart = cartOpt.get();
+    } else {
+      try {
+        cart = cartRepository.save(Cart.builder().userId(userId).build());
+      } catch (DataIntegrityViolationException e) {
+        cart = cartRepository.findByUserIdWithLock(userId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.SERVER_ERROR));
+      }
+    }
 
     Optional<CartItem> existingItem =
         cartItemRepository.findByCart_IdAndProductVariant_Id(cart.getId(), variant.getId());
