@@ -21,6 +21,7 @@ public class GlobalExceptionHandler {
         .body(ApiResponse.error(errorCode.getCode(), e.getMessage()));
   }
 
+  // @Valid 검증 실패 예외 처리
   @ExceptionHandler(MethodArgumentNotValidException.class)
   protected ResponseEntity<ApiResponse<Void>> handleValidationException(
       MethodArgumentNotValidException e) {

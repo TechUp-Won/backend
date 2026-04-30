@@ -1,4 +1,4 @@
-package com.example.WonkaoTalk.domain.auth.entity;
+package com.example.WonkaoTalk.domain.auth.enums;
 
 public enum AccountStatus {
   ACTIVE, // 활동
