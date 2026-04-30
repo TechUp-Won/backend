@@ -695,30 +695,11 @@ class CartServiceTest {
   }
 
   @Test
-  @DisplayName("요청한 아이템이 타인의 장바구니에 속하면 FORBIDDEN을 던진다")
-  void deleteFromCart_throwsForbidden_whenItemBelongsToOtherCart() {
-    Cart userCart = mockCart(1L, 1L);
-    Cart otherCart = mockCart(2L, 99L);
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(userCart));
-    when(cartItemRepository.findAllByIdInAndCart_Id(List.of(10L), 1L)).thenReturn(List.of());
-
-    CartItem otherItem = mock(CartItem.class);
-    when(otherItem.getCart()).thenReturn(otherCart);
-    when(cartItemRepository.findAllById(List.of(10L))).thenReturn(List.of(otherItem));
-
-    BusinessException ex = assertThrows(BusinessException.class,
-        () -> cartService.deleteFromCart(1L, List.of(10L), false));
-
-    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.FORBIDDEN);
-  }
-
-  @Test
-  @DisplayName("존재하지 않는 아이템 ID이면 NOT_FOUND를 던진다")
-  void deleteFromCart_throwsNotFound_whenItemNotFound() {
+  @DisplayName("요청한 아이템이 존재하지 않거나 타인의 장바구니에 속하면 NOT_FOUND를 던진다")
+  void deleteFromCart_throwsNotFound_whenItemNotFoundOrNotOwned() {
     Cart cart = mockCart(1L, 1L);
     when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
     when(cartItemRepository.findAllByIdInAndCart_Id(List.of(999L), 1L)).thenReturn(List.of());
-    when(cartItemRepository.findAllById(List.of(999L))).thenReturn(List.of());
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> cartService.deleteFromCart(1L, List.of(999L), false));

@@ -287,18 +287,6 @@ public class CartService {
 
     List<CartItem> items = cartItemRepository.findAllByIdInAndCart_Id(cartItemIds, cart.getId());
     if (items.size() != cartItemIds.size()) {
-      // 요청한 ID 중 존재하지 않는 것 → 404, 타인 소유인 것 → 403으로 구분 불가하므로 소유권 우선 검증
-      List<Long> foundIds = items.stream().map(CartItem::getId).toList();
-      boolean hasUnowned = cartItemIds.stream().anyMatch(id -> !foundIds.contains(id));
-      // findAllByIdInAndCart_Id가 이미 cart 소유권을 필터링하므로 미조회 = 미존재 또는 타인 소유
-      // 타인 소유 여부를 판단하려면 cart 조건 없이 재조회
-      boolean anyExistElsewhere = cartItemRepository.findAllById(
-              cartItemIds.stream().filter(id -> !foundIds.contains(id)).toList())
-          .stream().anyMatch(ci -> !ci.getCart().getId().equals(cart.getId()));
-
-      if (anyExistElsewhere) {
-        throw new BusinessException(ErrorCode.FORBIDDEN);
-      }
       throw new BusinessException(ErrorCode.NOT_FOUND);
     }
 
