@@ -10,7 +10,6 @@ import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.entity.AuthLocal;
 import com.example.WonkaoTalk.domain.auth.repo.AuthLocalRepo;
 import com.example.WonkaoTalk.domain.auth.repo.AuthRepo;
-import com.example.WonkaoTalk.domain.auth.repo.AuthSocialRepo;
 import com.example.WonkaoTalk.domain.user.entity.User;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +25,6 @@ public class AuthService {
 
   private final AuthRepo authRepo;
   private final AuthLocalRepo authLocalRepo;
-  private final AuthSocialRepo authSocialRepo;
   private final UserRepo userRepo;
   private final PasswordEncoder passwordEncoder;
 
