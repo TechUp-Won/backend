@@ -1,6 +1,8 @@
 package com.example.WonkaoTalk.domain.product.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -27,6 +29,7 @@ public class CartOptionUpdateResponse {
     private Integer quantity;
     private Integer stock;
     private String status;
-    private String updatedAt;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
+    private LocalDateTime updatedAt;
   }
 }

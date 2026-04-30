@@ -21,8 +21,6 @@ import com.example.WonkaoTalk.domain.product.repo.CartItemRepository;
 import com.example.WonkaoTalk.domain.product.repo.CartRepository;
 import com.example.WonkaoTalk.domain.product.repo.ProductRepository;
 import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepository;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -169,9 +167,6 @@ public class CartService {
     int discountTotal = calculateDiscountTotal(allItems);
 
     Product product = variant.getProduct();
-    String updatedAt = cartItem.getUpdatedAt()
-        .atZone(ZoneId.of("UTC"))
-        .format(DateTimeFormatter.ISO_INSTANT);
 
     return CartQuantityUpdateResponse.builder()
         .originalTotalAmount(originalTotal)
@@ -187,7 +182,7 @@ public class CartService {
             .quantity(cartItem.getQuantity())
             .stock(variant.getStock())
             .status(variant.getStatus().name())
-            .updatedAt(updatedAt)
+            .updatedAt(cartItem.getUpdatedAt())
             .build())
         .build();
   }
@@ -246,9 +241,6 @@ public class CartService {
     int discountTotal = calculateDiscountTotal(allItems);
 
     Product product = targetVariant.getProduct();
-    String updatedAt = resultItem.getUpdatedAt()
-        .atZone(ZoneId.of("UTC"))
-        .format(DateTimeFormatter.ISO_INSTANT);
 
     return CartOptionUpdateResponse.builder()
         .isMerged(isMerged)
@@ -265,7 +257,7 @@ public class CartService {
             .quantity(resultItem.getQuantity())
             .stock(targetVariant.getStock())
             .status(targetVariant.getStatus().name())
-            .updatedAt(updatedAt)
+            .updatedAt(resultItem.getUpdatedAt())
             .build())
         .build();
   }
@@ -310,10 +302,6 @@ public class CartService {
     ProductVariant variant = cartItem.getProductVariant();
     Product product = variant.getProduct();
 
-    String updatedAt = cartItem.getUpdatedAt()
-        .atZone(ZoneId.of("UTC"))
-        .format(DateTimeFormatter.ISO_INSTANT);
-
     return CartItemInfo.builder()
         .cartItemId(cartItem.getId())
         .id(product.getId())
@@ -327,7 +315,7 @@ public class CartService {
         .quantity(cartItem.getQuantity())
         .stock(variant.getStock())
         .status(variant.getStatus().name())
-        .updatedAt(updatedAt)
+        .updatedAt(cartItem.getUpdatedAt())
         .build();
   }
 }
