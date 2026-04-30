@@ -30,8 +30,12 @@ public enum ErrorCode {
   PROD_INVALID_PRODUCT_ID(400, "PROD-INVALID-PRODUCT-ID", "상품 ID는 숫자여야 합니다."),
   PROD_CATEGORY_NOT_FOUND(404, "PROD-NOT-FOUND-CATEGORY", "존재하지 않는 카테고리입니다."),
   PROD_STORE_NOT_FOUND(404, "PROD-NOT-FOUND-STORE", "존재하지 않는 스토어입니다."),
-  PROD_NOT_FOUND(404, "PROD-NOT-FOUND", "해당 상품을 찾을 수 없습니다."),
-  PROD_DELETED(410, "PROD-DELETED", "삭제된 상품입니다."),
+  PROD_NOT_FOUND(404, "PROD-NOT-FOUND-PRODUCT", "해당 상품을 찾을 수 없습니다."),
+  PROD_DELETED(410, "PROD-DELETED-PRODUCT", "삭제된 상품입니다."),
+  PROD_CART_NOT_FOUND(404, "PROD-NOT-FOUND-CART", "존재하지 않는 장바구니입니다."),
+  PROD_STOCK_INSUFFICIENT(400, "PROD-INSUFFICIENT-STOCK", "재고가 부족합니다."),
+  PROD_VARIANT_UNAVAILABLE(400, "PROD-UNAVAILABLE-VARIANT", "구매 불가능한 상품 옵션입니다."),
+  PROD_INVALID_QUANTITY(400, "PROD-INVALID-QUANTITY", "수량은 최소 1개 이상이어야 합니다."),
 
   // 주문 도메인
 
