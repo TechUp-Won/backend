@@ -348,8 +348,8 @@ class CartServiceIntegrationTest {
   }
 
   @Test
-  @DisplayName("타인의 CartItem을 삭제하려 하면 FORBIDDEN을 던진다")
-  void deleteFromCart_throwsForbidden_whenItemBelongsToOther() {
+  @DisplayName("타인의 CartItem을 삭제하려 하면 NOT_FOUND를 던진다")
+  void deleteFromCart_throwsNotFound_whenItemBelongsToOther() {
     Cart otherCart = saveCart(99L);
     CartItem otherItem = saveCartItem(otherCart, variantA1, 2);
     saveCart(1L);
@@ -359,7 +359,7 @@ class CartServiceIntegrationTest {
     BusinessException ex = assertThrows(BusinessException.class,
         () -> cartService.deleteFromCart(1L, List.of(otherItem.getId()), false));
 
-    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.FORBIDDEN);
+    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
   }
 
   @Test
