@@ -73,14 +73,12 @@ public class ChatRoomServiceImpl implements ChatRoomService {
       int size) {
     PageRequest pageRequest = PageRequest.of(0, size);
 
-    Slice<ChatRoom> slice = chatRoomRepository.findMyChatRooms(myId,
-        lastMessageAt,
-        cursorId,
-        pageRequest);
+    Slice<ChatParticipant> slice = chatParticipantRepository.findMyChatRooms(myId, lastMessageAt,
+        cursorId, pageRequest);
 
     List<ChatRoomInfo> rooms = slice.getContent().stream()
         // TODO unreadCount 임시로 0 넣어 놓음
-        .map(room -> ChatRoomInfo.from(room, 0))
+        .map(participant -> ChatRoomInfo.from(participant, 0))
         .toList();
 
     Long nextCursorId = null;

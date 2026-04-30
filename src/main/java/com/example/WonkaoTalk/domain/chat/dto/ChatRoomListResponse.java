@@ -1,5 +1,6 @@
 package com.example.WonkaoTalk.domain.chat.dto;
 
+import com.example.WonkaoTalk.domain.chat.entity.ChatParticipant;
 import com.example.WonkaoTalk.domain.chat.entity.ChatRoom;
 import com.example.WonkaoTalk.domain.chat.enums.RoomType;
 import java.time.LocalDateTime;
@@ -26,12 +27,13 @@ public record ChatRoomListResponse(
       Integer participantCount
   ) {
 
-    public static ChatRoomInfo from(ChatRoom room, Integer unreadCount) {
+    public static ChatRoomInfo from(ChatParticipant participant, Integer unreadCount) {
+      ChatRoom room = participant.getChatRoom();
       return ChatRoomInfo.builder()
           .chatRoomId(room.getId())
           .roomType(room.getRoomType())
-          .roomTitle(room.getTitle())
-          .roomImage(room.getRoomImage())
+          .roomTitle(participant.getRoomTitle())
+          .roomImage(participant.getRoomImage())
           .lastMessageContent(room.getLastMessageContent())
           .lastMessageAt(room.getLastMessageAt())
           .unreadCount(unreadCount)
