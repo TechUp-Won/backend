@@ -1,8 +1,10 @@
 package com.example.WonkaoTalk.common.exception;
 
 import com.example.WonkaoTalk.common.response.ApiResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -19,13 +21,25 @@ public class GlobalExceptionHandler {
         .body(ApiResponse.error(errorCode.getCode(), e.getMessage()));
   }
 
-  // JSON 타입 불일치나 @Valid 검증 실패 시 SYS-INVALID-INPUT (400)을 뱉을 수 있도록 해 줍니다.
-  @ExceptionHandler({MethodArgumentNotValidException.class, HttpMessageNotReadableException.class})
-  public ResponseEntity<ApiResponse<Void>> handleValidationException(Exception e) {
-    ErrorCode errorCode = ErrorCode.BAD_REQUEST;
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  protected ResponseEntity<ApiResponse<Void>> handleValidationException(
+      MethodArgumentNotValidException e) {
+    FieldError fieldError = e.getBindingResult().getFieldError();
+    String field = fieldError != null ? fieldError.getField() : "";
+    String errorMessage = fieldError != null ?
+        fieldError.getDefaultMessage() : "입력값이 올바르지 않습니다";
+
     return ResponseEntity
-        .status(errorCode.getHttpStatus())
-        .body(ApiResponse.error(errorCode.getCode(), errorCode.getMessage()));
+        .status(HttpStatus.BAD_REQUEST)
+        .body(ApiResponse.error(ErrorCode.BAD_REQUEST.getCode(), errorMessage));
+  }
+
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  protected ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadableException(
+      HttpMessageNotReadableException e) {
+    return ResponseEntity
+        .status(HttpStatus.BAD_REQUEST)
+        .body(ApiResponse.error(ErrorCode.BAD_REQUEST.getCode(), "요청 형식이 올바르지 않습니다"));
   }
 
   // 그 외 예상치 못한 에러가 발생했을 때 (500 에러 포장)
