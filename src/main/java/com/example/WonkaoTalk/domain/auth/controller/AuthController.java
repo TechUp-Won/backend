@@ -29,7 +29,7 @@ public class AuthController {
     EmailCheckResponse data = authService.validateEmail(request);
 
     String message =
-        data.isValid() ? "시용 기능한 이메일입니다." : "이미 사용 중인 이메일입니다.";
+        data.isValid() ? "사용 기능한 이메일입니다." : "이미 사용 중인 이메일입니다.";
 
     return ResponseEntity.ok(ApiResponse.success(message, data));
   }

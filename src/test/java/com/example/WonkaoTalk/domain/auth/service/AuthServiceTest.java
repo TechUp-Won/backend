@@ -62,7 +62,7 @@ class AuthServiceTest {
     //given
     SignUpRequest request = new SignUpRequest(
         "test@test.com", "Qwer1234", "Qwer1234",
-        "이병건", "침착맨", "010-1234-56678",
+        "이병건", "침착맨", "010-1234-5678",
         null, Gender.MALE
     );
 
@@ -94,7 +94,7 @@ class AuthServiceTest {
     //given
     SignUpRequest request = new SignUpRequest(
         "test@test.com", "Qwer1234", "Qwer12345",
-        "이병건", "침착맨", "010-1234-56678",
+        "이병건", "침착맨", "010-1234-5678",
         null, Gender.MALE
     );
 
