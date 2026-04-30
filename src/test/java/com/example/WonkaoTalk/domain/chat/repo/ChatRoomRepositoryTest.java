@@ -49,7 +49,8 @@ class ChatRoomRepositoryTest {
     joinRoom(room1, receiverId);
 
     // when
-    Slice<ChatRoom> result = chatRoomRepository.findMyChatRooms(myId, null, PageRequest.of(0, 10));
+    Slice<ChatRoom> result = chatRoomRepository.findMyChatRooms(myId, null, null,
+        PageRequest.of(0, 10));
 
     // then
     List<ChatRoom> content = result.getContent();
@@ -78,12 +79,16 @@ class ChatRoomRepositoryTest {
     joinRoom(room3, myId);
 
     // when: room3을 보고 다음 페이지(cursorId = room3의 ID) 요청
-    Slice<ChatRoom> result = chatRoomRepository.findMyChatRooms(myId, room3.getId(),
-        PageRequest.of(0, 1));
+    Slice<ChatRoom> result = chatRoomRepository.findMyChatRooms(
+        myId,
+        room3.getLastMessageAt(),
+        room3.getId(),
+        PageRequest.of(0, 1)
+    );
 
     // then
     assertThat(result.getContent()).hasSize(1);
-    assertThat(result.getContent().get(0).getId()).isEqualTo(room2.getId());
+    assertThat(result.getContent().getFirst().getId()).isEqualTo(room2.getId());
     assertThat(result.hasNext()).isTrue();
   }
 

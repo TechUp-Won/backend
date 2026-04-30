@@ -4,12 +4,14 @@ import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.chat.dto.ChatRoomCreateRequest;
 import com.example.WonkaoTalk.domain.chat.dto.ChatRoomListResponse;
+import com.example.WonkaoTalk.domain.chat.dto.ChatRoomListResponse.ChatRoomInfo;
 import com.example.WonkaoTalk.domain.chat.dto.ChatRoomResponse;
 import com.example.WonkaoTalk.domain.chat.entity.ChatParticipant;
 import com.example.WonkaoTalk.domain.chat.entity.ChatRoom;
 import com.example.WonkaoTalk.domain.chat.enums.RoomType;
 import com.example.WonkaoTalk.domain.chat.repo.ChatParticipantRepository;
 import com.example.WonkaoTalk.domain.chat.repo.ChatRoomRepository;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ChatRoomServiceImpl implements ChatRoomService {
 
   private final ChatRoomRepository chatRoomRepository;
@@ -65,26 +68,35 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         });
   }
 
-  public ChatRoomListResponse getChatRoomList(Long myId, Long cursorId, int size) {
+  @Override
+  public ChatRoomListResponse getChatRoomList(Long myId, LocalDateTime lastMessageAt, Long cursorId,
+      int size) {
     PageRequest pageRequest = PageRequest.of(0, size);
 
-    Slice<ChatRoom> roomSlice = chatRoomRepository.findMyChatRooms(myId, cursorId, pageRequest);
+    Slice<ChatRoom> slice = chatRoomRepository.findMyChatRooms(myId,
+        lastMessageAt,
+        cursorId,
+        pageRequest);
 
-    List<ChatRoomListResponse.ChatRoomInfo> roomSummaries = roomSlice.getContent().stream()
-        .map(room -> {
-          // TODO: 추후 last_read_message_id 기준으로 count 쿼리 연동
-          Integer unreadCount = 0;
-          return ChatRoomListResponse.ChatRoomInfo.from(room, unreadCount);
-        })
+    List<ChatRoomInfo> rooms = slice.getContent().stream()
+        // TODO unreadCount 임시로 0 넣어 놓음
+        .map(room -> ChatRoomInfo.from(room, 0))
         .toList();
 
-    Long nextCursorId = roomSummaries.isEmpty() ? null :
-        roomSummaries.get(roomSummaries.size() - 1).chatRoomId();
+    Long nextCursorId = null;
+    LocalDateTime nextLastMessageAt = null;
+
+    if (slice.hasNext() && !rooms.isEmpty()) {
+      ChatRoomInfo lastRoom = rooms.getLast();
+      nextCursorId = lastRoom.chatRoomId();
+      nextLastMessageAt = lastRoom.lastMessageAt();
+    }
 
     return ChatRoomListResponse.builder()
-        .rooms(roomSummaries)
-        .hasNext(roomSlice.hasNext())
-        .nextCursorId(roomSlice.hasNext() ? nextCursorId : null)
+        .rooms(rooms)
+        .hasNext(slice.hasNext())
+        .nextCursorId(nextCursorId)
+        .nextLastMessageAt(nextLastMessageAt)
         .build();
   }
 

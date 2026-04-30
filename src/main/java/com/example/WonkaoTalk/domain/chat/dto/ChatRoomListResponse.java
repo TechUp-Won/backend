@@ -10,7 +10,8 @@ import lombok.Builder;
 public record ChatRoomListResponse(
     List<ChatRoomInfo> rooms,
     Boolean hasNext,
-    Long nextCursorId
+    Long nextCursorId,
+    LocalDateTime nextLastMessageAt
 ) {
 
   @Builder
