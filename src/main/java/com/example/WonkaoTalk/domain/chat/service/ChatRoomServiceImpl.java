@@ -3,19 +3,25 @@ package com.example.WonkaoTalk.domain.chat.service;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.chat.dto.ChatRoomCreateRequest;
+import com.example.WonkaoTalk.domain.chat.dto.ChatRoomListResponse;
+import com.example.WonkaoTalk.domain.chat.dto.ChatRoomListResponse.ChatRoomInfo;
 import com.example.WonkaoTalk.domain.chat.dto.ChatRoomResponse;
 import com.example.WonkaoTalk.domain.chat.entity.ChatParticipant;
 import com.example.WonkaoTalk.domain.chat.entity.ChatRoom;
 import com.example.WonkaoTalk.domain.chat.enums.RoomType;
 import com.example.WonkaoTalk.domain.chat.repo.ChatParticipantRepository;
 import com.example.WonkaoTalk.domain.chat.repo.ChatRoomRepository;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ChatRoomServiceImpl implements ChatRoomService {
 
   private final ChatRoomRepository chatRoomRepository;
@@ -60,6 +66,36 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
           return ChatRoomResponse.from(newRoom, createTempParticipants(myId, receiverId));
         });
+  }
+
+  @Override
+  public ChatRoomListResponse getChatRoomList(Long myId, LocalDateTime lastMessageAt, Long cursorId,
+      int size) {
+    PageRequest pageRequest = PageRequest.of(0, size);
+
+    Slice<ChatParticipant> slice = chatParticipantRepository.findMyChatRooms(myId, lastMessageAt,
+        cursorId, pageRequest);
+
+    List<ChatRoomInfo> rooms = slice.getContent().stream()
+        // TODO unreadCount 임시로 0 넣어 놓음
+        .map(participant -> ChatRoomInfo.from(participant, 0))
+        .toList();
+
+    Long nextCursorId = null;
+    LocalDateTime nextLastMessageAt = null;
+
+    if (slice.hasNext() && !rooms.isEmpty()) {
+      ChatRoomInfo lastRoom = rooms.getLast();
+      nextCursorId = lastRoom.chatRoomId();
+      nextLastMessageAt = lastRoom.lastMessageAt();
+    }
+
+    return ChatRoomListResponse.builder()
+        .rooms(rooms)
+        .hasNext(slice.hasNext())
+        .nextCursorId(nextCursorId)
+        .nextLastMessageAt(nextLastMessageAt)
+        .build();
   }
 
   // TODO: 유저 연동 전 임시 데이터임
