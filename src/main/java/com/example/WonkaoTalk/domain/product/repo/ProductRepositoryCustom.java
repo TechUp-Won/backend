@@ -16,4 +16,15 @@ public interface ProductRepositoryCustom {
       Long lastSortValue,
       int size
   );
+
+  List<Product> findWithSearch(
+      String keyword,
+      List<Long> categoryIds,
+      Integer minPrice,
+      Integer maxPrice,
+      ProductSortType sortType,
+      Long lastId,
+      Long lastSortValue,
+      int size
+  );
 }
