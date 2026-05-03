@@ -137,5 +137,13 @@ public class AuthService {
     loginHistoryRepo.save(history);
   }
 
+  @Transactional
+  public void logout(String email) {
+    String redisKey = "RT:" + email;
+
+    if (redisService.hasKey(redisKey)) {
+      redisService.deleteValues(redisKey);
+    }
+  }
 
 }

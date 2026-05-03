@@ -35,6 +35,9 @@ public class SecurityConfig {
             ).permitAll() // 인증 없이 접근 허용
             .requestMatchers("/api/v1/seller/**").hasRole("SELLER") // SELLER만 접근허용
             .requestMatchers("/api/v1/admin/**").hasRole("ADMIN") // 관리자 전용
+            .requestMatchers(
+                "/api/v1/auth/logout"
+            ).authenticated()
             .anyRequest().authenticated() // 그 외의 다른 모든 요청은 인증을 거쳐야 함
         )
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
