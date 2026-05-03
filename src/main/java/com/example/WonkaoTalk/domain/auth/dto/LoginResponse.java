@@ -1,5 +1,7 @@
 package com.example.WonkaoTalk.domain.auth.dto;
 
+import com.example.WonkaoTalk.domain.auth.entity.Auth;
+import com.example.WonkaoTalk.domain.user.entity.User;
 import lombok.Builder;
 
 @Builder
@@ -8,14 +10,24 @@ public record LoginResponse(
     UserInfo userInfo
 ) {
 
+  public static LoginResponse of(
+      String accessToken, Long expiresIn, Auth auth, User user
+  ) {
+    return LoginResponse.builder()
+        .tokenInfo(TokenInfo.of(accessToken, expiresIn))
+        .userInfo(UserInfo.of(auth, user))
+        .build();
+  }
+
+
   @Builder
   public record TokenInfo(
       String accessToken,
       String grantType,
-      Integer expiresIn
+      Long expiresIn
   ) {
 
-    public static TokenInfo of(String accessToken, Integer expiresIn) {
+    public static TokenInfo of(String accessToken, Long expiresIn) {
       return TokenInfo.builder()
           .accessToken(accessToken)
           .grantType("Bearer")
@@ -32,5 +44,13 @@ public record LoginResponse(
       String image
   ) {
 
+    public static UserInfo of(Auth auth, User user) {
+      return UserInfo.builder()
+          .authId(auth.getId())
+          .userId(user.getId())
+          .nickname(user.getNickname())
+          .image(user.getImage())
+          .build();
+    }
   }
 }
