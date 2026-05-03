@@ -70,7 +70,7 @@ public class AuthService {
     authLocalRepo.save(authLocal);
 
     User user = User.builder()
-        .authId(savedAuth)
+        .auth(savedAuth)
         .name(request.name())
         .nickname(request.nickname())
         .phone(request.phone())

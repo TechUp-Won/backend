@@ -46,7 +46,7 @@ public record LoginResponse(
 
     public static UserInfo of(Auth auth, User user) {
       return UserInfo.builder()
-          .authId(auth.getId())
+          .authId(user.getId())
           .userId(user.getId())
           .nickname(user.getNickname())
           .image(user.getImage())
