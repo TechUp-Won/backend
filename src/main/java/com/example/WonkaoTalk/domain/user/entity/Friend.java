@@ -34,11 +34,11 @@ public class Friend {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
-  private User userId;
+  private User user;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "friend_id", nullable = false)
-  private User friendId;
+  private User friend;
 
   @Column(length = 20)
   private String alias;

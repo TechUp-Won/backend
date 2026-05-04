@@ -18,8 +18,11 @@ public enum ErrorCode {
   AUTH_INVALID_EMAIL(400, "AUTH-INVALID-EMAIL", "올바른 이메일 형식이 아닙니다."),
   AUTH_INVALID_PASSWORD(400, "AUTH-INVALID-PASSWORD", "비밀번호는 영문 대/소문자와 숫자를 모두 포함하여 8자리 이상이어야 합니다."),
   AUTH_DUPLICATE_EMAIL(409, "AUTH-DUPLICATE-EMAIL", "이미 사용 중인 이메일입니다."),
-  AUTH_MISMATCH_PASSWORD(400, "AUTH-MISMATCH-PASSWORD", "비밀번호와 비밀번호 확인이 일치하지 않습니다."),
-
+  AUTH_MISMATCH_PASSWORD(400, "AUTH-MISMATCH-PASSWORD", "비밀번호가 일치하지 않습니다."),
+  // UNAUTHORIZED와 동일함. INVALID_TOKEN과 구분을 위해 명시적 표현으로 이름 변경
+  AUTH_EXPIRED_TOKEN(401, "AUTH-EXPIRED-TOKEN", "토큰이 만료되었습니다."),
+  AUTH_INVALID_TOKEN(401, "AUTH-INVALID-TOKEN", "유효하지 않은 토큰입니다."),
+  AUTH_LOGGED_OUT_TOKEN(401, "AUTH-LOGGED-OUT-TOKEN", "이미 로그아웃 된 토큰입니다."),
   // 유저 도메인
   USER_NOT_FOUND(404, "USER-NOTFOUND-ID", "해당 사용자 ID를 찾을 수 없습니다."),
 
