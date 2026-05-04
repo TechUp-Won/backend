@@ -127,6 +127,8 @@ public class AuthService {
     // 프록시나 로드밸런서를 거쳤을 경우 대비
     if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
       ipAddress = request.getRemoteAddr();
+    } else {
+      ipAddress = ipAddress.split(",")[0].trim();
     }
 
     LoginHistory history = LoginHistory.builder()

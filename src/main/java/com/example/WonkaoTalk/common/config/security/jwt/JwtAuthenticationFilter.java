@@ -1,5 +1,7 @@
 package com.example.WonkaoTalk.common.config.security.jwt;
 
+import com.example.WonkaoTalk.common.exception.BusinessException;
+import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.common.redis.RedisService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -36,10 +38,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
       // 토큰 블랙리스트 체크
       if (redisService.hasKey("BlackList:" + token)) {
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write("{\"status\":\"ERROR\", \"message\":\"이미 로그아웃된 토큰입니다.\"}");
-        return;
+        throw new BusinessException(ErrorCode.AUTH_LOGGED_OUT_TOKEN);
       }
 
       String email = jwtTokenProvider.getEmailFromToken(token);
@@ -62,7 +61,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private String resolveToken(HttpServletRequest request) {
     String bearer = request.getHeader("Authorization");
-    if (StringUtils.hasText(bearer) && bearer.startsWith("Bearer")) {
+    if (StringUtils.hasText(bearer) && bearer.startsWith("Bearer ")) {
       return bearer.substring(7);
     }
     return null;

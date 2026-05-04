@@ -74,7 +74,7 @@ class SecurityIntegrationTest {
         .compact();
 
     //when & then
-    mockMvc.perform(get("/appi/v1/health/user")
+    mockMvc.perform(get("/api/v1/health/user")
             .header("Authorization", "Bearer " + expiredToken))
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.error").value(ErrorCode.AUTH_EXPIRED_TOKEN.getCode()));
