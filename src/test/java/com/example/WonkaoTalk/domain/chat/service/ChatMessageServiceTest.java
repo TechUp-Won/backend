@@ -31,7 +31,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 class ChatMessageServiceTest {
 
   @InjectMocks
-  private ChatMessageServiceImpl chatMessageService;
+  private ChatMessageService chatMessageService;
 
   @Mock
   private ChatMessageRepository chatMessageRepository;
