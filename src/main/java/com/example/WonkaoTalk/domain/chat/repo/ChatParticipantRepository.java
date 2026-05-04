@@ -27,7 +27,7 @@ public interface ChatParticipantRepository extends JpaRepository<ChatParticipant
       JOIN FETCH p.chatRoom r
       WHERE p.userId = :myId
       AND (
-          :lastMessageAt IS NULL
+          CAST(:lastMessageAt AS timestamp) IS NULL
           OR r.lastMessageAt < :lastMessageAt
           OR (r.lastMessageAt = :lastMessageAt AND r.id < :cursorId)
       )
@@ -39,4 +39,6 @@ public interface ChatParticipantRepository extends JpaRepository<ChatParticipant
       @Param("cursorId") Long cursorId,
       Pageable pageable
   );
+
+  Optional<ChatParticipant> findByChatRoomIdAndUserId(Long chatRoomId, Long userId);
 }
