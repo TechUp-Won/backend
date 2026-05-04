@@ -98,4 +98,15 @@ public class JwtTokenProvider {
         .get("role", String.class);
   }
 
+  public Long getExpiration(String accessToken) {
+    Date expiration = Jwts.parserBuilder()
+        .setSigningKey(key)
+        .build()
+        .parseClaimsJws(accessToken)
+        .getBody()
+        .getExpiration();
+
+    long now = new Date().getTime();
+    return (expiration.getTime() - now); // 남은 시간 밀리초 단위 반환
+  }
 }

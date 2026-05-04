@@ -13,7 +13,7 @@ import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.common.redis.RedisService;
 import com.example.WonkaoTalk.domain.auth.dto.LoginRequest;
-import com.example.WonkaoTalk.domain.auth.dto.LoginResponse;
+import com.example.WonkaoTalk.domain.auth.dto.TokenDto;
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.entity.AuthLocal;
 import com.example.WonkaoTalk.domain.auth.enums.Role;
@@ -71,7 +71,7 @@ class AuthLoginServiceTest {
     ReflectionTestUtils.setField(auth, "id", 1L);
     AuthLocal authLocal = AuthLocal.builder()
         .email("test@test.com").passwordHash("encodedPassword").auth(auth).build();
-    User user = User.builder().nickname("TestUser").build();
+    User user = User.builder().build();
 
     given(authLocalRepo.findByEmail(anyString())).willReturn(Optional.of(authLocal));
     given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
@@ -82,11 +82,10 @@ class AuthLoginServiceTest {
     given(jwtTokenProvider.getRefreshTokenValidTime()).willReturn(1209600000L);
 
     //when
-    LoginResponse response = authService.login(request, httpRequest);
+    TokenDto response = authService.login(request, httpRequest);
 
     //then
-    assertThat(response.tokenInfo().accessToken()).isEqualTo("mockAccessToken");
-    assertThat(response.userInfo().nickname()).isEqualTo("TestUser");
+    assertThat(response.accessToken()).isEqualTo("mockAccessToken");
 
     // Redis 검증
     verify(redisService).setValues(
@@ -120,13 +119,15 @@ class AuthLoginServiceTest {
   public void logoutSuccess() {
     //given
     String email = "test@test.com";
+    String accessToken = "mockAccessToken";
     given(redisService.hasKey("RT:" + email)).willReturn(true);
-
+    given(jwtTokenProvider.getExpiration(accessToken)).willReturn(1800000L);
     //when
-    authService.logout(email);
+    authService.logout(accessToken, email);
 
     //then
     verify(redisService).deleteValues("RT:" + email);
-
+    verify(redisService).setValues(eq("BlackList:" + accessToken), eq("logout"),
+        any(Duration.class));
   }
 }

@@ -1,5 +1,6 @@
 package com.example.WonkaoTalk.common.config.security.jwt;
 
+import com.example.WonkaoTalk.common.redis.RedisService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,6 +22,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private final JwtTokenProvider jwtTokenProvider;
+  private final RedisService redisService;
 
   @Override
   protected void doFilterInternal(
@@ -32,6 +34,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     String token = resolveToken(request);
 
     if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
+      // 토큰 블랙리스트 체크
+      if (redisService.hasKey("BlackList:" + token)) {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write("{\"status\":\"ERROR\", \"message\":\"이미 로그아웃된 토큰입니다.\"}");
+        return;
+      }
+
       String email = jwtTokenProvider.getEmailFromToken(token);
       String role = jwtTokenProvider.getRoleFromToken(token);
 

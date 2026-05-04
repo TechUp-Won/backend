@@ -7,9 +7,9 @@ import com.example.WonkaoTalk.common.redis.RedisService;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckRequest;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckResponse;
 import com.example.WonkaoTalk.domain.auth.dto.LoginRequest;
-import com.example.WonkaoTalk.domain.auth.dto.LoginResponse;
 import com.example.WonkaoTalk.domain.auth.dto.SignUpRequest;
 import com.example.WonkaoTalk.domain.auth.dto.SignUpResponse;
+import com.example.WonkaoTalk.domain.auth.dto.TokenDto;
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.entity.AuthLocal;
 import com.example.WonkaoTalk.domain.auth.entity.LoginHistory;
@@ -87,7 +87,7 @@ public class AuthService {
   }
 
   @Transactional
-  public LoginResponse login(LoginRequest request, HttpServletRequest httpRequest) {
+  public TokenDto login(LoginRequest request, HttpServletRequest httpRequest) {
     // TODO: 로그인 실패 횟수에 따른 계정 잠금이나 추가인증 기능 구현
     AuthLocal authLocal = authLocalRepo.findByEmail(request.email())
         .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_INVALID_EMAIL));
@@ -116,7 +116,8 @@ public class AuthService {
     saveLoginHistory(auth, LoginStatus.SUCCESS, httpRequest);
 
     long accessExpirationTime = jwtTokenProvider.getAccessTokenValidTime();
-    return LoginResponse.of(accessToken, accessExpirationTime, auth, user);
+
+    return new TokenDto(accessToken, refreshToken, accessExpirationTime, auth, user);
 
   }
 
@@ -139,12 +140,16 @@ public class AuthService {
   }
 
   @Transactional
-  public void logout(String email) {
+  public void logout(String accessToken, String email) {
     String redisKey = "RT:" + email;
-
     if (redisService.hasKey(redisKey)) {
       redisService.deleteValues(redisKey);
     }
+
+    Long expiration = jwtTokenProvider.getExpiration(accessToken);
+    log.info("블랙리스트 등록 토큰: {}", accessToken);
+    log.info("남은 만료 시간: {}", expiration);
+    redisService.setValues("BlackList:" + accessToken, "logout", Duration.ofMillis(expiration));
   }
 
 }
