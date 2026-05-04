@@ -21,7 +21,7 @@ public enum ErrorCode {
   AUTH_MISMATCH_PASSWORD(400, "AUTH-MISMATCH-PASSWORD", "비밀번호와 비밀번호 확인이 일치하지 않습니다."),
 
   // 유저 도메인
-  USER_NOT_FOUND(404, "USER-NOTFOUND-ID", "해당 사용자 ID를 찾을 수 없습니다."),
+  USER_NOT_FOUND(404, "USER-NOT-FOUND-ID", "해당 사용자 ID를 찾을 수 없습니다."),
 
   // 상품 도메인
   PROD_INVALID_PRICE_RANGE(400, "PROD-INVALID-PRICE-RANGE", "최소 가격은 최대 가격보다 클 수 없습니다."),
@@ -40,10 +40,10 @@ public enum ErrorCode {
   // 주문 도메인
 
   // 채팅 도메인
-  ROOM_NOTFOUND(404, "CHAT-NOTFOUND-ROOM", "존재하지 않는 채팅방입니다."),
+  ROOM_NOT_FOUND(404, "CHAT-NOT-FOUND-ROOM", "존재하지 않는 채팅방입니다."),
   CANNOT_CHAT_SELF(400, "CHAT-INVALID-SELF", "자기 자신과는 채팅방을 생성할 수 없습니다."),
   NOT_CHAT_PARTICIPANT(403, "CHAT-FORBIDDEN-PARTICIPANT", "해당 채팅방에 메시지를 보낼 권한이 없습니다."),
-  MESSAGE_NOTFOUND(404, "CHAT-NOTFOUND-MESSAGE", "대상 메시지를 찾을 수 없습니다.");
+  MESSAGE_NOT_FOUND(404, "CHAT-NOT-FOUND-MESSAGE", "대상 메시지를 찾을 수 없습니다.");
 
   private final int httpStatus;
   private final String code;

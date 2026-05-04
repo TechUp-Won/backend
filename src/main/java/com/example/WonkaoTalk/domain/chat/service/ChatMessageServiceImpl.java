@@ -27,7 +27,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
   @Transactional
   public ChatMessageResponse sendMessage(Long userId, Long chatRoomId, ChatMessageRequest request) {
     ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.ROOM_NOTFOUND));
+        .orElseThrow(() -> new BusinessException(ErrorCode.ROOM_NOT_FOUND));
 
     ChatParticipant participant = chatParticipantRepository.findByChatRoomIdAndUserId(chatRoomId,
             userId)
@@ -36,7 +36,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     ChatMessage answerMessage = null;
     if (request.answerMessageId() != null) {
       answerMessage = chatMessageRepository.findById(request.answerMessageId())
-          .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOTFOUND));
+          .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
     }
 
     ChatMessage chatMessage = ChatMessage.builder()

@@ -89,7 +89,7 @@ class ChatMessageServiceTest {
     // when & then
     assertThatThrownBy(() -> chatMessageService.sendMessage(userId, chatRoomId, request))
         .isInstanceOf(BusinessException.class)
-        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ROOM_NOTFOUND);
+        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ROOM_NOT_FOUND);
   }
 
   @Test
