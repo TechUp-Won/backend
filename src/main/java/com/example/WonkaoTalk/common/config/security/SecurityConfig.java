@@ -33,11 +33,13 @@ public class SecurityConfig {
                 "/api/v1/auth/signup",
                 "/api/v1/auth/login"
             ).permitAll() // 인증 없이 접근 허용
-            .requestMatchers("/api/v1/seller/**").hasRole("SELLER") // SELLER만 접근허용
-            .requestMatchers("/api/v1/admin/**").hasRole("ADMIN") // 관리자 전용
-            .requestMatchers(
-                "/api/v1/auth/logout"
-            ).authenticated()
+            .requestMatchers("/api/v1/auth/logout").authenticated()
+            // SecurityTest용 엔드포인트
+            .requestMatchers("/api/v1/health/public").permitAll()
+            .requestMatchers("/api/v1/health/user").hasRole("USER")
+            .requestMatchers("/api/v1/health/seller").hasRole("SELLER")
+            .requestMatchers("/api/v1/health/admin").hasRole("ADMIN")
+
             .anyRequest().authenticated() // 그 외의 다른 모든 요청은 인증을 거쳐야 함
         )
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
