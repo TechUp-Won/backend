@@ -5,6 +5,7 @@ import com.example.WonkaoTalk.domain.chat.dto.ChatRoomCreateRequest;
 import com.example.WonkaoTalk.domain.chat.dto.ChatRoomListResponse;
 import com.example.WonkaoTalk.domain.chat.dto.ChatRoomResponse;
 import com.example.WonkaoTalk.domain.chat.service.ChatRoomService;
+import jakarta.validation.Valid;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -25,7 +26,7 @@ public class ChatRoomController {
 
   @PostMapping
   public ResponseEntity<ApiResponse<ChatRoomResponse>> createChatRoom(
-      @jakarta.validation.Valid @RequestBody ChatRoomCreateRequest request
+      @Valid @RequestBody ChatRoomCreateRequest request
       // @AuthenticationPrincipal CustomUserDetails userDetails
   ) { // TODO 연동 전 임시로 ID넣어둠
     Long myId = 1L;

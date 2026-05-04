@@ -4,6 +4,7 @@ import com.example.WonkaoTalk.common.response.ApiResponse;
 import com.example.WonkaoTalk.domain.chat.dto.ChatMessageRequest;
 import com.example.WonkaoTalk.domain.chat.dto.ChatMessageResponse;
 import com.example.WonkaoTalk.domain.chat.service.ChatMessageService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,7 +23,7 @@ public class ChatMessageController {
   @PostMapping("/{chatRoomId}/messages")
   public ResponseEntity<ApiResponse<ChatMessageResponse>> sendMessage(
       @PathVariable Long chatRoomId,
-      @jakarta.validation.Valid @RequestBody ChatMessageRequest request
+      @Valid @RequestBody ChatMessageRequest request
       // @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
     // TODO 연동 전 임시로 ID넣어둠
