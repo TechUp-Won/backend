@@ -24,7 +24,8 @@ public class SecurityConfig {
             // 명시한 엔드포인트만 인증 없이 접근 허용
             .requestMatchers(
                 "/api/v1/auth/check-email",
-                "/api/v1/auth/signup"
+                "/api/v1/auth/signup",
+                "/chats/**"
             ).permitAll()
 
             // 그 외의 다른 모든 요청은 인증을 거쳐야 함
