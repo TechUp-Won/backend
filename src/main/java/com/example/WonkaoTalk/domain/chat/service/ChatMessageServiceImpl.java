@@ -47,7 +47,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         .answerMessage(answerMessage)
         .build();
 
-    chatMessageRepository.save(chatMessage);
+    chatMessageRepository.saveAndFlush(chatMessage);
 
     chatRoom.updateLastMessage(chatMessage.getContent(), chatMessage.getCreatedAt());
 
