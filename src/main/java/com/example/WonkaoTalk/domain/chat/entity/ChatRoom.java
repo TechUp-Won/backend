@@ -72,4 +72,9 @@ public class ChatRoom {
 
   @Column
   private LocalDateTime deletedAt;
+
+  public void updateLastMessage(String content, LocalDateTime sentAt) {
+    this.lastMessageContent = content;
+    this.lastMessageAt = sentAt;
+  }
 }
