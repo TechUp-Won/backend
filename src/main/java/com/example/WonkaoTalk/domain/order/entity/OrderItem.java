@@ -11,32 +11,31 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import java.math.BigDecimal;
-
 @Entity
 @Table(name = "order_items")
 public class OrderItem {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Order order;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "order_id", nullable = false)
+  private Order order;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "variant_id", nullable = false)
-    private ProductVariant productVariant;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "variant_id", nullable = false)
+  private ProductVariant productVariant;
 
-    @Column(name = "product_name",  nullable = false)
-    private String productName;
+  @Column(name = "product_name", nullable = false)
+  private String productName;
 
-    @Column(name = "option_summary")
-    private String optionSummary;
+  @Column(name = "option_summary")
+  private String optionSummary;
 
-    @Column(name = "product_amount", nullable = false)
-    private Integer productAmount;
+  @Column(name = "product_amount", nullable = false)
+  private Integer productAmount;
 
-    @Column
-    private Integer quantity;
+  @Column
+  private Integer quantity;
 }
