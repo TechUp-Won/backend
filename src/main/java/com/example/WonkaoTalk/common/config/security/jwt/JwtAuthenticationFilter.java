@@ -43,6 +43,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
       String email = jwtTokenProvider.getEmailFromToken(token);
       String role = jwtTokenProvider.getRoleFromToken(token);
+      Long authId = jwtTokenProvider.getAuthId(token);
 
       // 시큐리티 권한 객체로 반환
       List<GrantedAuthority> authorities = Collections.singletonList(

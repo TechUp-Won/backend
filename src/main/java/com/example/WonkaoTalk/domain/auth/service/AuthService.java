@@ -14,6 +14,7 @@ import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.entity.AuthLocal;
 import com.example.WonkaoTalk.domain.auth.entity.LoginHistory;
 import com.example.WonkaoTalk.domain.auth.enums.LoginStatus;
+import com.example.WonkaoTalk.domain.auth.enums.Role;
 import com.example.WonkaoTalk.domain.auth.repo.AuthLocalRepo;
 import com.example.WonkaoTalk.domain.auth.repo.AuthRepo;
 import com.example.WonkaoTalk.domain.auth.repo.LoginHistoryRepo;
@@ -152,6 +153,28 @@ public class AuthService {
     log.info("블랙리스트 등록 토큰: {}", accessToken);
     log.info("남은 만료 시간: {}", expiration);
     redisService.setValues("BlackList:" + accessToken, "logout", Duration.ofMillis(expiration));
+  }
+
+  @Transactional
+  public Auth createAuth(String email, String password, Role role) {
+    if (authLocalRepo.existsByEmail(email)) {
+      throw new BusinessException(ErrorCode.AUTH_DUPLICATE_EMAIL);
+    }
+
+    Auth auth = Auth.builder()
+        .role(role)
+        .build();
+    Auth savedAuth = authRepo.save(auth);
+
+    String encodedPassword = passwordEncoder.encode(password);
+    AuthLocal authLocal = AuthLocal.builder()
+        .auth(savedAuth)
+        .email(email)
+        .passwordHash(encodedPassword)
+        .build();
+    authLocalRepo.save(authLocal);
+
+    return savedAuth;
   }
 
 }

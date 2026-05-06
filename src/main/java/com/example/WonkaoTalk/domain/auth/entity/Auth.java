@@ -67,4 +67,8 @@ public class Auth {
   @Builder.Default
   @OneToMany(mappedBy = "auth", cascade = CascadeType.ALL)
   private List<AuthSocial> authSocials = new ArrayList<>();
+
+  public void updateRole(Role newRole) {
+    this.role = newRole;
+  }
 }

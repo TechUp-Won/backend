@@ -109,4 +109,13 @@ public class JwtTokenProvider {
     long now = new Date().getTime();
     return (expiration.getTime() - now); // 남은 시간 밀리초 단위 반환
   }
+
+  public Long getAuthId(String token) {
+    return Jwts.parserBuilder()
+        .setSigningKey(key)
+        .build()
+        .parseClaimsJws(token)
+        .getBody()
+        .get("authId", Long.class);
+  }
 }
