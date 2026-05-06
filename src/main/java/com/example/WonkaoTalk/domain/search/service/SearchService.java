@@ -2,7 +2,6 @@ package com.example.WonkaoTalk.domain.search.service;
 
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
-import com.example.WonkaoTalk.domain.product.entity.Category;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.enums.ProductSortType;
 import com.example.WonkaoTalk.domain.product.repo.CategoryRepository;
@@ -110,15 +109,8 @@ public class SearchService {
   private List<Long> getAllCategoryIds(Long categoryId) {
     List<Long> result = new ArrayList<>();
     result.add(categoryId);
-    collectChildIds(categoryId, result);
+    categoryRepository.findByParentCategory_Id(categoryId)
+        .forEach(child -> result.add(child.getId()));
     return result;
-  }
-
-  private void collectChildIds(Long parentId, List<Long> result) {
-    List<Category> children = categoryRepository.findByParentCategory_Id(parentId);
-    for (Category child : children) {
-      result.add(child.getId());
-      collectChildIds(child.getId(), result);
-    }
   }
 }
