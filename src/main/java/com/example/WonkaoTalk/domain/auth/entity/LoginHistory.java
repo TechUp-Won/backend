@@ -1,9 +1,11 @@
-package com.example.WonkaoTalk.domain.seller.entity;
+package com.example.WonkaoTalk.domain.auth.entity;
 
-import com.example.WonkaoTalk.domain.term.entity.TermVersion;
+import com.example.WonkaoTalk.domain.auth.enums.LoginStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -12,7 +14,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
-import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
@@ -20,27 +23,27 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "seller_consents")
-public class SellerConsent {
+@Table(name = "login_history")
+public class LoginHistory {
 
+  @CreatedDate
+  @Column(name = "login_at", nullable = false)
+  LocalDateTime loginAt;
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
-
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "terms_version_id", nullable = false)
-  private TermVersion termsVersionId;
-
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "seller_id")
-  private Seller seller;
-
-  @Column(name = "is_agreed", nullable = false)
-  private boolean isAgreed;
-
-  @CreatedDate
-  @Column(name = "created_at", nullable = false, updatable = false)
-  private LocalDateTime createdAt;
+  @JoinColumn(name = "auth_id", nullable = false)
+  private Auth auth;
+  @Column(name = "ip_address")
+  private String ipAddress;
+  @Column(name = "user_agent")
+  private String userAgent;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private LoginStatus status;
 }

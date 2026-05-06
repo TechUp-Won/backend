@@ -64,7 +64,7 @@ public class User {
 
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "auth_id", nullable = false)
-  private Auth authId;
+  private Auth auth;
 
   @CreatedDate
   @Column(name = "created_at", nullable = false, updatable = false)
