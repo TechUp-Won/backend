@@ -5,6 +5,8 @@ import com.example.WonkaoTalk.common.config.security.jwt.JwtExceptionFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -32,9 +34,17 @@ public class SecurityConfig {
                 "/api/v1/auth/check-email",
                 "/api/v1/auth/signup",
                 "/api/v1/auth/login",
+                "/api/v1/sellers/signup",
                 "/chats/**"
             ).permitAll() // 인증 없이 접근 허용
-            .requestMatchers("/api/v1/auth/logout").authenticated()
+            .requestMatchers(
+                "/api/v1/auth/logout",
+                "/api/v1/sellers/register"
+            ).authenticated()
+            .requestMatchers(
+                "/api/v1/sellers/**"
+            ).hasRole("SELLER")
+
             // SecurityTest용 엔드포인트
             .requestMatchers("/api/v1/health/public").permitAll()
             .requestMatchers("/api/v1/health/user").hasRole("USER")
@@ -56,4 +66,12 @@ public class SecurityConfig {
     return new BCryptPasswordEncoder();
   }
 
+  @Bean
+  public RoleHierarchy roleHierarchy() {
+    return RoleHierarchyImpl.fromHierarchy(
+        "ROLE_ADMIN > ROLE_USER_SELLER\n" +
+            "ROLE_USER_SELLER > ROLE_USER\n" +
+            "ROLE_USER_SELLER > ROLE_SELLER"
+    );
+  }
 }

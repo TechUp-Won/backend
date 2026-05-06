@@ -52,7 +52,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
           new SimpleGrantedAuthority("ROLE_" + role)
       );
 
-      CustomUserDetails userDetails = CustomUserDetails.builder()
+      CustomUserDetails userDetails = CustomUserDetails.customBuilder()
           .email(email)
           .authId(authId)
           .authorities(authorities)

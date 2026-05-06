@@ -11,7 +11,7 @@ public class CustomUserDetails extends User {
 
   private final Long authId;
 
-  @Builder
+  @Builder(builderMethodName = "customBuilder")
   public CustomUserDetails(
       String email, String password, Long authId,
       Collection<? extends GrantedAuthority> authorities) {
