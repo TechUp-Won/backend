@@ -34,7 +34,7 @@ public class Seller {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(name = "buz_no", nullable = false, length = 10)
+  @Column(name = "buz_no", nullable = false, length = 10, unique = true)
   private String buzNo;
 
   @Column(nullable = false)

@@ -27,6 +27,10 @@ public class SellerService {
 
   @Transactional
   public SellerResponse signUpAsSeller(SellerSignUpRequest request) {
+    if (sellerRepo.existsByBuzNo(request.buzNo())) {
+      throw new BusinessException(ErrorCode.SELLER_DUPLICATE_BUZNO);
+    }
+
     Auth savedAuth = authService.createAuth(request.email(), request.password(), Role.SELLER);
 
     Seller seller = Seller.builder()
@@ -43,6 +47,10 @@ public class SellerService {
 
   @Transactional
   public SellerResponse registerSeller(Long authId, SellerRegisterRequest request) {
+    if (sellerRepo.existsByBuzNo(request.buzNo())) {
+      throw new BusinessException(ErrorCode.SELLER_DUPLICATE_BUZNO);
+    }
+    
     Auth auth = authRepo.findById(authId)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 

@@ -29,7 +29,7 @@ public enum ErrorCode {
 
   // 판매자 도메인
   SELLER_REGISTERED_ACCOUNT(400, "SELLER-REGISTERED-ACCOUNT", "이미 사업자 등록된 계정입니다."),
-
+  SELLER_DUPLICATE_BUZNO(409, "SELLER-DUPLICATE-BUZNO", "이미 등록된 사업자 번호입니다."),
   // 상품 도메인
   PROD_INVALID_PRICE_RANGE(400, "PROD-INVALID-PRICE-RANGE", "최소 가격은 최대 가격보다 클 수 없습니다."),
   PROD_INVALID_SORT(400, "PROD-INVALID-SORT", "허용되지 않는 정렬 기준입니다."),
