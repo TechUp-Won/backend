@@ -31,7 +31,8 @@ public class SecurityConfig {
             .requestMatchers(
                 "/api/v1/auth/check-email",
                 "/api/v1/auth/signup",
-                "/api/v1/auth/login"
+                "/api/v1/auth/login",
+                "/chats/**"
             ).permitAll() // 인증 없이 접근 허용
             .requestMatchers("/api/v1/auth/logout").authenticated()
             // SecurityTest용 엔드포인트

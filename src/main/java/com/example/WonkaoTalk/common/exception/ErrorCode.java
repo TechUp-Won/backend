@@ -24,7 +24,7 @@ public enum ErrorCode {
   AUTH_INVALID_TOKEN(401, "AUTH-INVALID-TOKEN", "유효하지 않은 토큰입니다."),
   AUTH_LOGGED_OUT_TOKEN(401, "AUTH-LOGGED-OUT-TOKEN", "이미 로그아웃 된 토큰입니다."),
   // 유저 도메인
-  USER_NOT_FOUND(404, "USER-NOTFOUND-ID", "해당 사용자 ID를 찾을 수 없습니다."),
+  USER_NOT_FOUND(404, "USER-NOT-FOUND-ID", "해당 사용자 ID를 찾을 수 없습니다."),
 
   // 상품 도메인
   PROD_INVALID_PRICE_RANGE(400, "PROD-INVALID-PRICE-RANGE", "최소 가격은 최대 가격보다 클 수 없습니다."),
@@ -43,8 +43,10 @@ public enum ErrorCode {
   // 주문 도메인
 
   // 채팅 도메인
-  ROOM_NOT_FOUND(404, "CHAT-NOTFOUND-ROOM", "존재하지 않는 채팅방입니다."),
-  CANNOT_CHAT_SELF(400, "CHAT-INVALID-SELF", "자기 자신과는 채팅방을 생성할 수 없습니다.");
+  ROOM_NOT_FOUND(404, "CHAT-NOT-FOUND-ROOM", "존재하지 않는 채팅방입니다."),
+  CANNOT_CHAT_SELF(400, "CHAT-INVALID-SELF", "자기 자신과는 채팅방을 생성할 수 없습니다."),
+  NOT_CHAT_PARTICIPANT(403, "CHAT-FORBIDDEN-PARTICIPANT", "해당 채팅방에 메시지를 보낼 권한이 없습니다."),
+  MESSAGE_NOT_FOUND(404, "CHAT-NOT-FOUND-MESSAGE", "대상 메시지를 찾을 수 없습니다.");
 
   private final int httpStatus;
   private final String code;

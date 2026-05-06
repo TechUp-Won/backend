@@ -55,4 +55,8 @@ public class ChatParticipant {
   @CreatedDate
   @Column(nullable = false, updatable = false)
   private LocalDateTime createdAt;
+
+  public void updateLastReadMessage(ChatMessage message) {
+    this.lastReadMessage = message;
+  }
 }
