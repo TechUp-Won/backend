@@ -3,6 +3,7 @@ package com.example.WonkaoTalk.common.config.security.jwt;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.common.redis.RedisService;
+import com.example.WonkaoTalk.domain.auth.dto.CustomUserDetails;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,6 +13,7 @@ import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -50,9 +52,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
           new SimpleGrantedAuthority("ROLE_" + role)
       );
 
+      CustomUserDetails userDetails = CustomUserDetails.builder()
+          .email(email)
+          .authId(authId)
+          .authorities(authorities)
+          .build();
+
       // 시큐리티 인증 객체 생성
-      UsernamePasswordAuthenticationToken authentication =
-          new UsernamePasswordAuthenticationToken(email, null, authorities);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
 
       SecurityContextHolder.getContext().setAuthentication(authentication);
     }

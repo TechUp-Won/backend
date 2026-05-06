@@ -1,6 +1,7 @@
 package com.example.WonkaoTalk.domain.seller.controller;
 
 import com.example.WonkaoTalk.common.response.ApiResponse;
+import com.example.WonkaoTalk.domain.auth.dto.CustomUserDetails;
 import com.example.WonkaoTalk.domain.seller.dto.SellerRegisterRequest;
 import com.example.WonkaoTalk.domain.seller.dto.SellerResponse;
 import com.example.WonkaoTalk.domain.seller.dto.SellerSignUpRequest;
@@ -9,7 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,9 +36,9 @@ public class SellerController {
   @PostMapping("/register")
   public ResponseEntity<ApiResponse<SellerResponse>> register(
       @Valid @RequestBody SellerRegisterRequest request,
-      Authentication authentication
+      @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
-    Long authId = userDatails.getAuthId();
+    Long authId = userDetails.getAuthId();
 
     SellerResponse response = sellerService.registerSeller(authId, request);
 
