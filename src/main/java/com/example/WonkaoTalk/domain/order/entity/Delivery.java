@@ -3,6 +3,8 @@ package com.example.WonkaoTalk.domain.order.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -43,6 +45,7 @@ public class Delivery {
   @Column(nullable = false)
   private String addressDetail;
 
+  @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private DeliveryStatus deliveryStatus;
 
