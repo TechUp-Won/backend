@@ -79,14 +79,14 @@ class SellerServiceTest {
         .build();
 
     given(sellerRepo.existsByBuzNo(request.buzNo())).willReturn(false);
-    given(authService.createAuth(request.email(), request.password(), Role.SELLER))
+    given(authService.createAuthLocal(request.email(), request.password(), Role.SELLER))
         .willReturn(auth);
 
     //when
     sellerService.signUpAsSeller(request);
 
     //then
-    verify(authService).createAuth(request.email(), request.password(), Role.SELLER);
+    verify(authService).createAuthLocal(request.email(), request.password(), Role.SELLER);
     verify(sellerRepo).save(any(Seller.class));
 
   }
