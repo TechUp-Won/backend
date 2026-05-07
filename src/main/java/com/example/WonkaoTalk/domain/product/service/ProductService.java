@@ -11,12 +11,10 @@ import com.example.WonkaoTalk.domain.product.dto.ProductDetailResponse.VariantIn
 import com.example.WonkaoTalk.domain.product.dto.ProductListRequest;
 import com.example.WonkaoTalk.domain.product.dto.ProductListResponse;
 import com.example.WonkaoTalk.domain.product.dto.ProductListResponse.ProductSummary;
-import com.example.WonkaoTalk.domain.product.entity.Category;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.entity.ProductOption;
 import com.example.WonkaoTalk.domain.product.entity.ProductOptionGroup;
 import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
-import com.example.WonkaoTalk.domain.product.entity.VariantOptionMap;
 import com.example.WonkaoTalk.domain.product.enums.ProductSortType;
 import com.example.WonkaoTalk.domain.product.repo.CategoryRepository;
 import com.example.WonkaoTalk.domain.product.repo.ProductDetailRepository;
@@ -209,16 +207,9 @@ public class ProductService {
   private List<Long> getAllCategoryIds(Long categoryId) {
     List<Long> result = new ArrayList<>();
     result.add(categoryId);
-    collectChildIds(categoryId, result);
+    categoryRepository.findByParentCategory_Id(categoryId)
+        .forEach(child -> result.add(child.getId()));
     return result;
-  }
-
-  private void collectChildIds(Long parentId, List<Long> result) {
-    List<Category> children = categoryRepository.findByParentCategory_Id(parentId);
-    for (Category child : children) {
-      result.add(child.getId());
-      collectChildIds(child.getId(), result);
-    }
   }
 
   private ProductSummary toSummary(Product product) {
