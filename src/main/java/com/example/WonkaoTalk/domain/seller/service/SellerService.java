@@ -50,11 +50,11 @@ public class SellerService {
     if (sellerRepo.existsByBuzNo(request.buzNo())) {
       throw new BusinessException(ErrorCode.SELLER_DUPLICATE_BUZNO);
     }
-    
+
     Auth auth = authRepo.findById(authId)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-    if (auth.getRole() == Role.SELLER || auth.getRole() == Role.USER_SELLER) {
+    if (auth.getRole() != Role.USER) {
       throw new BusinessException(ErrorCode.SELLER_REGISTERED_ACCOUNT);
     }
 
