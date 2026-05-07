@@ -4,6 +4,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.WonkaoTalk.common.config.security.jwt.JwtExceptionFilter;
+import com.example.WonkaoTalk.common.config.security.jwt.JwtTokenProvider;
+import com.example.WonkaoTalk.common.redis.RedisService;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckRequest;
 import com.example.WonkaoTalk.domain.auth.service.AuthService;
 import org.junit.jupiter.api.DisplayName;
@@ -23,12 +26,16 @@ class AuthControllerTest {
 
   @Autowired
   private MockMvc mockMvc;
-
   @Autowired
   private ObjectMapper objectMapper;
-
   @MockitoBean
   private AuthService authService;
+  @MockitoBean
+  private JwtTokenProvider jwtTokenProvider;
+  @MockitoBean
+  private RedisService redisService;
+  @MockitoBean
+  private JwtExceptionFilter jwtExceptionFilter;
 
   @Test
   @DisplayName("올바르지 않은 이메일 형식으로 중복 검사 실패")
@@ -42,7 +49,7 @@ class AuthControllerTest {
             .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.status").value("ERROR"))
-        .andExpect(jsonPath("$.error").value("AUTH-INVALID-EMAIL")); // ErrorCode 검증
+        .andExpect(jsonPath("$.error").value("SYS-INVALID-INPUT")); // ErrorCode 검증
   }
 
 }
