@@ -18,6 +18,9 @@ public record SellerSignUpRequest(
         message = "비밀번호는 영문 대/소문자와 숫자를 포함하여 8자리 이상이어야 합니다."
     ) String password,
 
+    @NotBlank(message = "비밀번호 확인을 입력해주세요.")
+    String passwordCheck,
+
     @NotBlank(message = "사업자 등록번호는 필수입니다.")
     @Pattern(
         regexp = "^\\d{10}$",

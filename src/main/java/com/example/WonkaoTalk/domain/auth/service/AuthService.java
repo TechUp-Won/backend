@@ -7,8 +7,6 @@ import com.example.WonkaoTalk.common.redis.RedisService;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckRequest;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckResponse;
 import com.example.WonkaoTalk.domain.auth.dto.LoginRequest;
-import com.example.WonkaoTalk.domain.auth.dto.SignUpRequest;
-import com.example.WonkaoTalk.domain.auth.dto.SignUpResponse;
 import com.example.WonkaoTalk.domain.auth.dto.TokenDto;
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.entity.AuthLocal;
@@ -52,42 +50,26 @@ public class AuthService {
   }
 
   @Transactional
-  public SignUpResponse signUp(SignUpRequest request) {
-    if (!request.password().equals(request.passwordCheck())) {
-      throw new BusinessException(ErrorCode.AUTH_MISMATCH_PASSWORD);
-    }
-
-    if (authLocalRepo.existsByEmail(request.email())) {
+  public Auth createAuthLocal(String email, String password, Role role) {
+    if (authLocalRepo.existsByEmail(email)) {
       throw new BusinessException(ErrorCode.AUTH_DUPLICATE_EMAIL);
     }
 
-    Auth auth = Auth.builder().build();
+    Auth auth = Auth.builder()
+        .role(role)
+        .build();
     Auth savedAuth = authRepo.save(auth);
 
-    String encodedPassword = passwordEncoder.encode(request.password());
+    String encodedPassword = passwordEncoder.encode(password);
     AuthLocal authLocal = AuthLocal.builder()
         .auth(savedAuth)
-        .email(request.email())
+        .email(email)
         .passwordHash(encodedPassword)
         .failedAttemptsCount(0)
         .build();
     authLocalRepo.save(authLocal);
 
-    User user = User.builder()
-        .auth(savedAuth)
-        .name(request.name())
-        .nickname(request.nickname())
-        .phone(request.phone())
-        .birthDate(request.birthDate())
-        .gender(request.gender())
-        .build();
-    User savedUser = userRepo.save(user);
-
-    return SignUpResponse.builder()
-        .authId(savedAuth.getId())
-        .userId(savedUser.getId())
-        .createdAt(savedAuth.getCreatedAt())
-        .build();
+    return savedAuth;
   }
 
   @Transactional
@@ -133,28 +115,6 @@ public class AuthService {
     log.info("블랙리스트 등록 토큰: {}", accessToken);
     log.info("남은 만료 시간: {}", expiration);
     redisService.setValues("BlackList:" + accessToken, "logout", Duration.ofMillis(expiration));
-  }
-
-  @Transactional
-  public Auth createAuth(String email, String password, Role role) {
-    if (authLocalRepo.existsByEmail(email)) {
-      throw new BusinessException(ErrorCode.AUTH_DUPLICATE_EMAIL);
-    }
-
-    Auth auth = Auth.builder()
-        .role(role)
-        .build();
-    Auth savedAuth = authRepo.save(auth);
-
-    String encodedPassword = passwordEncoder.encode(password);
-    AuthLocal authLocal = AuthLocal.builder()
-        .auth(savedAuth)
-        .email(email)
-        .passwordHash(encodedPassword)
-        .build();
-    authLocalRepo.save(authLocal);
-
-    return savedAuth;
   }
 
   private void saveLoginHistory(Auth auth, LoginStatus status, HttpServletRequest request) {

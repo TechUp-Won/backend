@@ -7,8 +7,8 @@ import com.example.WonkaoTalk.domain.auth.enums.Role;
 import com.example.WonkaoTalk.domain.auth.repo.AuthRepo;
 import com.example.WonkaoTalk.domain.auth.service.AuthService;
 import com.example.WonkaoTalk.domain.seller.dto.SellerRegisterRequest;
-import com.example.WonkaoTalk.domain.seller.dto.SellerResponse;
 import com.example.WonkaoTalk.domain.seller.dto.SellerSignUpRequest;
+import com.example.WonkaoTalk.domain.seller.dto.SellerSignUpResponse;
 import com.example.WonkaoTalk.domain.seller.entity.Seller;
 import com.example.WonkaoTalk.domain.seller.repo.SellerRepo;
 import lombok.RequiredArgsConstructor;
@@ -26,12 +26,16 @@ public class SellerService {
   private final SellerRepo sellerRepo;
 
   @Transactional
-  public SellerResponse signUpAsSeller(SellerSignUpRequest request) {
+  public SellerSignUpResponse signUpAsSeller(SellerSignUpRequest request) {
+    if (!request.password().equals(request.passwordCheck())) {
+      throw new BusinessException(ErrorCode.AUTH_MISMATCH_PASSWORD);
+    }
+    
     if (sellerRepo.existsByBuzNo(request.buzNo())) {
       throw new BusinessException(ErrorCode.SELLER_DUPLICATE_BUZNO);
     }
 
-    Auth savedAuth = authService.createAuth(request.email(), request.password(), Role.SELLER);
+    Auth savedAuth = authService.createAuthLocal(request.email(), request.password(), Role.SELLER);
 
     Seller seller = Seller.builder()
         .auth(savedAuth)
@@ -42,11 +46,11 @@ public class SellerService {
 
     sellerRepo.save(seller);
 
-    return SellerResponse.of(seller, savedAuth.getRole());
+    return SellerSignUpResponse.of(seller, savedAuth.getRole());
   }
 
   @Transactional
-  public SellerResponse registerSeller(Long authId, SellerRegisterRequest request) {
+  public SellerSignUpResponse registerSeller(Long authId, SellerRegisterRequest request) {
     if (sellerRepo.existsByBuzNo(request.buzNo())) {
       throw new BusinessException(ErrorCode.SELLER_DUPLICATE_BUZNO);
     }
@@ -69,7 +73,7 @@ public class SellerService {
 
     sellerRepo.save(seller);
 
-    return SellerResponse.of(seller, auth.getRole());
+    return SellerSignUpResponse.of(seller, auth.getRole());
   }
 
 }

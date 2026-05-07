@@ -1,4 +1,4 @@
-package com.example.WonkaoTalk.domain.auth.dto;
+package com.example.WonkaoTalk.domain.user.dto;
 
 import com.example.WonkaoTalk.domain.user.enums.Gender;
 import jakarta.validation.constraints.NotBlank;
@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import java.time.LocalDate;
 
-public record SignUpRequest(
+public record UserSignUpRequest(
     @NotBlank(message = "이메일을 입력해주세요.")
     @Pattern(
         regexp = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$",

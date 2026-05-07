@@ -5,7 +5,7 @@ import com.example.WonkaoTalk.domain.seller.entity.Seller;
 import lombok.Builder;
 
 @Builder
-public record SellerResponse(
+public record SellerSignUpResponse(
     Long sellerId,
     String buzNo,
     String name,
@@ -13,8 +13,8 @@ public record SellerResponse(
     Role currentRole
 ) {
 
-  public static SellerResponse of(Seller seller, Role currentRole) {
-    return SellerResponse.builder()
+  public static SellerSignUpResponse of(Seller seller, Role currentRole) {
+    return SellerSignUpResponse.builder()
         .sellerId(seller.getId())
         .buzNo(seller.getBuzNo())
         .name(seller.getName())

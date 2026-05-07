@@ -2,6 +2,7 @@ package com.example.WonkaoTalk.domain.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -12,12 +13,15 @@ import com.example.WonkaoTalk.common.config.security.jwt.JwtTokenProvider;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.common.redis.RedisService;
+import com.example.WonkaoTalk.domain.auth.dto.EmailCheckRequest;
+import com.example.WonkaoTalk.domain.auth.dto.EmailCheckResponse;
 import com.example.WonkaoTalk.domain.auth.dto.LoginRequest;
 import com.example.WonkaoTalk.domain.auth.dto.TokenDto;
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.entity.AuthLocal;
 import com.example.WonkaoTalk.domain.auth.enums.Role;
 import com.example.WonkaoTalk.domain.auth.repo.AuthLocalRepo;
+import com.example.WonkaoTalk.domain.auth.repo.AuthRepo;
 import com.example.WonkaoTalk.domain.auth.repo.LoginHistoryRepo;
 import com.example.WonkaoTalk.domain.user.entity.User;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
@@ -35,17 +39,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
-class AuthLoginServiceTest {
+class AuthServiceTest {
 
   @InjectMocks
   private AuthService authService;
 
   @Mock
+  private AuthRepo authRepo;
+  @Mock
   private AuthLocalRepo authLocalRepo;
   @Mock
-  private UserRepo userRepo;
-  @Mock
   private LoginHistoryRepo loginHistoryRepo;
+  @Mock
+  private UserRepo userRepo;
   @Mock
   private PasswordEncoder passwordEncoder;
   @Mock
@@ -63,29 +69,92 @@ class AuthLoginServiceTest {
   }
 
   @Test
+  @DisplayName("사용 가능한 이메일 중복 검사")
+  public void checkEmailAvailable() {
+    //given
+    EmailCheckRequest request = new EmailCheckRequest("test@test.com");
+    given(authLocalRepo.existsByEmail(request.email())).willReturn(false);
+
+    //when
+    EmailCheckResponse response = authService.validateEmail(request);
+
+    //then
+    assertThat(response.isValid()).isTrue();
+  }
+
+  @Test
+  @DisplayName("인증 계정 생성 성공")
+  public void createAuthSuccess() {
+    //given
+    String email = "test@test.com";
+    String password = "Qwer1234";
+    Role role = Role.USER;
+
+    given(authLocalRepo.existsByEmail(email)).willReturn(false);
+    given(passwordEncoder.encode(password)).willReturn("EncodedPassword");
+
+    Auth auth = Auth.builder().role(role).build();
+    given(authRepo.save(any(Auth.class))).willReturn(auth);
+
+    //when
+    Auth savedAuth = authService.createAuthLocal(email, password, role);
+
+    //then
+    assertThat(savedAuth).isNotNull();
+    assertThat(savedAuth.getRole()).isEqualTo(Role.USER);
+    verify(authRepo).save(any(Auth.class));
+    verify(authLocalRepo).save(any(AuthLocal.class));
+  }
+
+  @Test
+  @DisplayName("중복된 이메일로 계정 생성 시 예외 발생")
+  public void createAuthFailedByDuplicateEmail() {
+    //given
+    String email = "test@test.com";
+    given(authLocalRepo.existsByEmail(email)).willReturn(true);
+
+    //when & then
+    BusinessException e = assertThrows(BusinessException.class, () -> {
+      authService.createAuthLocal(email, "password", Role.USER);
+    });
+
+    assertThat(e.getErrorCode()).isEqualTo(ErrorCode.AUTH_DUPLICATE_EMAIL);
+  }
+
+  @Test
   @DisplayName("정상적인 로그인 시도로 로그인에 성공한다.")
   public void loginSuccess() {
     //given
     LoginRequest request = new LoginRequest("test@test.com", "Qwer1234");
+
     Auth auth = Auth.builder().role(Role.USER).build();
     ReflectionTestUtils.setField(auth, "id", 1L);
+
     AuthLocal authLocal = AuthLocal.builder()
-        .email("test@test.com").passwordHash("encodedPassword").auth(auth).build();
-    User user = User.builder().nickname("nickname").build();
+        .email("test@test.com")
+        .passwordHash("encodedPassword")
+        .auth(auth)
+        .build();
+
+    User user = User.builder().nickname("침착맨").build();
 
     given(authLocalRepo.findByEmail(anyString())).willReturn(Optional.of(authLocal));
     given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
     given(userRepo.findByAuth(any(Auth.class))).willReturn(Optional.of(user));
+
     given(jwtTokenProvider.createAccessToken(anyString(), any(Long.class), anyString()))
         .willReturn("mockAccessToken");
     given(jwtTokenProvider.createRefreshToken(anyString())).willReturn("mockRefreshToken");
     given(jwtTokenProvider.getRefreshTokenValidTime()).willReturn(1209600000L);
+    given(jwtTokenProvider.getAccessTokenValidTime()).willReturn(1800000L);
 
     //when
     TokenDto response = authService.login(request, httpRequest);
 
     //then
+    assertThat(response).isNotNull();
     assertThat(response.accessToken()).isEqualTo("mockAccessToken");
+    assertThat(response.profileName()).isEqualTo("침착맨");
 
     // Redis 검증
     verify(redisService).setValues(

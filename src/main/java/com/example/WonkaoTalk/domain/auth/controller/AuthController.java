@@ -5,15 +5,12 @@ import com.example.WonkaoTalk.domain.auth.dto.EmailCheckRequest;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckResponse;
 import com.example.WonkaoTalk.domain.auth.dto.LoginRequest;
 import com.example.WonkaoTalk.domain.auth.dto.LoginResponse;
-import com.example.WonkaoTalk.domain.auth.dto.SignUpRequest;
-import com.example.WonkaoTalk.domain.auth.dto.SignUpResponse;
 import com.example.WonkaoTalk.domain.auth.dto.TokenDto;
 import com.example.WonkaoTalk.domain.auth.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -39,16 +36,6 @@ public class AuthController {
         data.isValid() ? "사용 기능한 이메일입니다." : "이미 사용 중인 이메일입니다.";
 
     return ResponseEntity.ok(ApiResponse.success(message, data));
-  }
-
-  @PostMapping("/signup")
-  public ResponseEntity<ApiResponse<SignUpResponse>> signUp(
-      @Valid @RequestBody SignUpRequest request
-  ) {
-    SignUpResponse data = authService.signUp(request);
-
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(ApiResponse.success("회원가입이 완료되었습니다.", data));
   }
 
   @PostMapping("/login")
