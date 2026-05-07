@@ -65,12 +65,13 @@ public class AuthService {
         .auth(savedAuth)
         .email(email)
         .passwordHash(encodedPassword)
+        .failedAttemptsCount(0)
         .build();
     authLocalRepo.save(authLocal);
 
     return savedAuth;
   }
-  
+
   @Transactional
   public TokenDto login(LoginRequest request, HttpServletRequest httpRequest) {
     // TODO: 로그인 실패 횟수에 따른 계정 잠금이나 추가인증 기능 구현
