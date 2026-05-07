@@ -27,6 +27,10 @@ public class SellerService {
 
   @Transactional
   public SellerSignUpResponse signUpAsSeller(SellerSignUpRequest request) {
+    if (!request.password().equals(request.passwordCheck())) {
+      throw new BusinessException(ErrorCode.AUTH_MISMATCH_PASSWORD);
+    }
+    
     if (sellerRepo.existsByBuzNo(request.buzNo())) {
       throw new BusinessException(ErrorCode.SELLER_DUPLICATE_BUZNO);
     }
