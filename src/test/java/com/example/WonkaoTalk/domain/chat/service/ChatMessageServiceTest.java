@@ -58,7 +58,7 @@ class ChatMessageServiceTest {
     when(chatParticipantRepository.findByChatRoomIdAndUserId(chatRoomId, userId))
         .thenReturn(Optional.of(participant));
 
-    when(chatMessageRepository.save(any(ChatMessage.class))).thenAnswer(invocation -> {
+    when(chatMessageRepository.saveAndFlush(any(ChatMessage.class))).thenAnswer(invocation -> {
       ChatMessage message = invocation.getArgument(0);
       ReflectionTestUtils.setField(message, "id", 100L);
       return message;
@@ -73,7 +73,7 @@ class ChatMessageServiceTest {
     assertThat(room.getLastMessageContent()).isEqualTo("테스트");
     assertThat(participant.getLastReadMessage()).isNotNull();
 
-    verify(chatMessageRepository, times(1)).save(any(ChatMessage.class));
+    verify(chatMessageRepository, times(1)).saveAndFlush(any(ChatMessage.class));
   }
 
   @Test
