@@ -28,6 +28,7 @@ public enum ErrorCode {
   USER_NOT_FOUND(404, "USER-NOT-FOUND-ID", "해당 사용자 ID를 찾을 수 없습니다."),
 
   // 판매자 도메인
+  SELLER_NOT_FOUND(404, "SELLER-NOT-FOUND", "해당 판매자 ID를 찾을 수 없습니다."),
   SELLER_REGISTERED_ACCOUNT(400, "SELLER-REGISTERED-ACCOUNT", "이미 사업자 등록된 계정입니다."),
   SELLER_DUPLICATE_BUZNO(409, "SELLER-DUPLICATE-BUZNO", "이미 등록된 사업자 번호입니다."),
   // 상품 도메인
