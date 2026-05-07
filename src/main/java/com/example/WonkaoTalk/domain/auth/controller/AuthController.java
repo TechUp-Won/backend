@@ -70,7 +70,7 @@ public class AuthController {
         dto.accessToken(),
         dto.accessExpirationTime(),
         dto.auth(),
-        dto.user()
+        dto.profileName()
     );
 
     return ResponseEntity.ok()

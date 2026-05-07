@@ -28,7 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
-class AuthSignInServiceTest {
+class AuthSignUpServiceTest {
 
   @InjectMocks
   private AuthService authService;

@@ -71,7 +71,7 @@ class AuthLoginServiceTest {
     ReflectionTestUtils.setField(auth, "id", 1L);
     AuthLocal authLocal = AuthLocal.builder()
         .email("test@test.com").passwordHash("encodedPassword").auth(auth).build();
-    User user = User.builder().build();
+    User user = User.builder().nickname("nickname").build();
 
     given(authLocalRepo.findByEmail(anyString())).willReturn(Optional.of(authLocal));
     given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);

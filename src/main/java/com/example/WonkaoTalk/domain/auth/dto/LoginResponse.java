@@ -1,7 +1,7 @@
 package com.example.WonkaoTalk.domain.auth.dto;
 
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
-import com.example.WonkaoTalk.domain.user.entity.User;
+import com.example.WonkaoTalk.domain.auth.enums.Role;
 import lombok.Builder;
 
 @Builder
@@ -11,11 +11,11 @@ public record LoginResponse(
 ) {
 
   public static LoginResponse of(
-      String accessToken, Long expiresIn, Auth auth, User user
+      String accessToken, Long expiresIn, Auth auth, String profileName
   ) {
     return LoginResponse.builder()
         .tokenInfo(TokenInfo.of(accessToken, expiresIn))
-        .userInfo(UserInfo.of(auth, user))
+        .userInfo(UserInfo.of(auth, profileName))
         .build();
   }
 
@@ -39,17 +39,15 @@ public record LoginResponse(
   @Builder
   public record UserInfo(
       Long authId,
-      Long userId,
-      String nickname,
-      String image
+      Role role,
+      String profileName
   ) {
 
-    public static UserInfo of(Auth auth, User user) {
+    public static UserInfo of(Auth auth, String profileName) {
       return UserInfo.builder()
           .authId(auth.getId())
-          .userId(user.getId())
-          .nickname(user.getNickname())
-          .image(user.getImage())
+          .role(auth.getRole())
+          .profileName(profileName)
           .build();
     }
   }
