@@ -771,7 +771,7 @@ class CartServiceTest {
   void deleteFromCart_throwsNotFound_whenItemNotFoundOrNotOwned() {
     Cart cart = mockCart(1L, 1L);
     when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
-    when(cartItemRepository.findAllByIdInAndCart_Id(List.of(999L), 1L)).thenReturn(List.of());
+    when(cartItemRepository.countByIdInAndCart_Id(List.of(999L), 1L)).thenReturn(0);
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> cartService.deleteFromCart(1L, List.of(999L), false));
@@ -780,19 +780,15 @@ class CartServiceTest {
   }
 
   @Test
-  @DisplayName("선택 삭제 성공 시 해당 아이템들에 대해 deleteAll이 호출된다")
+  @DisplayName("선택 삭제 성공 시 단일 DELETE 쿼리가 실행된다")
   void deleteFromCart_deletesSelectedItems_successfully() {
     Cart cart = mockCart(1L, 1L);
     when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
-
-    CartItem item1 = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 2);
-    CartItem item2 = mockCartItem(2L, cart, mockVariantWithProduct(2L, 5000, 4000), 1);
-    when(cartItemRepository.findAllByIdInAndCart_Id(List.of(1L, 2L), 1L))
-        .thenReturn(List.of(item1, item2));
+    when(cartItemRepository.countByIdInAndCart_Id(List.of(1L, 2L), 1L)).thenReturn(2);
 
     CartDeleteResponse response = cartService.deleteFromCart(1L, List.of(1L, 2L), false);
 
-    verify(cartItemRepository).deleteAll(List.of(item1, item2));
+    verify(cartItemRepository).deleteAllByIdInAndCart_Id(List.of(1L, 2L), 1L);
     assertThat(response.getCartId()).isEqualTo(1L);
   }
 

@@ -289,12 +289,12 @@ public class CartService {
       throw new BusinessException(ErrorCode.BAD_REQUEST);
     }
 
-    List<CartItem> items = cartItemRepository.findAllByIdInAndCart_Id(cartItemIds, cart.getId());
-    if (items.size() != cartItemIds.size()) {
+    int count = cartItemRepository.countByIdInAndCart_Id(cartItemIds, cart.getId());
+    if (count != cartItemIds.size()) {
       throw new BusinessException(ErrorCode.NOT_FOUND);
     }
 
-    cartItemRepository.deleteAll(items);
+    cartItemRepository.deleteAllByIdInAndCart_Id(cartItemIds, cart.getId());
     return CartDeleteResponse.builder().cartId(cart.getId()).build();
   }
 
