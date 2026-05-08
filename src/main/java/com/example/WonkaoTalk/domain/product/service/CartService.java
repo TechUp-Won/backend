@@ -150,15 +150,8 @@ public class CartService {
 
     Long userId = resolveUser(authId).getId();
 
-    CartItem cartItem = cartItemRepository.findWithVariantAndProductById(cartItemId)
+    CartItem cartItem = cartItemRepository.findWithVariantAndProductByIdAndUserId(cartItemId, userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-
-    Cart cart = cartRepository.findByUser_Id(userId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-
-    if (!cartItem.getCart().getId().equals(cart.getId())) {
-      throw new BusinessException(ErrorCode.FORBIDDEN);
-    }
 
     ProductVariant variant = cartItem.getProductVariant();
     if (variant.getStatus() != SaleStatus.ON_SALE || variant.getDeletedAt() != null) {
@@ -171,7 +164,7 @@ public class CartService {
 
     cartItem.updateQuantity(request.getQuantity());
 
-    List<CartItem> allItems = cartItemRepository.findAllWithVariantAndProductByCartId(cart.getId());
+    List<CartItem> allItems = cartItemRepository.findAllWithVariantAndProductByCartId(cartItem.getCart().getId());
     int originalTotal = calculateOriginalTotal(allItems);
     int discountTotal = calculateDiscountTotal(allItems);
 
@@ -205,15 +198,10 @@ public class CartService {
 
     Long userId = resolveUser(authId).getId();
 
-    CartItem currentItem = cartItemRepository.findWithVariantAndProductById(cartItemId)
+    CartItem currentItem = cartItemRepository.findWithVariantAndProductByIdAndUserId(cartItemId, userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
-    Cart cart = cartRepository.findByUser_Id(userId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-
-    if (!currentItem.getCart().getId().equals(cart.getId())) {
-      throw new BusinessException(ErrorCode.FORBIDDEN);
-    }
+    Long cartId = currentItem.getCart().getId();
 
     ProductVariant targetVariant = productVariantRepository.findById(request.getVariantId())
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
@@ -223,7 +211,7 @@ public class CartService {
     }
 
     Optional<CartItem> duplicateOpt =
-        cartItemRepository.findByCart_IdAndProductVariant_Id(cart.getId(), targetVariant.getId());
+        cartItemRepository.findByCart_IdAndProductVariant_Id(cartId, targetVariant.getId());
 
     CartItem resultItem;
     boolean isMerged;
@@ -247,7 +235,7 @@ public class CartService {
       isMerged = false;
     }
 
-    List<CartItem> allItems = cartItemRepository.findAllWithVariantAndProductByCartId(cart.getId());
+    List<CartItem> allItems = cartItemRepository.findAllWithVariantAndProductByCartId(cartId);
     int originalTotal = calculateOriginalTotal(allItems);
     int discountTotal = calculateDiscountTotal(allItems);
 

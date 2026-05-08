@@ -388,9 +388,9 @@ class CartServiceTest {
   // ── updateCartItemQuantity - 소유권/상태 검증 ────────────────────────────────
 
   @Test
-  @DisplayName("cartItemId에 해당하는 아이템이 없으면 NOT_FOUND를 던진다")
+  @DisplayName("cartItemId에 해당하는 아이템이 없거나 소유자가 다르면 NOT_FOUND를 던진다")
   void updateQuantity_throwsNotFound_whenCartItemNotFound() {
-    when(cartItemRepository.findWithVariantAndProductById(99L)).thenReturn(Optional.empty());
+    when(cartItemRepository.findWithVariantAndProductByIdAndUserId(99L, 1L)).thenReturn(Optional.empty());
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> cartService.updateCartItemQuantity(1L, 99L, mockQuantityUpdateRequest(3)));
@@ -399,32 +399,14 @@ class CartServiceTest {
   }
 
   @Test
-  @DisplayName("사용자의 장바구니가 없으면 NOT_FOUND를 던진다")
-  void updateQuantity_throwsNotFound_whenCartNotFound() {
-    Cart cart = mockCart(1L, 1L);
-    CartItem cartItem = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 2);
-    when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(cartItem));
-    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.empty());
+  @DisplayName("아이템이 다른 사용자의 장바구니에 속하면 NOT_FOUND를 던진다")
+  void updateQuantity_throwsNotFound_whenCartItemNotOwnedByUser() {
+    when(cartItemRepository.findWithVariantAndProductByIdAndUserId(1L, 1L)).thenReturn(Optional.empty());
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> cartService.updateCartItemQuantity(1L, 1L, mockQuantityUpdateRequest(3)));
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
-  }
-
-  @Test
-  @DisplayName("아이템이 다른 사용자의 장바구니에 속하면 FORBIDDEN을 던진다")
-  void updateQuantity_throwsForbidden_whenCartItemNotOwnedByUser() {
-    Cart userCart = mockCart(1L, 1L);
-    Cart otherCart = mockCart(2L, 99L);
-    CartItem cartItem = mockCartItem(1L, otherCart, mockVariantWithProduct(1L, 10000, 8000), 2);
-    when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(cartItem));
-    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(userCart));
-
-    BusinessException ex = assertThrows(BusinessException.class,
-        () -> cartService.updateCartItemQuantity(1L, 1L, mockQuantityUpdateRequest(3)));
-
-    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.FORBIDDEN);
   }
 
   @Test
@@ -434,8 +416,7 @@ class CartServiceTest {
     ProductVariant variant = mockVariantWithProduct(1L, 10000, 8000);
     when(variant.getStatus()).thenReturn(SaleStatus.STOP_SALE);
     CartItem cartItem = mockCartItem(1L, cart, variant, 2);
-    when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(cartItem));
-    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
+    when(cartItemRepository.findWithVariantAndProductByIdAndUserId(1L, 1L)).thenReturn(Optional.of(cartItem));
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> cartService.updateCartItemQuantity(1L, 1L, mockQuantityUpdateRequest(3)));
@@ -450,8 +431,7 @@ class CartServiceTest {
     ProductVariant variant = mockVariantWithProduct(1L, 10000, 8000);
     when(variant.getStock()).thenReturn(3);
     CartItem cartItem = mockCartItem(1L, cart, variant, 2);
-    when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(cartItem));
-    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
+    when(cartItemRepository.findWithVariantAndProductByIdAndUserId(1L, 1L)).thenReturn(Optional.of(cartItem));
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> cartService.updateCartItemQuantity(1L, 1L,
@@ -479,8 +459,7 @@ class CartServiceTest {
     Cart cart = mockCart(1L, 1L);
     ProductVariant variant = mockVariantWithProduct(1L, 10000, 8000);
     CartItem cartItem = mockCartItem(1L, cart, variant, 2);
-    when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(cartItem));
-    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
+    when(cartItemRepository.findWithVariantAndProductByIdAndUserId(1L, 1L)).thenReturn(Optional.of(cartItem));
     when(cartItemRepository.findAllWithVariantAndProductByCartId(1L)).thenReturn(List.of(cartItem));
 
     cartService.updateCartItemQuantity(1L, 1L, mockQuantityUpdateRequest(5));
@@ -494,8 +473,7 @@ class CartServiceTest {
     Cart cart = mockCart(1L, 1L);
     ProductVariant variant = mockVariantWithProduct(1L, 10000, 8000);
     CartItem cartItem = mockCartItem(1L, cart, variant, 3);
-    when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(cartItem));
-    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
+    when(cartItemRepository.findWithVariantAndProductByIdAndUserId(1L, 1L)).thenReturn(Optional.of(cartItem));
     when(cartItemRepository.findAllWithVariantAndProductByCartId(1L)).thenReturn(List.of(cartItem));
 
     CartQuantityUpdateResponse response =
@@ -517,9 +495,9 @@ class CartServiceTest {
   }
 
   @Test
-  @DisplayName("cartItemId에 해당하는 아이템이 없으면 NOT_FOUND를 던진다")
+  @DisplayName("cartItemId에 해당하는 아이템이 없거나 소유자가 다르면 NOT_FOUND를 던진다")
   void updateOption_throwsNotFound_whenCartItemNotFound() {
-    when(cartItemRepository.findWithVariantAndProductById(99L)).thenReturn(Optional.empty());
+    when(cartItemRepository.findWithVariantAndProductByIdAndUserId(99L, 1L)).thenReturn(Optional.empty());
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> cartService.updateCartItemOption(1L, 99L, mockOptionUpdateRequest(2L)));
@@ -528,18 +506,14 @@ class CartServiceTest {
   }
 
   @Test
-  @DisplayName("아이템이 다른 사용자의 장바구니에 속하면 FORBIDDEN을 던진다")
-  void updateOption_throwsForbidden_whenNotOwnedByUser() {
-    Cart userCart = mockCart(1L, 1L);
-    Cart otherCart = mockCart(2L, 99L);
-    CartItem cartItem = mockCartItem(1L, otherCart, mockVariantWithProduct(1L, 10000, 8000), 2);
-    when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(cartItem));
-    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(userCart));
+  @DisplayName("아이템이 다른 사용자의 장바구니에 속하면 NOT_FOUND를 던진다")
+  void updateOption_throwsNotFound_whenNotOwnedByUser() {
+    when(cartItemRepository.findWithVariantAndProductByIdAndUserId(1L, 1L)).thenReturn(Optional.empty());
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> cartService.updateCartItemOption(1L, 1L, mockOptionUpdateRequest(2L)));
 
-    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.FORBIDDEN);
+    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
   }
 
   @Test
@@ -547,8 +521,7 @@ class CartServiceTest {
   void updateOption_throwsNotFound_whenTargetVariantNotFound() {
     Cart cart = mockCart(1L, 1L);
     CartItem cartItem = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 2);
-    when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(cartItem));
-    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
+    when(cartItemRepository.findWithVariantAndProductByIdAndUserId(1L, 1L)).thenReturn(Optional.of(cartItem));
     when(productVariantRepository.findById(99L)).thenReturn(Optional.empty());
 
     BusinessException ex = assertThrows(BusinessException.class,
@@ -562,8 +535,7 @@ class CartServiceTest {
   void updateOption_throwsUnavailable_whenTargetVariantNotOnSale() {
     Cart cart = mockCart(1L, 1L);
     CartItem cartItem = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 2);
-    when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(cartItem));
-    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
+    when(cartItemRepository.findWithVariantAndProductByIdAndUserId(1L, 1L)).thenReturn(Optional.of(cartItem));
 
     ProductVariant targetVariant = mockVariant(2L, mockProductWithId(2L), 10, SaleStatus.STOP_SALE,
         null);
@@ -593,8 +565,7 @@ class CartServiceTest {
   void updateOption_throwsStockInsufficient_whenMergedQuantityExceedsStock() {
     Cart cart = mockCart(1L, 1L);
     CartItem currentItem = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 3);
-    when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(currentItem));
-    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
+    when(cartItemRepository.findWithVariantAndProductByIdAndUserId(1L, 1L)).thenReturn(Optional.of(currentItem));
 
     ProductVariant targetVariant = mockVariant(2L, mockProductWithId(2L), 4, SaleStatus.ON_SALE,
         null);
@@ -615,8 +586,7 @@ class CartServiceTest {
   void updateOption_merges_andDeletesCurrentItem_whenDuplicateExists() {
     Cart cart = mockCart(1L, 1L);
     CartItem currentItem = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 2);
-    when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(currentItem));
-    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
+    when(cartItemRepository.findWithVariantAndProductByIdAndUserId(1L, 1L)).thenReturn(Optional.of(currentItem));
 
     ProductVariant targetVariant = mockVariant(2L, mockProductWithId(2L), 10, SaleStatus.ON_SALE,
         null);
@@ -646,8 +616,7 @@ class CartServiceTest {
     ProductVariant sameVariant = mockVariant(1L, mockProductWithId(1L), 10, SaleStatus.ON_SALE,
         null);
     CartItem currentItem = mockCartItem(1L, cart, sameVariant, 2);
-    when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(currentItem));
-    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
+    when(cartItemRepository.findWithVariantAndProductByIdAndUserId(1L, 1L)).thenReturn(Optional.of(currentItem));
     when(productVariantRepository.findById(1L)).thenReturn(Optional.of(sameVariant));
     when(cartItemRepository.findByCart_IdAndProductVariant_Id(1L, 1L))
         .thenReturn(Optional.of(currentItem)); // 자기 자신을 반환
@@ -668,8 +637,7 @@ class CartServiceTest {
   void updateOption_updatesVariant_whenNoDuplicateExists() {
     Cart cart = mockCart(1L, 1L);
     CartItem currentItem = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 2);
-    when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(currentItem));
-    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
+    when(cartItemRepository.findWithVariantAndProductByIdAndUserId(1L, 1L)).thenReturn(Optional.of(currentItem));
 
     ProductVariant targetVariant = mockVariant(2L, mockProductWithId(2L), 10, SaleStatus.ON_SALE,
         null);
@@ -691,8 +659,7 @@ class CartServiceTest {
   void updateOption_throwsStockInsufficient_whenCurrentQuantityExceedsStock() {
     Cart cart = mockCart(1L, 1L);
     CartItem currentItem = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 5);
-    when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(currentItem));
-    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
+    when(cartItemRepository.findWithVariantAndProductByIdAndUserId(1L, 1L)).thenReturn(Optional.of(currentItem));
 
     ProductVariant targetVariant = mockVariant(2L, mockProductWithId(2L), 3, SaleStatus.ON_SALE,
         null); // stock=3

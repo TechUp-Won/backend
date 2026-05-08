@@ -253,8 +253,8 @@ class CartServiceIntegrationTest {
   }
 
   @Test
-  @DisplayName("타인의 CartItem 수량 수정 시 FORBIDDEN을 던진다")
-  void updateCartItemQuantity_throwsForbidden_whenNotOwned() {
+  @DisplayName("타인의 CartItem 수량 수정 시 NOT_FOUND를 던진다")
+  void updateCartItemQuantity_throwsNotFound_whenNotOwned() {
     Cart otherCart = saveCart(otherUser);
     CartItem otherItem = saveCartItem(otherCart, variantA1, 2);
     saveCart(testUser);
@@ -264,7 +264,7 @@ class CartServiceIntegrationTest {
     BusinessException ex = assertThrows(BusinessException.class,
         () -> cartService.updateCartItemQuantity(testAuthId, otherItem.getId(), quantityUpdateRequest(3)));
 
-    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.FORBIDDEN);
+    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
   }
 
   // ── updateCartItemOption ────────────────────────────────────────────────────
