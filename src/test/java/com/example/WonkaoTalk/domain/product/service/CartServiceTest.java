@@ -64,7 +64,9 @@ class CartServiceTest {
 
   @BeforeEach
   void setUp() {
-    when(userRepo.findById(anyLong())).thenReturn(Optional.of(mock(User.class)));
+    User mockUser = mock(User.class);
+    when(mockUser.getId()).thenReturn(1L);
+    when(userRepo.findByAuth_Id(anyLong())).thenReturn(Optional.of(mockUser));
   }
 
   // ── getCart ──────────────────────────────────────────────────────────────────
@@ -112,6 +114,17 @@ class CartServiceTest {
     CartResponse response = cartService.getCart(1L);
 
     assertThat(response.getSummary().getDiscountTotalAmount()).isEqualTo(28000); // 8000*2 + 4000*3
+  }
+
+  @Test
+  @DisplayName("authId에 해당하는 User가 없으면 NOT_FOUND를 던진다")
+  void getCart_throwsNotFound_whenUserNotFound() {
+    when(userRepo.findByAuth_Id(anyLong())).thenReturn(Optional.empty());
+
+    BusinessException ex = assertThrows(BusinessException.class,
+        () -> cartService.getCart(1L));
+
+    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
   }
 
   // ── addToCart - 입력 검증 ─────────────────────────────────────────────────────
@@ -240,6 +253,21 @@ class CartServiceTest {
         () -> cartService.addToCart(1L, mockAddRequest(1L, 1L, 5))); // 5 > stock 3
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_STOCK_INSUFFICIENT);
+  }
+
+  @Test
+  @DisplayName("authId에 해당하는 User가 없으면 NOT_FOUND를 던진다")
+  void addToCart_throwsNotFound_whenUserNotFound() {
+    Product product = mockProductWithId(1L);
+    when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+    ProductVariant variant = mockVariant(1L, product, 10, SaleStatus.ON_SALE, null);
+    when(productVariantRepository.findById(1L)).thenReturn(Optional.of(variant));
+    when(userRepo.findByAuth_Id(anyLong())).thenReturn(Optional.empty());
+
+    BusinessException ex = assertThrows(BusinessException.class,
+        () -> cartService.addToCart(1L, mockAddRequest(1L, 1L, 2)));
+
+    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
   }
 
   // ── addToCart - Upsert ───────────────────────────────────────────────────────
@@ -432,6 +460,17 @@ class CartServiceTest {
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_STOCK_INSUFFICIENT);
   }
 
+  @Test
+  @DisplayName("authId에 해당하는 User가 없으면 NOT_FOUND를 던진다")
+  void updateQuantity_throwsNotFound_whenUserNotFound() {
+    when(userRepo.findByAuth_Id(anyLong())).thenReturn(Optional.empty());
+
+    BusinessException ex = assertThrows(BusinessException.class,
+        () -> cartService.updateCartItemQuantity(1L, 1L, mockQuantityUpdateRequest(3)));
+
+    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
+  }
+
   // ── updateCartItemQuantity - 성공 ────────────────────────────────────────────
 
   @Test
@@ -534,6 +573,17 @@ class CartServiceTest {
         () -> cartService.updateCartItemOption(1L, 1L, mockOptionUpdateRequest(2L)));
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_VARIANT_UNAVAILABLE);
+  }
+
+  @Test
+  @DisplayName("authId에 해당하는 User가 없으면 NOT_FOUND를 던진다")
+  void updateOption_throwsNotFound_whenUserNotFound() {
+    when(userRepo.findByAuth_Id(anyLong())).thenReturn(Optional.empty());
+
+    BusinessException ex = assertThrows(BusinessException.class,
+        () -> cartService.updateCartItemOption(1L, 1L, mockOptionUpdateRequest(2L)));
+
+    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
   }
 
   // ── updateCartItemOption - Merge ─────────────────────────────────────────────
@@ -657,6 +707,17 @@ class CartServiceTest {
   }
 
   // ── deleteFromCart ───────────────────────────────────────────────────────────
+
+  @Test
+  @DisplayName("authId에 해당하는 User가 없으면 NOT_FOUND를 던진다")
+  void deleteFromCart_throwsNotFound_whenUserNotFound() {
+    when(userRepo.findByAuth_Id(anyLong())).thenReturn(Optional.empty());
+
+    BusinessException ex = assertThrows(BusinessException.class,
+        () -> cartService.deleteFromCart(1L, null, true));
+
+    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
+  }
 
   @Test
   @DisplayName("장바구니가 없으면 NOT_FOUND를 던진다")

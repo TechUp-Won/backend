@@ -56,12 +56,18 @@ class CartServiceIntegrationTest {
   private User testUser;
   private User otherUser;
   private User newUser;
+  private Long testAuthId;
+  private Long otherAuthId;
+  private Long newAuthId;
 
   @BeforeEach
   void setUp() {
     testUser = saveUser("테스트유저");
+    testAuthId = testUser.getAuth().getId();
     otherUser = saveUser("다른유저");
+    otherAuthId = otherUser.getAuth().getId();
     newUser = saveUser("새유저");
+    newAuthId = newUser.getAuth().getId();
     category = saveCategory();
     productA = saveProduct(category, "상품A", 10000, 8000);
     productB = saveProduct(category, "상품B", 5000, 4000);
@@ -77,12 +83,21 @@ class CartServiceIntegrationTest {
   @Test
   @DisplayName("장바구니가 없으면 빈 응답을 반환한다")
   void getCart_returnsEmpty_whenNoCartExists() {
-    CartResponse response = cartService.getCart(999L);
+    CartResponse response = cartService.getCart(newAuthId);
 
     assertThat(response.getCartId()).isNull();
     assertThat(response.getCartItems()).isEmpty();
     assertThat(response.getSummary().getOriginalTotalAmount()).isEqualTo(0);
     assertThat(response.getSummary().getDiscountTotalAmount()).isEqualTo(0);
+  }
+
+  @Test
+  @DisplayName("존재하지 않는 authId로 요청 시 NOT_FOUND를 던진다")
+  void getCart_throwsNotFound_whenUserNotFound() {
+    BusinessException ex = assertThrows(BusinessException.class,
+        () -> cartService.getCart(999L));
+
+    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
   }
 
   @Test
@@ -94,7 +109,7 @@ class CartServiceIntegrationTest {
     em.flush();
     em.clear();
 
-    CartResponse response = cartService.getCart(testUser.getId());
+    CartResponse response = cartService.getCart(testAuthId);
 
     assertThat(response.getCartId()).isEqualTo(cart.getId());
     assertThat(response.getCartItems()).hasSize(2);
@@ -110,7 +125,7 @@ class CartServiceIntegrationTest {
     em.flush();
     em.clear();
 
-    CartResponse response = cartService.getCart(testUser.getId());
+    CartResponse response = cartService.getCart(testAuthId);
 
     CartResponse.CartItemInfo item = response.getCartItems().get(0);
     assertThat(item.getVariantName()).isEqualTo("옵션A-1");
@@ -125,14 +140,14 @@ class CartServiceIntegrationTest {
   @Test
   @DisplayName("장바구니가 없을 때 addToCart 호출 시 Cart가 자동 생성된다")
   void addToCart_createsCart_whenCartNotExists() {
-    CartAddResponse response = cartService.addToCart(newUser.getId(), addRequest(productA.getId(), variantA1.getId(), 2));
+    CartAddResponse response = cartService.addToCart(newAuthId, addRequest(productA.getId(), variantA1.getId(), 2));
 
     assertThat(response.getCartItemId()).isNotNull();
 
     em.flush();
     em.clear();
 
-    CartResponse cart = cartService.getCart(newUser.getId());
+    CartResponse cart = cartService.getCart(newAuthId);
     assertThat(cart.getCartId()).isNotNull();
     assertThat(cart.getCartItems()).hasSize(1);
     assertThat(cart.getCartItems().get(0).getQuantity()).isEqualTo(2);
@@ -146,12 +161,12 @@ class CartServiceIntegrationTest {
     em.flush();
     em.clear();
 
-    cartService.addToCart(testUser.getId(), addRequest(productA.getId(), variantA1.getId(), 2));
+    cartService.addToCart(testAuthId, addRequest(productA.getId(), variantA1.getId(), 2));
 
     em.flush();
     em.clear();
 
-    CartResponse response = cartService.getCart(testUser.getId());
+    CartResponse response = cartService.getCart(testAuthId);
     assertThat(response.getCartItems()).hasSize(1);
     assertThat(response.getCartItems().get(0).getQuantity()).isEqualTo(5); // 3 + 2
   }
@@ -164,12 +179,12 @@ class CartServiceIntegrationTest {
     em.flush();
     em.clear();
 
-    cartService.addToCart(testUser.getId(), addRequest(productA.getId(), variantA2.getId(), 1));
+    cartService.addToCart(testAuthId, addRequest(productA.getId(), variantA2.getId(), 1));
 
     em.flush();
     em.clear();
 
-    CartResponse response = cartService.getCart(testUser.getId());
+    CartResponse response = cartService.getCart(testAuthId);
     assertThat(response.getCartItems()).hasSize(2);
   }
 
@@ -181,7 +196,7 @@ class CartServiceIntegrationTest {
     em.clear();
 
     BusinessException ex = assertThrows(BusinessException.class,
-        () -> cartService.addToCart(testUser.getId(), addRequest(productA.getId(), stopped.getId(), 1)));
+        () -> cartService.addToCart(testAuthId, addRequest(productA.getId(), stopped.getId(), 1)));
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_VARIANT_UNAVAILABLE);
   }
@@ -195,7 +210,7 @@ class CartServiceIntegrationTest {
     em.clear();
 
     BusinessException ex = assertThrows(BusinessException.class,
-        () -> cartService.addToCart(testUser.getId(), addRequest(productA.getId(), variantA2.getId(), 2))); // 4+2=6 > 5
+        () -> cartService.addToCart(testAuthId, addRequest(productA.getId(), variantA2.getId(), 2))); // 4+2=6 > 5
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_STOCK_INSUFFICIENT);
   }
@@ -210,12 +225,12 @@ class CartServiceIntegrationTest {
     em.flush();
     em.clear();
 
-    cartService.updateCartItemQuantity(testUser.getId(), item.getId(), quantityUpdateRequest(5));
+    cartService.updateCartItemQuantity(testAuthId, item.getId(), quantityUpdateRequest(5));
 
     em.flush();
     em.clear();
 
-    CartResponse response = cartService.getCart(testUser.getId());
+    CartResponse response = cartService.getCart(testAuthId);
     assertThat(response.getCartItems().get(0).getQuantity()).isEqualTo(5);
   }
 
@@ -229,7 +244,7 @@ class CartServiceIntegrationTest {
     em.clear();
 
     CartQuantityUpdateResponse response =
-        cartService.updateCartItemQuantity(testUser.getId(), item.getId(), quantityUpdateRequest(4));
+        cartService.updateCartItemQuantity(testAuthId, item.getId(), quantityUpdateRequest(4));
 
     // variantA1: 10000*4, variantB1: 5000*1
     assertThat(response.getOriginalTotalAmount()).isEqualTo(45000);
@@ -247,7 +262,7 @@ class CartServiceIntegrationTest {
     em.clear();
 
     BusinessException ex = assertThrows(BusinessException.class,
-        () -> cartService.updateCartItemQuantity(testUser.getId(), otherItem.getId(), quantityUpdateRequest(3)));
+        () -> cartService.updateCartItemQuantity(testAuthId, otherItem.getId(), quantityUpdateRequest(3)));
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.FORBIDDEN);
   }
@@ -263,7 +278,7 @@ class CartServiceIntegrationTest {
     em.clear();
 
     CartOptionUpdateResponse response =
-        cartService.updateCartItemOption(testUser.getId(), item.getId(), optionUpdateRequest(variantA2.getId()));
+        cartService.updateCartItemOption(testAuthId, item.getId(), optionUpdateRequest(variantA2.getId()));
 
     assertThat(response.isMerged()).isFalse();
     assertThat(response.getCartItem().getVariantId()).isEqualTo(variantA2.getId());
@@ -271,7 +286,7 @@ class CartServiceIntegrationTest {
     em.flush();
     em.clear();
 
-    CartResponse cartResponse = cartService.getCart(testUser.getId());
+    CartResponse cartResponse = cartService.getCart(testAuthId);
     assertThat(cartResponse.getCartItems()).hasSize(1);
     assertThat(cartResponse.getCartItems().get(0).getVariantId()).isEqualTo(variantA2.getId());
   }
@@ -286,7 +301,7 @@ class CartServiceIntegrationTest {
     em.clear();
 
     CartOptionUpdateResponse response =
-        cartService.updateCartItemOption(testUser.getId(), itemA1.getId(), optionUpdateRequest(variantA2.getId()));
+        cartService.updateCartItemOption(testAuthId, itemA1.getId(), optionUpdateRequest(variantA2.getId()));
 
     assertThat(response.isMerged()).isTrue();
     assertThat(response.getCartItem().getVariantId()).isEqualTo(variantA2.getId());
@@ -295,7 +310,7 @@ class CartServiceIntegrationTest {
     em.flush();
     em.clear();
 
-    CartResponse cartResponse = cartService.getCart(testUser.getId());
+    CartResponse cartResponse = cartService.getCart(testAuthId);
     assertThat(cartResponse.getCartItems()).hasSize(1);
     assertThat(cartResponse.getCartItems().get(0).getQuantity()).isEqualTo(3);
   }
@@ -310,7 +325,7 @@ class CartServiceIntegrationTest {
     em.clear();
 
     BusinessException ex = assertThrows(BusinessException.class,
-        () -> cartService.updateCartItemOption(testUser.getId(), itemA1.getId(), optionUpdateRequest(variantA2.getId())));
+        () -> cartService.updateCartItemOption(testAuthId, itemA1.getId(), optionUpdateRequest(variantA2.getId())));
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_STOCK_INSUFFICIENT);
   }
@@ -326,14 +341,14 @@ class CartServiceIntegrationTest {
     em.flush();
     em.clear();
 
-    CartDeleteResponse response = cartService.deleteFromCart(testUser.getId(), null, true);
+    CartDeleteResponse response = cartService.deleteFromCart(testAuthId, null, true);
 
     assertThat(response.getCartId()).isEqualTo(cart.getId());
 
     em.flush();
     em.clear();
 
-    CartResponse cartResponse = cartService.getCart(testUser.getId());
+    CartResponse cartResponse = cartService.getCart(testAuthId);
     assertThat(cartResponse.getCartItems()).isEmpty();
   }
 
@@ -346,12 +361,12 @@ class CartServiceIntegrationTest {
     em.flush();
     em.clear();
 
-    cartService.deleteFromCart(testUser.getId(), List.of(item1.getId()), false);
+    cartService.deleteFromCart(testAuthId, List.of(item1.getId()), false);
 
     em.flush();
     em.clear();
 
-    CartResponse cartResponse = cartService.getCart(testUser.getId());
+    CartResponse cartResponse = cartService.getCart(testAuthId);
     assertThat(cartResponse.getCartItems()).hasSize(1);
     assertThat(cartResponse.getCartItems().get(0).getCartItemId()).isEqualTo(item2.getId());
   }
@@ -366,7 +381,7 @@ class CartServiceIntegrationTest {
     em.clear();
 
     BusinessException ex = assertThrows(BusinessException.class,
-        () -> cartService.deleteFromCart(testUser.getId(), List.of(otherItem.getId()), false));
+        () -> cartService.deleteFromCart(testAuthId, List.of(otherItem.getId()), false));
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
   }
@@ -379,7 +394,7 @@ class CartServiceIntegrationTest {
     em.clear();
 
     BusinessException ex = assertThrows(BusinessException.class,
-        () -> cartService.deleteFromCart(testUser.getId(), List.of(99999L), false));
+        () -> cartService.deleteFromCart(testAuthId, List.of(99999L), false));
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
   }
