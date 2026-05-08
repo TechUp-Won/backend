@@ -21,6 +21,8 @@ import com.example.WonkaoTalk.domain.product.repo.CartItemRepository;
 import com.example.WonkaoTalk.domain.product.repo.CartRepository;
 import com.example.WonkaoTalk.domain.product.repo.ProductRepository;
 import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepository;
+import com.example.WonkaoTalk.domain.user.entity.User;
+import com.example.WonkaoTalk.domain.user.repo.UserRepo;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -37,9 +39,10 @@ public class CartService {
   private final CartItemRepository cartItemRepository;
   private final ProductRepository productRepository;
   private final ProductVariantRepository productVariantRepository;
+  private final UserRepo userRepo;
 
   public CartResponse getCart(Long userId) {
-    Optional<Cart> cartOpt = cartRepository.findByUserId(userId);
+    Optional<Cart> cartOpt = cartRepository.findByUser_Id(userId);
 
     if (cartOpt.isEmpty()) {
       return CartResponse.builder()
@@ -94,13 +97,16 @@ public class CartService {
       throw new BusinessException(ErrorCode.PROD_VARIANT_UNAVAILABLE);
     }
 
+    User user = userRepo.findById(userId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
     Cart cart;
     Optional<Cart> cartOpt = cartRepository.findByUserIdWithLock(userId);
     if (cartOpt.isPresent()) {
       cart = cartOpt.get();
     } else {
       try {
-        cart = cartRepository.save(Cart.builder().userId(userId).build());
+        cart = cartRepository.save(Cart.builder().user(user).build());
       } catch (DataIntegrityViolationException e) {
         cart = cartRepository.findByUserIdWithLock(userId)
             .orElseThrow(() -> new BusinessException(ErrorCode.SERVER_ERROR));
@@ -144,7 +150,7 @@ public class CartService {
     CartItem cartItem = cartItemRepository.findWithVariantAndProductById(cartItemId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
-    Cart cart = cartRepository.findByUserId(userId)
+    Cart cart = cartRepository.findByUser_Id(userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
     if (!cartItem.getCart().getId().equals(cart.getId())) {
@@ -197,7 +203,7 @@ public class CartService {
     CartItem currentItem = cartItemRepository.findWithVariantAndProductById(cartItemId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
-    Cart cart = cartRepository.findByUserId(userId)
+    Cart cart = cartRepository.findByUser_Id(userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
     if (!currentItem.getCart().getId().equals(cart.getId())) {
@@ -265,7 +271,7 @@ public class CartService {
   @Transactional
   public CartDeleteResponse deleteFromCart(Long userId, List<Long> cartItemIds,
       boolean isAllDelete) {
-    Cart cart = cartRepository.findByUserId(userId)
+    Cart cart = cartRepository.findByUser_Id(userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
     if (isAllDelete) {

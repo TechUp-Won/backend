@@ -3,6 +3,7 @@ package com.example.WonkaoTalk.domain.product.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -27,9 +28,12 @@ import com.example.WonkaoTalk.domain.product.repo.CartItemRepository;
 import com.example.WonkaoTalk.domain.product.repo.CartRepository;
 import com.example.WonkaoTalk.domain.product.repo.ProductRepository;
 import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepository;
+import com.example.WonkaoTalk.domain.user.entity.User;
+import com.example.WonkaoTalk.domain.user.repo.UserRepo;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,16 +56,23 @@ class CartServiceTest {
   private ProductRepository productRepository;
   @Mock
   private ProductVariantRepository productVariantRepository;
+  @Mock
+  private UserRepo userRepo;
 
   @InjectMocks
   private CartService cartService;
+
+  @BeforeEach
+  void setUp() {
+    when(userRepo.findById(anyLong())).thenReturn(Optional.of(mock(User.class)));
+  }
 
   // ── getCart ──────────────────────────────────────────────────────────────────
 
   @Test
   @DisplayName("장바구니가 없으면 cartId=null, cartItems=[], 합계=0을 반환한다")
   void getCart_returnsEmpty_whenCartNotFound() {
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.empty());
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.empty());
 
     CartResponse response = cartService.getCart(1L);
 
@@ -75,7 +86,7 @@ class CartServiceTest {
   @DisplayName("originalTotalAmount는 price * quantity의 합산이다")
   void getCart_calculatesOriginalTotalAmount_correctly() {
     Cart cart = mockCart(1L, 1L);
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
 
     CartItem item1 = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 2);
     CartItem item2 = mockCartItem(2L, cart, mockVariantWithProduct(2L, 5000, 4000), 3);
@@ -91,7 +102,7 @@ class CartServiceTest {
   @DisplayName("discountTotalAmount는 discountedPrice * quantity의 합산이다")
   void getCart_calculatesDiscountTotalAmount_correctly() {
     Cart cart = mockCart(1L, 1L);
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
 
     CartItem item1 = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 2);
     CartItem item2 = mockCartItem(2L, cart, mockVariantWithProduct(2L, 5000, 4000), 3);
@@ -242,7 +253,7 @@ class CartServiceTest {
     ProductVariant variant = mockVariant(1L, product, 10, SaleStatus.ON_SALE, null);
     when(productVariantRepository.findById(1L)).thenReturn(Optional.of(variant));
 
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.empty());
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.empty());
     Cart newCart = mockCart(1L, 1L);
     when(cartRepository.save(any(Cart.class))).thenReturn(newCart);
     when(cartItemRepository.findByCart_IdAndProductVariant_Id(1L, 1L)).thenReturn(Optional.empty());
@@ -365,7 +376,7 @@ class CartServiceTest {
     Cart cart = mockCart(1L, 1L);
     CartItem cartItem = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 2);
     when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(cartItem));
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.empty());
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.empty());
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> cartService.updateCartItemQuantity(1L, 1L, mockQuantityUpdateRequest(3)));
@@ -380,7 +391,7 @@ class CartServiceTest {
     Cart otherCart = mockCart(2L, 99L);
     CartItem cartItem = mockCartItem(1L, otherCart, mockVariantWithProduct(1L, 10000, 8000), 2);
     when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(cartItem));
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(userCart));
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(userCart));
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> cartService.updateCartItemQuantity(1L, 1L, mockQuantityUpdateRequest(3)));
@@ -396,7 +407,7 @@ class CartServiceTest {
     when(variant.getStatus()).thenReturn(SaleStatus.STOP_SALE);
     CartItem cartItem = mockCartItem(1L, cart, variant, 2);
     when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(cartItem));
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> cartService.updateCartItemQuantity(1L, 1L, mockQuantityUpdateRequest(3)));
@@ -412,7 +423,7 @@ class CartServiceTest {
     when(variant.getStock()).thenReturn(3);
     CartItem cartItem = mockCartItem(1L, cart, variant, 2);
     when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(cartItem));
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> cartService.updateCartItemQuantity(1L, 1L,
@@ -430,7 +441,7 @@ class CartServiceTest {
     ProductVariant variant = mockVariantWithProduct(1L, 10000, 8000);
     CartItem cartItem = mockCartItem(1L, cart, variant, 2);
     when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(cartItem));
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
     when(cartItemRepository.findAllWithVariantAndProductByCartId(1L)).thenReturn(List.of(cartItem));
 
     cartService.updateCartItemQuantity(1L, 1L, mockQuantityUpdateRequest(5));
@@ -445,7 +456,7 @@ class CartServiceTest {
     ProductVariant variant = mockVariantWithProduct(1L, 10000, 8000);
     CartItem cartItem = mockCartItem(1L, cart, variant, 3);
     when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(cartItem));
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
     when(cartItemRepository.findAllWithVariantAndProductByCartId(1L)).thenReturn(List.of(cartItem));
 
     CartQuantityUpdateResponse response =
@@ -484,7 +495,7 @@ class CartServiceTest {
     Cart otherCart = mockCart(2L, 99L);
     CartItem cartItem = mockCartItem(1L, otherCart, mockVariantWithProduct(1L, 10000, 8000), 2);
     when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(cartItem));
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(userCart));
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(userCart));
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> cartService.updateCartItemOption(1L, 1L, mockOptionUpdateRequest(2L)));
@@ -498,7 +509,7 @@ class CartServiceTest {
     Cart cart = mockCart(1L, 1L);
     CartItem cartItem = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 2);
     when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(cartItem));
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
     when(productVariantRepository.findById(99L)).thenReturn(Optional.empty());
 
     BusinessException ex = assertThrows(BusinessException.class,
@@ -513,7 +524,7 @@ class CartServiceTest {
     Cart cart = mockCart(1L, 1L);
     CartItem cartItem = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 2);
     when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(cartItem));
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
 
     ProductVariant targetVariant = mockVariant(2L, mockProductWithId(2L), 10, SaleStatus.STOP_SALE,
         null);
@@ -533,7 +544,7 @@ class CartServiceTest {
     Cart cart = mockCart(1L, 1L);
     CartItem currentItem = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 3);
     when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(currentItem));
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
 
     ProductVariant targetVariant = mockVariant(2L, mockProductWithId(2L), 4, SaleStatus.ON_SALE,
         null);
@@ -555,7 +566,7 @@ class CartServiceTest {
     Cart cart = mockCart(1L, 1L);
     CartItem currentItem = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 2);
     when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(currentItem));
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
 
     ProductVariant targetVariant = mockVariant(2L, mockProductWithId(2L), 10, SaleStatus.ON_SALE,
         null);
@@ -586,7 +597,7 @@ class CartServiceTest {
         null);
     CartItem currentItem = mockCartItem(1L, cart, sameVariant, 2);
     when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(currentItem));
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
     when(productVariantRepository.findById(1L)).thenReturn(Optional.of(sameVariant));
     when(cartItemRepository.findByCart_IdAndProductVariant_Id(1L, 1L))
         .thenReturn(Optional.of(currentItem)); // 자기 자신을 반환
@@ -608,7 +619,7 @@ class CartServiceTest {
     Cart cart = mockCart(1L, 1L);
     CartItem currentItem = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 2);
     when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(currentItem));
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
 
     ProductVariant targetVariant = mockVariant(2L, mockProductWithId(2L), 10, SaleStatus.ON_SALE,
         null);
@@ -631,7 +642,7 @@ class CartServiceTest {
     Cart cart = mockCart(1L, 1L);
     CartItem currentItem = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 5);
     when(cartItemRepository.findWithVariantAndProductById(1L)).thenReturn(Optional.of(currentItem));
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
 
     ProductVariant targetVariant = mockVariant(2L, mockProductWithId(2L), 3, SaleStatus.ON_SALE,
         null); // stock=3
@@ -650,7 +661,7 @@ class CartServiceTest {
   @Test
   @DisplayName("장바구니가 없으면 NOT_FOUND를 던진다")
   void deleteFromCart_throwsNotFound_whenCartNotFound() {
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.empty());
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.empty());
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> cartService.deleteFromCart(1L, null, true));
@@ -662,7 +673,7 @@ class CartServiceTest {
   @DisplayName("isAllDelete=true이면 deleteByCart_Id가 호출되고 cartId를 반환한다")
   void deleteFromCart_deletesAll_whenIsAllDeleteIsTrue() {
     Cart cart = mockCart(1L, 1L);
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
 
     CartDeleteResponse response = cartService.deleteFromCart(1L, null, true);
 
@@ -674,7 +685,7 @@ class CartServiceTest {
   @DisplayName("isAllDelete=false이고 cartItemIds가 null이면 BAD_REQUEST를 던진다")
   void deleteFromCart_throwsBadRequest_whenCartItemIdsIsNull() {
     Cart cart = mockCart(1L, 1L);
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> cartService.deleteFromCart(1L, null, false));
@@ -686,7 +697,7 @@ class CartServiceTest {
   @DisplayName("isAllDelete=false이고 cartItemIds가 비어 있으면 BAD_REQUEST를 던진다")
   void deleteFromCart_throwsBadRequest_whenCartItemIdsIsEmpty() {
     Cart cart = mockCart(1L, 1L);
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> cartService.deleteFromCart(1L, List.of(), false));
@@ -698,7 +709,7 @@ class CartServiceTest {
   @DisplayName("요청한 아이템이 존재하지 않거나 타인의 장바구니에 속하면 NOT_FOUND를 던진다")
   void deleteFromCart_throwsNotFound_whenItemNotFoundOrNotOwned() {
     Cart cart = mockCart(1L, 1L);
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
     when(cartItemRepository.findAllByIdInAndCart_Id(List.of(999L), 1L)).thenReturn(List.of());
 
     BusinessException ex = assertThrows(BusinessException.class,
@@ -711,7 +722,7 @@ class CartServiceTest {
   @DisplayName("선택 삭제 성공 시 해당 아이템들에 대해 deleteAll이 호출된다")
   void deleteFromCart_deletesSelectedItems_successfully() {
     Cart cart = mockCart(1L, 1L);
-    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUser_Id(1L)).thenReturn(Optional.of(cart));
 
     CartItem item1 = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 2);
     CartItem item2 = mockCartItem(2L, cart, mockVariantWithProduct(2L, 5000, 4000), 1);
@@ -729,7 +740,6 @@ class CartServiceTest {
   private Cart mockCart(Long cartId, Long userId) {
     Cart cart = mock(Cart.class);
     when(cart.getId()).thenReturn(cartId);
-    when(cart.getUserId()).thenReturn(userId);
     return cart;
   }
 
