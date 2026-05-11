@@ -115,12 +115,10 @@ public class AuthService {
         .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_NOT_FOUND));
 
     authLocalRepo.findByAuth(auth).ifPresent(authLocal -> {
-      authLocal.anonymize();
-      authLocalRepo.delete(authLocal);
+      authLocal.withdraw();
     });
 
-    auth.anonymize();
-    authRepo.delete(auth);
+    auth.withdraw();
   }
 
   private void saveLoginHistory(Auth auth, LoginStatus status, HttpServletRequest request) {

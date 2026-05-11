@@ -81,9 +81,7 @@ public class SellerService {
     Seller seller = sellerRepo.findByAuthId(authId)
         .orElseThrow(() -> new BusinessException(ErrorCode.SELLER_NOT_FOUND));
 
-    seller.anonymize();
-    
-    sellerRepo.delete(seller);
+    seller.withdraw();
   }
 
   @Transactional(readOnly = true)

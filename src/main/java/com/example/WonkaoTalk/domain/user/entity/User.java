@@ -82,7 +82,7 @@ public class User {
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
 
-  public void anonymize() {
+  public void withdraw() {
     this.nickname = "탈퇴한사용자" + UUID.randomUUID().toString().substring(0, 8);
     this.image = "http://defaultImage.png";
     this.birthDate = null;
@@ -90,5 +90,6 @@ public class User {
     this.phone = "000-0000-" + UUID.randomUUID().toString().substring(0, 4);
     this.gender = Gender.NONE;
     this.marketingAgree = false;
+    this.deletedAt = LocalDateTime.now();
   }
 }

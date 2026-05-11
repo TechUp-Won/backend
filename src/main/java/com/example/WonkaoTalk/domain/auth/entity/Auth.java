@@ -76,7 +76,8 @@ public class Auth {
     this.role = newRole;
   }
 
-  public void anonymize() {
+  public void withdraw() {
     this.status = AccountStatus.DELETED;
+    this.deletedAt = LocalDateTime.now();
   }
 }

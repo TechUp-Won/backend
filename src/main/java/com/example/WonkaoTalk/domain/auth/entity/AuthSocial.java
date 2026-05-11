@@ -14,6 +14,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -59,4 +60,10 @@ public class AuthSocial {
 
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
+
+  public void withdraw() {
+    this.email = UUID.randomUUID().toString() + "@deleted.email";
+    this.providerUserId = UUID.randomUUID().toString();
+    this.deletedAt = LocalDateTime.now();
+  }
 }

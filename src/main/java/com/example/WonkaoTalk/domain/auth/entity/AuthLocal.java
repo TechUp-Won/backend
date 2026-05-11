@@ -60,9 +60,10 @@ public class AuthLocal {
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
 
-  public void anonymize() {
+  public void withdraw() {
     this.email = UUID.randomUUID().toString() + "@deleted.email";
     this.passwordHash = "deleted_password";
+    this.deletedAt = LocalDateTime.now();
   }
 
 }

@@ -63,9 +63,10 @@ public class Seller {
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
 
-  public void anonymize() {
+  public void withdraw() {
     this.buzNo = UUID.randomUUID().toString().substring(0, 10);
     this.name = "Unknown";
     this.phone = "000-0000-0000";
+    this.deletedAt = LocalDateTime.now();
   }
 }

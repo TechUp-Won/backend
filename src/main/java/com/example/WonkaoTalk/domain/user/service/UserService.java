@@ -49,8 +49,7 @@ public class UserService {
     User user = userRepo.findByAuthId(authId)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-    user.anonymize();
-    userRepo.delete(user);
+    user.withdraw();
   }
 
   @Transactional(readOnly = true)
