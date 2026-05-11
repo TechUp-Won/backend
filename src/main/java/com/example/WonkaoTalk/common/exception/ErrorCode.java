@@ -45,6 +45,11 @@ public enum ErrorCode {
   PROD_VARIANT_UNAVAILABLE(400, "PROD-UNAVAILABLE-VARIANT", "구매 불가능한 상품 옵션입니다."),
   PROD_INVALID_QUANTITY(400, "PROD-INVALID-QUANTITY", "수량은 최소 1개 이상이어야 합니다."),
 
+  // 이미지 도메인
+  IMAGE_INVALID_TYPE(400, "IMAGE-INVALID-TYPE", "허용되지 않는 파일 형식입니다. (jpg, jpeg, png, webp)"),
+  IMAGE_INVALID_KEY(400, "IMAGE-INVALID-KEY", "유효하지 않은 이미지 키 형식입니다."),
+  IMAGE_NOT_FOUND_KEY(400, "IMAGE-NOT-FOUND-KEY", "업로드되지 않았거나 만료된 이미지 키입니다."),
+
   // 주문 도메인
 
   // 채팅 도메인

@@ -46,7 +46,8 @@ public class SecurityConfig {
                 "/api/v1/sellers/register"
             ).authenticated()
             .requestMatchers(
-                "/api/v1/sellers/**"
+                "/api/v1/sellers/**",
+                "/api/v1/images/**"
             ).hasRole("SELLER")
 
             // SecurityTest용 엔드포인트
