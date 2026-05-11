@@ -1,6 +1,8 @@
 package com.example.WonkaoTalk.domain.user.controller;
 
 import com.example.WonkaoTalk.application.facade.AccountWithdraw;
+import com.example.WonkaoTalk.common.exception.BusinessException;
+import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.common.response.ApiResponse;
 import com.example.WonkaoTalk.domain.auth.dto.CustomUserDetails;
 import com.example.WonkaoTalk.domain.user.dto.UserSignUpRequest;
@@ -41,6 +43,9 @@ public class UserController {
       @AuthenticationPrincipal CustomUserDetails userDetails,
       @RequestHeader("Authorization") String authHeader
   ) {
+    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+      throw new BusinessException(ErrorCode.AUTH_INVALID_TOKEN);
+    }
     String accessToken = authHeader.substring(7);
 
     accountWithdraw.withdrawUser(userDetails.getAuthId(), userDetails.getUsername(), accessToken);

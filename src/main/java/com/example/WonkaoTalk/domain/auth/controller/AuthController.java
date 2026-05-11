@@ -1,5 +1,7 @@
 package com.example.WonkaoTalk.domain.auth.controller;
 
+import com.example.WonkaoTalk.common.exception.BusinessException;
+import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.common.response.ApiResponse;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckRequest;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckResponse;
@@ -71,6 +73,9 @@ public class AuthController {
       @RequestHeader("Authorization") String authHeader,
       Authentication authentication
   ) {
+    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+      throw new BusinessException(ErrorCode.AUTH_INVALID_TOKEN);
+    }
     String accessToken = authHeader.substring(7);
     String email = authentication.getName();
 

@@ -62,7 +62,7 @@ public class AuthLocal {
 
   public void withdraw() {
     this.email = UUID.randomUUID().toString() + "@deleted.email";
-    this.passwordHash = "deleted_password";
+    this.passwordHash = "deleted_password" + UUID.randomUUID().toString();
     this.deletedAt = LocalDateTime.now();
   }
 
