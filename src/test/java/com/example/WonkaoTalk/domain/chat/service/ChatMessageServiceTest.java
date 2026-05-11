@@ -18,9 +18,9 @@ import com.example.WonkaoTalk.domain.chat.entity.ChatParticipant;
 import com.example.WonkaoTalk.domain.chat.entity.ChatRoom;
 import com.example.WonkaoTalk.domain.chat.enums.MessageType;
 import com.example.WonkaoTalk.domain.chat.enums.RoomType;
-import com.example.WonkaoTalk.domain.chat.repo.ChatMessageRepository;
-import com.example.WonkaoTalk.domain.chat.repo.ChatParticipantRepository;
-import com.example.WonkaoTalk.domain.chat.repo.ChatRoomRepository;
+import com.example.WonkaoTalk.domain.chat.repo.ChatMessageRepo;
+import com.example.WonkaoTalk.domain.chat.repo.ChatParticipantRepo;
+import com.example.WonkaoTalk.domain.chat.repo.ChatRoomRepo;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -41,11 +41,11 @@ class ChatMessageServiceTest {
   private ChatMessageService chatMessageService;
 
   @Mock
-  private ChatMessageRepository chatMessageRepository;
+  private ChatMessageRepo chatMessageRepo;
   @Mock
-  private ChatRoomRepository chatRoomRepository;
+  private ChatRoomRepo chatRoomRepo;
   @Mock
-  private ChatParticipantRepository chatParticipantRepository;
+  private ChatParticipantRepo chatParticipantRepo;
 
   @Test
   @DisplayName("✅ 메시지 전송 성공")
@@ -61,11 +61,11 @@ class ChatMessageServiceTest {
     ChatRoom room = ChatRoom.builder().build();
     ChatParticipant participant = ChatParticipant.builder().build();
 
-    when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.of(room));
-    when(chatParticipantRepository.findByChatRoomIdAndUserId(chatRoomId, userId))
+    when(chatRoomRepo.findById(chatRoomId)).thenReturn(Optional.of(room));
+    when(chatParticipantRepo.findByChatRoomIdAndUserId(chatRoomId, userId))
         .thenReturn(Optional.of(participant));
 
-    when(chatMessageRepository.saveAndFlush(any(ChatMessage.class))).thenAnswer(invocation -> {
+    when(chatMessageRepo.saveAndFlush(any(ChatMessage.class))).thenAnswer(invocation -> {
       ChatMessage message = invocation.getArgument(0);
       ReflectionTestUtils.setField(message, "id", 100L);
       return message;
@@ -80,7 +80,7 @@ class ChatMessageServiceTest {
     assertThat(room.getLastMessageContent()).isEqualTo("테스트");
     assertThat(participant.getLastReadMessage()).isNotNull();
 
-    verify(chatMessageRepository, times(1)).saveAndFlush(any(ChatMessage.class));
+    verify(chatMessageRepo, times(1)).saveAndFlush(any(ChatMessage.class));
   }
 
   @Test
@@ -91,7 +91,7 @@ class ChatMessageServiceTest {
     Long chatRoomId = 999L;
     ChatMessageRequest request = ChatMessageRequest.builder().content("테스트").build();
 
-    when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.empty());
+    when(chatRoomRepo.findById(chatRoomId)).thenReturn(Optional.empty());
 
     // when & then
     assertThatThrownBy(() -> chatMessageService.sendMessage(userId, chatRoomId, request))
@@ -108,9 +108,9 @@ class ChatMessageServiceTest {
     ChatMessageRequest request = ChatMessageRequest.builder().content("테스트").build();
 
     ChatRoom room = ChatRoom.builder().build();
-    when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.of(room));
+    when(chatRoomRepo.findById(chatRoomId)).thenReturn(Optional.of(room));
 
-    when(chatParticipantRepository.findByChatRoomIdAndUserId(chatRoomId, userId))
+    when(chatParticipantRepo.findByChatRoomIdAndUserId(chatRoomId, userId))
         .thenReturn(Optional.empty());
 
     // when & then
@@ -134,14 +134,14 @@ class ChatMessageServiceTest {
     ChatMessage msg2 = createMessage(199L, chatRoom, myId, "내가 보낸 과거 메시지");
     List<ChatMessage> mockMessages = List.of(msg1, msg2);
 
-    when(chatParticipantRepository.findByChatRoomIdAndUserId(chatRoomId, myId))
+    when(chatParticipantRepo.findByChatRoomIdAndUserId(chatRoomId, myId))
         .thenReturn(Optional.of(myParticipant));
 
-    when(chatMessageRepository.findMessagesByCursor(eq(chatRoomId), eq(null),
+    when(chatMessageRepo.findMessagesByCursor(eq(chatRoomId), eq(null),
         any(PageRequest.class)))
         .thenReturn(new SliceImpl<>(mockMessages, PageRequest.of(0, size), true));
 
-    when(chatParticipantRepository.findOtherParticipantsLastReadMessageIds(chatRoomId, myId))
+    when(chatParticipantRepo.findOtherParticipantsLastReadMessageIds(chatRoomId, myId))
         .thenReturn(List.of(200L));
 
     // when

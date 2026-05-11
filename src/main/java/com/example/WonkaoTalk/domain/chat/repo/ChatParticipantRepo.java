@@ -11,7 +11,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface ChatParticipantRepository extends JpaRepository<ChatParticipant, Long> {
+public interface ChatParticipantRepo extends JpaRepository<ChatParticipant, Long> {
 
   // 이미 참여 중인 방이 있는지?
   @Query("SELECT p1.chatRoom FROM ChatParticipant p1 " +

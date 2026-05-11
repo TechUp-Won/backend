@@ -9,9 +9,9 @@ import com.example.WonkaoTalk.domain.chat.dto.ChatMessageResponse;
 import com.example.WonkaoTalk.domain.chat.entity.ChatMessage;
 import com.example.WonkaoTalk.domain.chat.entity.ChatParticipant;
 import com.example.WonkaoTalk.domain.chat.entity.ChatRoom;
-import com.example.WonkaoTalk.domain.chat.repo.ChatMessageRepository;
-import com.example.WonkaoTalk.domain.chat.repo.ChatParticipantRepository;
-import com.example.WonkaoTalk.domain.chat.repo.ChatRoomRepository;
+import com.example.WonkaoTalk.domain.chat.repo.ChatMessageRepo;
+import com.example.WonkaoTalk.domain.chat.repo.ChatParticipantRepo;
+import com.example.WonkaoTalk.domain.chat.repo.ChatRoomRepo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -24,22 +24,22 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ChatMessageService {
 
-  private final ChatMessageRepository chatMessageRepository;
-  private final ChatRoomRepository chatRoomRepository;
-  private final ChatParticipantRepository chatParticipantRepository;
+  private final ChatMessageRepo chatMessageRepo;
+  private final ChatRoomRepo chatRoomRepo;
+  private final ChatParticipantRepo chatParticipantRepo;
 
   @Transactional
   public ChatMessageResponse sendMessage(Long userId, Long chatRoomId, ChatMessageRequest request) {
-    ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
+    ChatRoom chatRoom = chatRoomRepo.findById(chatRoomId)
         .orElseThrow(() -> new BusinessException(ErrorCode.ROOM_NOT_FOUND));
 
-    ChatParticipant participant = chatParticipantRepository.findByChatRoomIdAndUserId(chatRoomId,
+    ChatParticipant participant = chatParticipantRepo.findByChatRoomIdAndUserId(chatRoomId,
             userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_CHAT_PARTICIPANT));
 
     ChatMessage answerMessage = null;
     if (request.answerMessageId() != null) {
-      answerMessage = chatMessageRepository.findById(request.answerMessageId())
+      answerMessage = chatMessageRepo.findById(request.answerMessageId())
           .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
     }
 
@@ -51,7 +51,7 @@ public class ChatMessageService {
         .answerMessage(answerMessage)
         .build();
 
-    chatMessageRepository.saveAndFlush(chatMessage);
+    chatMessageRepo.saveAndFlush(chatMessage);
 
     chatRoom.updateLastMessage(chatMessage.getContent(), chatMessage.getCreatedAt());
 
@@ -63,15 +63,15 @@ public class ChatMessageService {
   @Transactional
   public ChatMessageListResponse getMessageList(Long userId, Long chatRoomId, Long cursorId,
       int size) {
-    ChatParticipant myParticipant = chatParticipantRepository.findByChatRoomIdAndUserId(chatRoomId,
+    ChatParticipant myParticipant = chatParticipantRepo.findByChatRoomIdAndUserId(chatRoomId,
             userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_CHAT_PARTICIPANT));
 
     PageRequest pageRequest = PageRequest.of(0, size);
-    Slice<ChatMessage> messageSlice = chatMessageRepository.findMessagesByCursor(chatRoomId,
+    Slice<ChatMessage> messageSlice = chatMessageRepo.findMessagesByCursor(chatRoomId,
         cursorId, pageRequest);
 
-    List<Long> otherReadMessageIds = chatParticipantRepository.findOtherParticipantsLastReadMessageIds(
+    List<Long> otherReadMessageIds = chatParticipantRepo.findOtherParticipantsLastReadMessageIds(
         chatRoomId, userId);
 
     List<ChatMessageDto> messageDtoList = messageSlice.getContent().stream()

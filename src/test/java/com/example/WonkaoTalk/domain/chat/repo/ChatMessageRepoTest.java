@@ -17,26 +17,26 @@ import org.springframework.data.domain.Slice;
 
 @DataJpaTest
 @Import(JpaConfig.class)
-class ChatMessageRepositoryTest {
+class ChatMessageRepoTest {
 
   @Autowired
-  private ChatMessageRepository chatMessageRepository;
+  private ChatMessageRepo chatMessageRepo;
 
   @Autowired
-  private ChatRoomRepository chatRoomRepository;
+  private ChatRoomRepo chatRoomRepo;
 
   @Test
   @DisplayName("커서 ID가 없을 때 가장 최신 메시지부터 조회되어야 한다")
   void findMessagesByCursor_NoCursor() {
     // given
-    ChatRoom room = chatRoomRepository.save(ChatRoom.builder().roomType(RoomType.SINGLE).build());
+    ChatRoom room = chatRoomRepo.save(ChatRoom.builder().roomType(RoomType.SINGLE).build());
 
-    chatMessageRepository.save(createMessage(room, "메시지1"));
-    chatMessageRepository.save(createMessage(room, "메시지2"));
-    ChatMessage lastMessage = chatMessageRepository.save(createMessage(room, "메시지3"));
+    chatMessageRepo.save(createMessage(room, "메시지1"));
+    chatMessageRepo.save(createMessage(room, "메시지2"));
+    ChatMessage lastMessage = chatMessageRepo.save(createMessage(room, "메시지3"));
 
     // when
-    Slice<ChatMessage> result = chatMessageRepository.findMessagesByCursor(
+    Slice<ChatMessage> result = chatMessageRepo.findMessagesByCursor(
         room.getId(), null, PageRequest.of(0, 2)
     );
 
@@ -52,14 +52,14 @@ class ChatMessageRepositoryTest {
   @DisplayName("커서 ID가 있을 때 해당 ID보다 작은 메시지부터 조회되어야 한다")
   void findMessagesByCursor_WithCursor() {
     // given
-    ChatRoom room = chatRoomRepository.save(ChatRoom.builder().roomType(RoomType.SINGLE).build());
+    ChatRoom room = chatRoomRepo.save(ChatRoom.builder().roomType(RoomType.SINGLE).build());
 
-    ChatMessage msg1 = chatMessageRepository.save(createMessage(room, "메시지1"));
-    ChatMessage msg2 = chatMessageRepository.save(createMessage(room, "메시지2"));
-    chatMessageRepository.save(createMessage(room, "메시지3"));
+    ChatMessage msg1 = chatMessageRepo.save(createMessage(room, "메시지1"));
+    ChatMessage msg2 = chatMessageRepo.save(createMessage(room, "메시지2"));
+    chatMessageRepo.save(createMessage(room, "메시지3"));
 
     // when
-    Slice<ChatMessage> result = chatMessageRepository.findMessagesByCursor(
+    Slice<ChatMessage> result = chatMessageRepo.findMessagesByCursor(
         room.getId(), msg2.getId(), PageRequest.of(0, 2)
     );
 
