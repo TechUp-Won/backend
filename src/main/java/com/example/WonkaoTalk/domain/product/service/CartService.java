@@ -286,6 +286,7 @@ public class CartService {
     return CartDeleteResponse.builder().cartId(cart.getId()).build();
   }
 
+  // TODO: CustomUserDetails에 userId 필드 추가 후 이 메서드 제거하고 authId 대신 userId를 직접 파라미터로 받도록 변경
   private User resolveUser(Long authId) {
     return userRepo.findByAuthId(authId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
