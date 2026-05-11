@@ -63,19 +63,6 @@ services:
     volumes:
       - ./minio/data:/data
 
-  minio-init:
-    image: minio/mc:latest
-    container_name: wonkao-talk-minio-init
-    depends_on:
-      - minio
-    entrypoint: >
-      /bin/sh -c "
-      sleep 3;
-      mc alias set local http://minio:9000 minioadmin minioadmin;
-      mc mb --ignore-existing local/wonkaotalk;
-      exit 0;
-      "
-
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
     container_name: wonkao-talk-es

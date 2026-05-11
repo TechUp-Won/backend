@@ -2,12 +2,16 @@ package com.example.WonkaoTalk.common.config;
 
 import java.net.URI;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 @Configuration
@@ -21,6 +25,9 @@ public class S3Config {
 
   @Value("${storage.secret-key}")
   private String secretKey;
+
+  @Value("${storage.bucket}")
+  private String bucket;
 
   @Bean
   public S3Client s3Client() {
@@ -41,5 +48,18 @@ public class S3Config {
             AwsBasicCredentials.create(accessKey, secretKey)))
         .region(Region.AP_NORTHEAST_2)
         .build();
+  }
+
+  @Bean
+  public CommandLineRunner bucketInitializer(S3Client s3Client) {
+    return args -> {
+      try {
+        s3Client.headBucket(HeadBucketRequest.builder().bucket(bucket).build());
+      } catch (S3Exception e) {
+        if (e.statusCode() == 404) {
+          s3Client.createBucket(CreateBucketRequest.builder().bucket(bucket).build());
+        }
+      }
+    };
   }
 }
