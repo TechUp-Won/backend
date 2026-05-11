@@ -3,6 +3,7 @@ package com.example.WonkaoTalk.application.facade;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
 import com.example.WonkaoTalk.domain.auth.service.AuthService;
@@ -56,7 +57,7 @@ class AccountWithdrawTest {
 
     //then
     then(userService).should(times(1)).withdrawUser(authId);
-    then(authService).should(times(1)).withdraw(anyLong());
+    then(authService).should(never()).withdraw(anyLong());
     then(authService).should(times(1)).invalidateToken(email, accessToken);
   }
 }
