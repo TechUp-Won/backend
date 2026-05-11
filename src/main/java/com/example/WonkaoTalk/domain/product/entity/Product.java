@@ -1,6 +1,7 @@
 package com.example.WonkaoTalk.domain.product.entity;
 
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
+import com.example.WonkaoTalk.domain.store.entity.Store;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -30,9 +31,9 @@ public class Product {
   @Column(name = "id")
   private Long id;
 
-  @Column(name = "store_id", nullable = false)
-  // TODO: Store 엔티티 구현 시 @ManyToOne 관계로 변경 및 연관관계 매핑 필요
-  private Long storeId;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "store_id", nullable = false)
+  private Store store;
 
   @Column(name = "name", nullable = false)
   private String name;

@@ -6,11 +6,14 @@ package com.example.WonkaoTalk.domain.search.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.WonkaoTalk.config.TestContainerConfig;
+import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.product.entity.Category;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.enums.ProductSortType;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
 import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
+import com.example.WonkaoTalk.domain.seller.entity.Seller;
+import com.example.WonkaoTalk.domain.store.entity.Store;
 import jakarta.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,10 +38,12 @@ class SearchRepositoryCustomImplTest {
   private ProductRepo productRepository;
 
   private Category category;
+  private Store store;
 
   @BeforeEach
   void setUp() {
     category = saveCategory("테스트카테고리");
+    store = saveStore("테스트스토어");
   }
 
   // ── 키워드 검색 ───────────────────────────────────────────────────────────────
@@ -220,11 +225,33 @@ class SearchRepositoryCustomImplTest {
     return cat;
   }
 
-  private Product saveProduct(String name, Long storeId, Category cat, int discountedPrice,
+  private Store saveStore(String name) {
+    Auth auth = Auth.builder().build();
+    em.persist(auth);
+
+    Seller seller = Seller.builder()
+        .buzNo(String.valueOf(System.nanoTime()).substring(0, 10))
+        .name(name + "판매자")
+        .phone("010-0000-0000")
+        .auth(auth)
+        .build();
+    em.persist(seller);
+
+    Store s = Store.builder()
+        .name(name)
+        .description("설명")
+        .phone("010-0000-0000")
+        .seller(seller)
+        .build();
+    em.persist(s);
+    return s;
+  }
+
+  private Product saveProduct(String name, Long ignoredStoreId, Category cat, int discountedPrice,
       int likeCount, SaleStatus status, LocalDateTime deletedAt) {
     Product product = new Product();
     ReflectionTestUtils.setField(product, "name", name);
-    ReflectionTestUtils.setField(product, "storeId", storeId);
+    ReflectionTestUtils.setField(product, "store", store);
     ReflectionTestUtils.setField(product, "category", cat);
     ReflectionTestUtils.setField(product, "price", discountedPrice);
     ReflectionTestUtils.setField(product, "discountRate", 0);
