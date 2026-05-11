@@ -42,10 +42,11 @@ public class SecurityConfig {
             ).permitAll() // 인증 없이 접근 허용
             .requestMatchers(
                 "/api/v1/auth/logout",
-                "/api/v1/sellers/register",
-                "/api/v1/users/withdraw",
-                "/api/v1/sellers/withdraw"
+                "/api/v1/sellers/register"
             ).authenticated()
+            .requestMatchers(
+                "/api/v1/users/**"
+            ).hasRole("USER")
             .requestMatchers(
                 "/api/v1/sellers/**"
             ).hasRole("SELLER")
