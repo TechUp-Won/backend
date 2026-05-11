@@ -9,8 +9,8 @@ import com.example.WonkaoTalk.domain.chat.dto.ChatRoomResponse;
 import com.example.WonkaoTalk.domain.chat.entity.ChatParticipant;
 import com.example.WonkaoTalk.domain.chat.entity.ChatRoom;
 import com.example.WonkaoTalk.domain.chat.enums.RoomType;
-import com.example.WonkaoTalk.domain.chat.repo.ChatParticipantRepository;
-import com.example.WonkaoTalk.domain.chat.repo.ChatRoomRepository;
+import com.example.WonkaoTalk.domain.chat.repo.ChatParticipantRepo;
+import com.example.WonkaoTalk.domain.chat.repo.ChatRoomRepo;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ChatRoomService {
 
-  private final ChatRoomRepository chatRoomRepository;
-  private final ChatParticipantRepository chatParticipantRepository;
+  private final ChatRoomRepo chatRoomRepo;
+  private final ChatParticipantRepo chatParticipantRepo;
 
   @Transactional
   public ChatRoomResponse createChatRoom(Long myId, ChatRoomCreateRequest request) {
@@ -35,10 +35,10 @@ public class ChatRoomService {
       throw new BusinessException(ErrorCode.CANNOT_CHAT_SELF);
     }
 
-    return chatParticipantRepository.findChatRoomByUsers(myId, receiverId)
+    return chatParticipantRepo.findChatRoomByUsers(myId, receiverId)
         .map(room -> ChatRoomResponse.from(room, createTempParticipants(myId, receiverId)))
         .orElseGet(() -> {
-          ChatRoom newRoom = chatRoomRepository.save(
+          ChatRoom newRoom = chatRoomRepo.save(
               ChatRoom.builder()
                   .roomType(RoomType.SINGLE)
                   .participantCount(2)
@@ -46,7 +46,7 @@ public class ChatRoomService {
           );
 
           // 내 참여 정보
-          chatParticipantRepository.save(
+          chatParticipantRepo.save(
               ChatParticipant.builder()
                   .chatRoom(newRoom)
                   .userId(myId)
@@ -55,7 +55,7 @@ public class ChatRoomService {
                   .build());
 
           // 상대방 참여 정보
-          chatParticipantRepository.save(
+          chatParticipantRepo.save(
               ChatParticipant.builder()
                   .chatRoom(newRoom)
                   .userId(receiverId)
@@ -66,12 +66,12 @@ public class ChatRoomService {
           return ChatRoomResponse.from(newRoom, createTempParticipants(myId, receiverId));
         });
   }
-  
+
   public ChatRoomListResponse getChatRoomList(Long myId, LocalDateTime lastMessageAt, Long cursorId,
       int size) {
     PageRequest pageRequest = PageRequest.of(0, size);
 
-    Slice<ChatParticipant> slice = chatParticipantRepository.findMyChatRooms(myId, lastMessageAt,
+    Slice<ChatParticipant> slice = chatParticipantRepo.findMyChatRooms(myId, lastMessageAt,
         cursorId, pageRequest);
 
     List<ChatRoomInfo> rooms = slice.getContent().stream()
