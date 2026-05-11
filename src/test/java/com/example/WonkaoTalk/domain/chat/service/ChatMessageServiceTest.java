@@ -141,7 +141,7 @@ class ChatMessageServiceTest {
         any(PageRequest.class)))
         .thenReturn(new SliceImpl<>(mockMessages, PageRequest.of(0, size), true));
 
-    when(chatParticipantRepo.findOtherParticipantsLastReadMessageIds(chatRoomId, myId))
+    when(chatParticipantRepo.findAllParticipantsLastReadMessageIds(chatRoomId))
         .thenReturn(List.of(200L));
 
     // when

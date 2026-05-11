@@ -44,10 +44,10 @@ public interface ChatParticipantRepo extends JpaRepository<ChatParticipant, Long
   Optional<ChatParticipant> findByChatRoomIdAndUserId(Long chatRoomId, Long userId);
 
   // unreadCount 계산용 다른 참가자 lastReadMessageId 조회
-  @Query("SELECT p.lastReadMessage.id FROM ChatParticipant p " +
-      "WHERE p.chatRoom.id = :chatRoomId AND p.userId != :myId")
-  List<Long> findOtherParticipantsLastReadMessageIds(
-      @Param("chatRoomId") Long chatRoomId,
-      @Param("myId") Long myId
-  );
+  @Query("""
+      SELECT lrm.id FROM ChatParticipant p
+      LEFT JOIN p.lastReadMessage lrm
+      WHERE p.chatRoom.id = :chatRoomId
+      """)
+  List<Long> findAllParticipantsLastReadMessageIds(@Param("chatRoomId") Long chatRoomId);
 }

@@ -71,12 +71,12 @@ public class ChatMessageService {
     Slice<ChatMessage> messageSlice = chatMessageRepo.findMessagesByCursor(chatRoomId,
         cursorId, pageRequest);
 
-    List<Long> otherReadMessageIds = chatParticipantRepo.findOtherParticipantsLastReadMessageIds(
-        chatRoomId, userId);
+    List<Long> allReadMessageIds = chatParticipantRepo.findAllParticipantsLastReadMessageIds(
+        chatRoomId);
 
     List<ChatMessageDto> messageDtoList = messageSlice.getContent().stream()
         .map(message -> {
-          int unreadCount = calculateUnreadCount(message.getId(), otherReadMessageIds);
+          int unreadCount = calculateUnreadCount(message.getId(), allReadMessageIds);
 
           // TODO 연동 후 실제 닉네임
           String senderNickname =
@@ -102,9 +102,9 @@ public class ChatMessageService {
     return ChatMessageListResponse.of(messageDtoList, messageSlice.hasNext(), nextCursorId);
   }
 
-  private int calculateUnreadCount(Long currentMessageId, List<Long> otherReadMessageIds) {
+  private int calculateUnreadCount(Long currentMessageId, List<Long> allReadMessageIds) {
     int unreadCount = 0;
-    for (Long readId : otherReadMessageIds) {
+    for (Long readId : allReadMessageIds) {
       if (readId == null || currentMessageId > readId) {
         unreadCount++;
       }
