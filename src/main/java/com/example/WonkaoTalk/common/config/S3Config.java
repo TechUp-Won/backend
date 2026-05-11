@@ -30,14 +30,17 @@ public class S3Config {
   @Value("${storage.bucket}")
   private String bucket;
 
+  @Value("${storage.region}")
+  private String region;
+
   @Bean
   public S3Client s3Client() {
     return S3Client.builder()
         .endpointOverride(URI.create(endpoint))
         .credentialsProvider(StaticCredentialsProvider.create(
             AwsBasicCredentials.create(accessKey, secretKey)))
-        .region(Region.AP_NORTHEAST_2)
-        .forcePathStyle(true) // MinIO는 path-style 필수
+        .region(Region.of(region))
+        .forcePathStyle(true)
         .build();
   }
 
@@ -47,7 +50,7 @@ public class S3Config {
         .endpointOverride(URI.create(endpoint))
         .credentialsProvider(StaticCredentialsProvider.create(
             AwsBasicCredentials.create(accessKey, secretKey)))
-        .region(Region.AP_NORTHEAST_2)
+        .region(Region.of(region))
         .serviceConfiguration(S3Configuration.builder()
             .pathStyleAccessEnabled(true)
             .build())
