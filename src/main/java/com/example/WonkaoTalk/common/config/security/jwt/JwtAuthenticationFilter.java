@@ -1,0 +1,79 @@
+package com.example.WonkaoTalk.common.config.security.jwt;
+
+import com.example.WonkaoTalk.common.exception.BusinessException;
+import com.example.WonkaoTalk.common.exception.ErrorCode;
+import com.example.WonkaoTalk.common.redis.RedisService;
+import com.example.WonkaoTalk.domain.auth.dto.CustomUserDetails;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+@Component
+@RequiredArgsConstructor
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+  private final JwtTokenProvider jwtTokenProvider;
+  private final RedisService redisService;
+
+  @Override
+  protected void doFilterInternal(
+      HttpServletRequest request,
+      HttpServletResponse response,
+      FilterChain filterChain
+  ) throws ServletException, IOException {
+
+    String token = resolveToken(request);
+
+    if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
+      // 토큰 블랙리스트 체크
+      if (redisService.hasKey("BlackList:" + token)) {
+        throw new BusinessException(ErrorCode.AUTH_LOGGED_OUT_TOKEN);
+      }
+
+      String email = jwtTokenProvider.getEmailFromToken(token);
+      String role = jwtTokenProvider.getRoleFromToken(token);
+      Long authId = jwtTokenProvider.getAuthId(token);
+
+      // 시큐리티 권한 객체로 반환
+      List<GrantedAuthority> authorities = Collections.singletonList(
+          new SimpleGrantedAuthority("ROLE_" + role)
+      );
+
+      CustomUserDetails userDetails = CustomUserDetails.customBuilder()
+          .email(email)
+          .authId(authId)
+          .authorities(authorities)
+          .build();
+
+      // 시큐리티 인증 객체 생성
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
+
+      SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    filterChain.doFilter(request, response);
+  }
+
+  private String resolveToken(HttpServletRequest request) {
+    String bearer = request.getHeader("Authorization");
+    if (StringUtils.hasText(bearer) && bearer.startsWith("Bearer ")) {
+      return bearer.substring(7);
+    }
+    return null;
+  }
+
+}

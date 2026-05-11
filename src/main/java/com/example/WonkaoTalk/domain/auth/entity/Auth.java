@@ -2,6 +2,7 @@ package com.example.WonkaoTalk.domain.auth.entity;
 
 
 import com.example.WonkaoTalk.domain.auth.enums.AccountStatus;
+import com.example.WonkaoTalk.domain.auth.enums.Role;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -43,9 +44,6 @@ public class Auth {
   @Column(nullable = false)
   private AccountStatus status = AccountStatus.ACTIVE;
 
-  @Column(name = "refresh_token")
-  private String refreshToken;
-
   @CreatedDate
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;
@@ -58,10 +56,19 @@ public class Auth {
   private LocalDateTime deletedAt;
 
   @Builder.Default
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private Role role = Role.USER;
+
+  @Builder.Default
   @OneToMany(mappedBy = "auth", cascade = CascadeType.ALL)
   private List<AuthLocal> authLocals = new ArrayList<>();
 
   @Builder.Default
   @OneToMany(mappedBy = "auth", cascade = CascadeType.ALL)
   private List<AuthSocial> authSocials = new ArrayList<>();
+
+  public void updateRole(Role newRole) {
+    this.role = newRole;
+  }
 }

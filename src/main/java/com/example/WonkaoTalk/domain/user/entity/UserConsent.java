@@ -35,7 +35,7 @@ public class UserConsent {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id")
-  private User userId;
+  private User user;
 
   @Column(name = "is_agreed", nullable = false)
   private boolean isAgreed;

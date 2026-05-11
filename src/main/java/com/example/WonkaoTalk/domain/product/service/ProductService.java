@@ -11,21 +11,19 @@ import com.example.WonkaoTalk.domain.product.dto.ProductDetailResponse.VariantIn
 import com.example.WonkaoTalk.domain.product.dto.ProductListRequest;
 import com.example.WonkaoTalk.domain.product.dto.ProductListResponse;
 import com.example.WonkaoTalk.domain.product.dto.ProductListResponse.ProductSummary;
-import com.example.WonkaoTalk.domain.product.entity.Category;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.entity.ProductOption;
 import com.example.WonkaoTalk.domain.product.entity.ProductOptionGroup;
 import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
-import com.example.WonkaoTalk.domain.product.entity.VariantOptionMap;
 import com.example.WonkaoTalk.domain.product.enums.ProductSortType;
-import com.example.WonkaoTalk.domain.product.repo.CategoryRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductDetailRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductImageRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductOptionGroupRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductOptionRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepository;
-import com.example.WonkaoTalk.domain.product.repo.VariantOptionMapRepository;
+import com.example.WonkaoTalk.domain.product.repo.CategoryRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductDetailRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductImageRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductOptionGroupRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductOptionRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepo;
+import com.example.WonkaoTalk.domain.product.repo.VariantOptionMapRepo;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,14 +38,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ProductService {
 
-  private final ProductRepository productRepository;
-  private final CategoryRepository categoryRepository;
-  private final ProductImageRepository productImageRepository;
-  private final ProductDetailRepository productDetailRepository;
-  private final ProductOptionGroupRepository productOptionGroupRepository;
-  private final ProductOptionRepository productOptionRepository;
-  private final ProductVariantRepository productVariantRepository;
-  private final VariantOptionMapRepository variantOptionMapRepository;
+  private final ProductRepo productRepository;
+  private final CategoryRepo categoryRepository;
+  private final ProductImageRepo productImageRepository;
+  private final ProductDetailRepo productDetailRepository;
+  private final ProductOptionGroupRepo productOptionGroupRepository;
+  private final ProductOptionRepo productOptionRepository;
+  private final ProductVariantRepo productVariantRepository;
+  private final VariantOptionMapRepo variantOptionMapRepository;
 
   public ProductListResponse getProductList(ProductListRequest request) {
     int size = request.getSize() != null ? request.getSize() : 20;
@@ -114,7 +112,7 @@ public class ProductService {
       throw new BusinessException(ErrorCode.PROD_DELETED);
     }
 
-    List<ImageInfo> images = productImageRepository.findByProduct_IdOrderBySortOrderAsc(productId)
+    List<ImageInfo> images = productImageRepository.findByProductIdOrderBySortOrderAsc(productId)
         .stream()
         .map(img -> ImageInfo.builder()
             .url(img.getUrl())
@@ -122,14 +120,14 @@ public class ProductService {
             .build())
         .toList();
 
-    DetailInfo detail = productDetailRepository.findFirstByProduct_Id(productId)
+    DetailInfo detail = productDetailRepository.findFirstByProductId(productId)
         .map(d -> DetailInfo.builder().content(d.getContent()).build())
         .orElse(null);
 
-    List<ProductOptionGroup> groups = productOptionGroupRepository.findByProduct_Id(productId);
+    List<ProductOptionGroup> groups = productOptionGroupRepository.findByProductId(productId);
     List<Long> groupIds = groups.stream().map(ProductOptionGroup::getId).toList();
     Map<Long, List<ProductOption>> optionsByGroup = productOptionRepository
-        .findByProductOptionGroup_IdIn(groupIds)
+        .findByProductOptionGroupIdIn(groupIds)
         .stream()
         .collect(Collectors.groupingBy(opt -> opt.getProductOptionGroup().getId()));
 
@@ -137,10 +135,10 @@ public class ProductService {
         .map(group -> toOptionGroupInfo(group, optionsByGroup))
         .toList();
 
-    List<ProductVariant> variantList = productVariantRepository.findByProduct_Id(productId);
+    List<ProductVariant> variantList = productVariantRepository.findByProductId(productId);
     List<Long> variantIds = variantList.stream().map(ProductVariant::getId).toList();
     Map<Long, List<Long>> combinationIdsByVariant = variantOptionMapRepository
-        .findByProductVariant_IdIn(variantIds)
+        .findByProductVariantIdIn(variantIds)
         .stream()
         .collect(Collectors.groupingBy(
             map -> map.getProductVariant().getId(),
@@ -209,16 +207,9 @@ public class ProductService {
   private List<Long> getAllCategoryIds(Long categoryId) {
     List<Long> result = new ArrayList<>();
     result.add(categoryId);
-    collectChildIds(categoryId, result);
+    categoryRepository.findByParentCategoryId(categoryId)
+        .forEach(child -> result.add(child.getId()));
     return result;
-  }
-
-  private void collectChildIds(Long parentId, List<Long> result) {
-    List<Category> children = categoryRepository.findByParentCategory_Id(parentId);
-    for (Category child : children) {
-      result.add(child.getId());
-      collectChildIds(child.getId(), result);
-    }
   }
 
   private ProductSummary toSummary(Product product) {

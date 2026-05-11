@@ -1,31 +1,42 @@
 package com.example.WonkaoTalk.domain.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
+import com.example.WonkaoTalk.common.config.security.jwt.JwtTokenProvider;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
+import com.example.WonkaoTalk.common.redis.RedisService;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckRequest;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckResponse;
-import com.example.WonkaoTalk.domain.auth.dto.SignUpRequest;
-import com.example.WonkaoTalk.domain.auth.dto.SignUpResponse;
+import com.example.WonkaoTalk.domain.auth.dto.LoginRequest;
+import com.example.WonkaoTalk.domain.auth.dto.TokenDto;
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.entity.AuthLocal;
+import com.example.WonkaoTalk.domain.auth.enums.Role;
 import com.example.WonkaoTalk.domain.auth.repo.AuthLocalRepo;
 import com.example.WonkaoTalk.domain.auth.repo.AuthRepo;
+import com.example.WonkaoTalk.domain.auth.repo.LoginHistoryRepo;
 import com.example.WonkaoTalk.domain.user.entity.User;
-import com.example.WonkaoTalk.domain.user.enums.Gender;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
+import java.time.Duration;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -38,9 +49,24 @@ class AuthServiceTest {
   @Mock
   private AuthLocalRepo authLocalRepo;
   @Mock
+  private LoginHistoryRepo loginHistoryRepo;
+  @Mock
   private UserRepo userRepo;
   @Mock
   private PasswordEncoder passwordEncoder;
+  @Mock
+  private JwtTokenProvider jwtTokenProvider;
+  @Mock
+  private RedisService redisService;
+
+  private MockHttpServletRequest httpRequest;
+
+  @BeforeEach
+  void setUp() {
+    httpRequest = new MockHttpServletRequest();
+    httpRequest.addHeader("User-Agent", "Test-Agent");
+    httpRequest.setRemoteAddr("127.0.0.1");
+  }
 
   @Test
   @DisplayName("사용 가능한 이메일 중복 검사")
@@ -57,54 +83,120 @@ class AuthServiceTest {
   }
 
   @Test
-  @DisplayName("정상적으로 회원가입에 성공")
-  public void signUpSuccess() {
+  @DisplayName("인증 계정 생성 성공")
+  public void createAuthSuccess() {
     //given
-    SignUpRequest request = new SignUpRequest(
-        "test@test.com", "Qwer1234", "Qwer1234",
-        "이병건", "침착맨", "010-1234-5678",
-        null, Gender.MALE
-    );
+    String email = "test@test.com";
+    String password = "Qwer1234";
+    Role role = Role.USER;
 
-    given(authLocalRepo.existsByEmail(request.email())).willReturn(false);
-    given(passwordEncoder.encode(request.password())).willReturn("EncodedPassword");
+    given(authLocalRepo.existsByEmail(email)).willReturn(false);
+    given(passwordEncoder.encode(password)).willReturn("EncodedPassword");
 
-    Auth auth = Auth.builder().build();
+    Auth auth = Auth.builder().role(role).build();
     given(authRepo.save(any(Auth.class))).willReturn(auth);
 
-    AuthLocal authLocal = AuthLocal.builder().build();
-    given(authLocalRepo.save(any(AuthLocal.class))).willReturn(authLocal);
-
-    User user = User.builder().build();
-    given(userRepo.save(any(User.class))).willReturn(user);
-
     //when
-    SignUpResponse response = authService.signUp(request);
+    Auth savedAuth = authService.createAuthLocal(email, password, role);
 
     //then
-    assertThat(response).isNotNull();
+    assertThat(savedAuth).isNotNull();
+    assertThat(savedAuth.getRole()).isEqualTo(Role.USER);
     verify(authRepo).save(any(Auth.class));
     verify(authLocalRepo).save(any(AuthLocal.class));
-    verify(userRepo).save(any(User.class));
   }
 
   @Test
-  @DisplayName("비밀번호 확인 불일치 회원가입 실패")
-  public void signUpFailedPasswordMismatch() {
+  @DisplayName("중복된 이메일로 계정 생성 시 예외 발생")
+  public void createAuthFailedByDuplicateEmail() {
     //given
-    SignUpRequest request = new SignUpRequest(
-        "test@test.com", "Qwer1234", "Qwer12345",
-        "이병건", "침착맨", "010-1234-5678",
-        null, Gender.MALE
-    );
+    String email = "test@test.com";
+    given(authLocalRepo.existsByEmail(email)).willReturn(true);
 
     //when & then
     BusinessException e = assertThrows(BusinessException.class, () -> {
-      authService.signUp(request);
+      authService.createAuthLocal(email, "password", Role.USER);
     });
 
-    assertThat(e.getErrorCode()).isEqualTo(ErrorCode.AUTH_MISMATCH_PASSWORD);
+    assertThat(e.getErrorCode()).isEqualTo(ErrorCode.AUTH_DUPLICATE_EMAIL);
+  }
+
+  @Test
+  @DisplayName("정상적인 로그인 시도로 로그인에 성공한다.")
+  public void loginSuccess() {
+    //given
+    LoginRequest request = new LoginRequest("test@test.com", "Qwer1234");
+
+    Auth auth = Auth.builder().role(Role.USER).build();
+    ReflectionTestUtils.setField(auth, "id", 1L);
+
+    AuthLocal authLocal = AuthLocal.builder()
+        .email("test@test.com")
+        .passwordHash("encodedPassword")
+        .auth(auth)
+        .build();
+
+    User user = User.builder().nickname("침착맨").build();
+
+    given(authLocalRepo.findByEmail(anyString())).willReturn(Optional.of(authLocal));
+    given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
+    given(userRepo.findByAuth(any(Auth.class))).willReturn(Optional.of(user));
+
+    given(jwtTokenProvider.createAccessToken(anyString(), any(Long.class), anyString()))
+        .willReturn("mockAccessToken");
+    given(jwtTokenProvider.createRefreshToken(anyString())).willReturn("mockRefreshToken");
+    given(jwtTokenProvider.getRefreshTokenValidTime()).willReturn(1209600000L);
+    given(jwtTokenProvider.getAccessTokenValidTime()).willReturn(1800000L);
+
+    //when
+    TokenDto response = authService.login(request, httpRequest);
+
+    //then
+    assertThat(response).isNotNull();
+    assertThat(response.accessToken()).isEqualTo("mockAccessToken");
+    assertThat(response.profileName()).isEqualTo("침착맨");
+
+    // Redis 검증
+    verify(redisService).setValues(
+        eq("RT:test@test.com"), eq("mockRefreshToken"), any(Duration.class));
+    verify(loginHistoryRepo).save(any());
 
   }
 
+  @Test
+  @DisplayName("비밀번호가 일치하지 않아 로그인에 실패하고 예외 발생")
+  public void loginFailPasswordMismatch() {
+    //given
+    LoginRequest request = new LoginRequest("test@test.com", "wrongPassword");
+    Auth auth = Auth.builder().role(Role.USER).build();
+    AuthLocal authLocal = AuthLocal.builder()
+        .email("test@test.com").passwordHash("encodedPassword").auth(auth).build();
+
+    given(authLocalRepo.findByEmail(anyString())).willReturn(Optional.of(authLocal));
+    given(passwordEncoder.matches(anyString(), anyString())).willReturn(false);
+
+    //when & then
+    assertThatThrownBy(() -> authService.login(request, httpRequest))
+        .isInstanceOf(BusinessException.class)
+        .hasMessageContaining(ErrorCode.AUTH_MISMATCH_PASSWORD.getMessage());
+
+    verify(loginHistoryRepo).save(any());
+  }
+
+  @Test
+  @DisplayName("정상적으로 로그아웃을 수행하여 Redis에서 토큰을 삭제한다.")
+  public void logoutSuccess() {
+    //given
+    String email = "test@test.com";
+    String accessToken = "mockAccessToken";
+    given(redisService.hasKey("RT:" + email)).willReturn(true);
+    given(jwtTokenProvider.getExpiration(accessToken)).willReturn(1800000L);
+    //when
+    authService.logout(accessToken, email);
+
+    //then
+    verify(redisService).deleteValues("RT:" + email);
+    verify(redisService).setValues(eq("BlackList:" + accessToken), eq("logout"),
+        any(Duration.class));
+  }
 }

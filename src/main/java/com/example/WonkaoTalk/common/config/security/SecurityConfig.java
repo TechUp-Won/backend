@@ -1,36 +1,64 @@
 package com.example.WonkaoTalk.common.config.security;
 
+import com.example.WonkaoTalk.common.config.security.jwt.JwtAuthenticationFilter;
+import com.example.WonkaoTalk.common.config.security.jwt.JwtExceptionFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final JwtExceptionFilter jwtExceptionFilter;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http
-        // REST API 서버이므로 CSRF 보호 비활성화 (토큰 기반 인증을 사용할 예정이므로 불필요)
+        // REST API 서버이므로 CSRF 보호 비활성화
         .csrf(AbstractHttpConfigurer::disable)
-
         // HTTP 요청에 대한 접근 권한 설정
         .authorizeHttpRequests(auth -> auth
-            // 명시한 엔드포인트만 인증 없이 접근 허용
             .requestMatchers(
                 "/api/v1/auth/check-email",
-                "/api/v1/auth/signup",
+                "/api/v1/users/signup",
+                "/api/v1/sellers/signup",
+                "/api/v1/products",
+                "/api/v1/products/*",
+                "/api/v1/search",
+                "/api/v1/auth/login",
+                "/api/v1/sellers/signup",
                 "/api/v1/chats/**"
-            ).permitAll()
+            ).permitAll() // 인증 없이 접근 허용
+            .requestMatchers(
+                "/api/v1/auth/logout",
+                "/api/v1/sellers/register"
+            ).authenticated()
+            .requestMatchers(
+                "/api/v1/sellers/**"
+            ).hasRole("SELLER")
 
-            // 그 외의 다른 모든 요청은 인증을 거쳐야 함
-            .anyRequest().authenticated()
-        );
+            // SecurityTest용 엔드포인트
+            .requestMatchers("/api/v1/health/public").permitAll()
+            .requestMatchers("/api/v1/health/user").hasRole("USER")
+            .requestMatchers("/api/v1/health/seller").hasRole("SELLER")
+            .requestMatchers("/api/v1/health/admin").hasRole("ADMIN")
+
+            .anyRequest().authenticated() // 그 외의 다른 모든 요청은 인증을 거쳐야 함
+        )
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(jwtExceptionFilter, JwtAuthenticationFilter.class);
 
     return http.build();
   }
@@ -42,4 +70,12 @@ public class SecurityConfig {
     return new BCryptPasswordEncoder();
   }
 
+  @Bean
+  public RoleHierarchy roleHierarchy() {
+    return RoleHierarchyImpl.fromHierarchy(
+        "ROLE_ADMIN > ROLE_USER_SELLER\n" +
+            "ROLE_USER_SELLER > ROLE_USER\n" +
+            "ROLE_USER_SELLER > ROLE_SELLER"
+    );
+  }
 }
