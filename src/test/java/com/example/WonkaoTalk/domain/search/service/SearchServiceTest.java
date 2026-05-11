@@ -12,8 +12,8 @@ import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
-import com.example.WonkaoTalk.domain.product.repo.CategoryRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductRepository;
+import com.example.WonkaoTalk.domain.product.repo.CategoryRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
 import com.example.WonkaoTalk.domain.search.dto.SearchRequest;
 import com.example.WonkaoTalk.domain.search.dto.SearchResponse;
 import java.time.LocalDateTime;
@@ -35,10 +35,10 @@ import org.mockito.quality.Strictness;
 class SearchServiceTest {
 
   @Mock
-  private ProductRepository productRepository;
+  private ProductRepo productRepository;
 
   @Mock
-  private CategoryRepository categoryRepository;
+  private CategoryRepo categoryRepository;
 
   @InjectMocks
   private SearchService searchService;
