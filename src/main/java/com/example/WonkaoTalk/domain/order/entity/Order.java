@@ -55,4 +55,23 @@ public class Order {
   @Column(name = "title")
   // 주문 명 (xx외 2건)
   private String orderTitle;
+
+  public static Order createOrder(
+      String orderNumber,
+      Long userId,
+      Integer originalAmount,
+      Integer discountAmount,
+      Integer finalAmount,
+      String orderTitle
+  ) {
+    Order order = new Order();
+    order.orderNumber = orderNumber;
+    order.userId = userId;
+    order.orderStatus = OrderStatus.CREATED;
+    order.originalAmount = originalAmount;
+    order.discountAmount = discountAmount;
+    order.finalAmount = finalAmount;
+    order.orderTitle = orderTitle;
+    return order;
+  }
 }
