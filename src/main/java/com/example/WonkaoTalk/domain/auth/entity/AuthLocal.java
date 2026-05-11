@@ -57,6 +57,9 @@ public class AuthLocal {
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
 
+  @Column(name = "deleted_at")
+  private LocalDateTime deletedAt;
+
   public void anonymize() {
     this.email = UUID.randomUUID().toString() + "@deleted.email";
     this.passwordHash = "deleted_password";

@@ -50,7 +50,6 @@ public class UserService {
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
     user.anonymize();
-
     userRepo.delete(user);
   }
 

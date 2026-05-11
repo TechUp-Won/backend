@@ -82,7 +82,7 @@ public class SellerService {
         .orElseThrow(() -> new BusinessException(ErrorCode.SELLER_NOT_FOUND));
 
     seller.anonymize();
-
+    
     sellerRepo.delete(seller);
   }
 
