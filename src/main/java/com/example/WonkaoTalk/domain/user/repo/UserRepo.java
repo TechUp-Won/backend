@@ -9,5 +9,5 @@ public interface UserRepo extends JpaRepository<User, Long> {
 
   Optional<User> findByAuth(Auth auth);
 
-  Optional<User> findByAuth_Id(Long authId);
+  Optional<User> findByAuthId(Long authId);
 }

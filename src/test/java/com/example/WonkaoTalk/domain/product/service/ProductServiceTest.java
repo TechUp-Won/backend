@@ -287,7 +287,7 @@ class ProductServiceTest {
     when(variant.getName()).thenReturn("화이트 / M");
     when(variant.getStock()).thenReturn(50);
     when(variant.getStatus()).thenReturn(SaleStatus.ON_SALE);
-    when(productVariantRepository.findByProduct_Id(1L)).thenReturn(List.of(variant));
+    when(productVariantRepository.findByProductId(1L)).thenReturn(List.of(variant));
 
     ProductOption option1 = mock(ProductOption.class);
     when(option1.getId()).thenReturn(201L);
@@ -300,7 +300,7 @@ class ProductServiceTest {
     VariantOptionMap map2 = mock(VariantOptionMap.class);
     when(map2.getProductVariant()).thenReturn(variant);
     when(map2.getProductOption()).thenReturn(option2);
-    when(variantOptionMapRepository.findByProductVariant_IdIn(List.of(10L))).thenReturn(List.of(map1, map2));
+    when(variantOptionMapRepository.findByProductVariantIdIn(List.of(10L))).thenReturn(List.of(map1, map2));
 
     ProductDetailResponse response = productService.getProductDetail(1L);
 

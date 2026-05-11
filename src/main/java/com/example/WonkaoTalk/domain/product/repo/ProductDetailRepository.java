@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProductDetailRepository extends JpaRepository<ProductDetail, Long> {
 
-  Optional<ProductDetail> findFirstByProduct_Id(Long productId);
+  Optional<ProductDetail> findFirstByProductId(Long productId);
 }

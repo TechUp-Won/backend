@@ -43,7 +43,7 @@ public class CartService {
 
   public CartResponse getCart(Long authId) {
     Long userId = resolveUser(authId).getId();
-    Optional<Cart> cartOpt = cartRepository.findByUser_Id(userId);
+    Optional<Cart> cartOpt = cartRepository.findByUserId(userId);
 
     if (cartOpt.isEmpty()) {
       return CartResponse.builder()
@@ -115,7 +115,7 @@ public class CartService {
     }
 
     Optional<CartItem> existingItem =
-        cartItemRepository.findByCart_IdAndProductVariant_Id(cart.getId(), variant.getId());
+        cartItemRepository.findByCartIdAndProductVariantId(cart.getId(), variant.getId());
 
     CartItem cartItem;
     if (existingItem.isPresent()) {
@@ -211,7 +211,7 @@ public class CartService {
     }
 
     Optional<CartItem> duplicateOpt =
-        cartItemRepository.findByCart_IdAndProductVariant_Id(cartId, targetVariant.getId());
+        cartItemRepository.findByCartIdAndProductVariantId(cartId, targetVariant.getId());
 
     CartItem resultItem;
     boolean isMerged;
@@ -265,11 +265,11 @@ public class CartService {
   public CartDeleteResponse deleteFromCart(Long authId, List<Long> cartItemIds,
       boolean isAllDelete) {
     Long userId = resolveUser(authId).getId();
-    Cart cart = cartRepository.findByUser_Id(userId)
+    Cart cart = cartRepository.findByUserId(userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
     if (isAllDelete) {
-      cartItemRepository.deleteByCart_Id(cart.getId());
+      cartItemRepository.deleteByCartId(cart.getId());
       return CartDeleteResponse.builder().cartId(cart.getId()).build();
     }
 
@@ -277,17 +277,17 @@ public class CartService {
       throw new BusinessException(ErrorCode.BAD_REQUEST);
     }
 
-    int count = cartItemRepository.countByIdInAndCart_Id(cartItemIds, cart.getId());
+    int count = cartItemRepository.countByIdInAndCartId(cartItemIds, cart.getId());
     if (count != cartItemIds.size()) {
       throw new BusinessException(ErrorCode.NOT_FOUND);
     }
 
-    cartItemRepository.deleteAllByIdInAndCart_Id(cartItemIds, cart.getId());
+    cartItemRepository.deleteAllByIdInAndCartId(cartItemIds, cart.getId());
     return CartDeleteResponse.builder().cartId(cart.getId()).build();
   }
 
   private User resolveUser(Long authId) {
-    return userRepo.findByAuth_Id(authId)
+    return userRepo.findByAuthId(authId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
   }
 

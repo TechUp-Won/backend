@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface CartRepository extends JpaRepository<Cart, Long> {
 
-  Optional<Cart> findByUser_Id(Long userId);
+  Optional<Cart> findByUserId(Long userId);
 
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("SELECT c FROM Cart c WHERE c.user.id = :userId")

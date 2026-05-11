@@ -109,7 +109,7 @@ public class SearchService {
   private List<Long> getAllCategoryIds(Long categoryId) {
     List<Long> result = new ArrayList<>();
     result.add(categoryId);
-    categoryRepository.findByParentCategory_Id(categoryId)
+    categoryRepository.findByParentCategoryId(categoryId)
         .forEach(child -> result.add(child.getId()));
     return result;
   }

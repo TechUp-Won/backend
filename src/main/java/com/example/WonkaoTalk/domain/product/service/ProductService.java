@@ -112,7 +112,7 @@ public class ProductService {
       throw new BusinessException(ErrorCode.PROD_DELETED);
     }
 
-    List<ImageInfo> images = productImageRepository.findByProduct_IdOrderBySortOrderAsc(productId)
+    List<ImageInfo> images = productImageRepository.findByProductIdOrderBySortOrderAsc(productId)
         .stream()
         .map(img -> ImageInfo.builder()
             .url(img.getUrl())
@@ -120,14 +120,14 @@ public class ProductService {
             .build())
         .toList();
 
-    DetailInfo detail = productDetailRepository.findFirstByProduct_Id(productId)
+    DetailInfo detail = productDetailRepository.findFirstByProductId(productId)
         .map(d -> DetailInfo.builder().content(d.getContent()).build())
         .orElse(null);
 
-    List<ProductOptionGroup> groups = productOptionGroupRepository.findByProduct_Id(productId);
+    List<ProductOptionGroup> groups = productOptionGroupRepository.findByProductId(productId);
     List<Long> groupIds = groups.stream().map(ProductOptionGroup::getId).toList();
     Map<Long, List<ProductOption>> optionsByGroup = productOptionRepository
-        .findByProductOptionGroup_IdIn(groupIds)
+        .findByProductOptionGroupIdIn(groupIds)
         .stream()
         .collect(Collectors.groupingBy(opt -> opt.getProductOptionGroup().getId()));
 
@@ -135,10 +135,10 @@ public class ProductService {
         .map(group -> toOptionGroupInfo(group, optionsByGroup))
         .toList();
 
-    List<ProductVariant> variantList = productVariantRepository.findByProduct_Id(productId);
+    List<ProductVariant> variantList = productVariantRepository.findByProductId(productId);
     List<Long> variantIds = variantList.stream().map(ProductVariant::getId).toList();
     Map<Long, List<Long>> combinationIdsByVariant = variantOptionMapRepository
-        .findByProductVariant_IdIn(variantIds)
+        .findByProductVariantIdIn(variantIds)
         .stream()
         .collect(Collectors.groupingBy(
             map -> map.getProductVariant().getId(),
@@ -207,7 +207,7 @@ public class ProductService {
   private List<Long> getAllCategoryIds(Long categoryId) {
     List<Long> result = new ArrayList<>();
     result.add(categoryId);
-    categoryRepository.findByParentCategory_Id(categoryId)
+    categoryRepository.findByParentCategoryId(categoryId)
         .forEach(child -> result.add(child.getId()));
     return result;
   }
