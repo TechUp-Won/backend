@@ -127,9 +127,6 @@ public class ProductCreateService {
     }
 
     if (!hasOptions) {
-      if (request.stock() < 1) {
-        throw new BusinessException(ErrorCode.PROD_INVALID_QUANTITY);
-      }
       productVariantRepo.save(ProductVariant.builder()
           .product(product)
           .name("기본")
@@ -230,7 +227,7 @@ public class ProductCreateService {
     if (hasOptionGroups && request.stock() != null) {
       throw new BusinessException(ErrorCode.PROD_INVALID_STOCK_OPTION);
     }
-    if (!hasOptionGroups && request.stock() == null) {
+    if (!hasOptionGroups && (request.stock() == null || request.stock() < 1)) {
       throw new BusinessException(ErrorCode.PROD_INVALID_QUANTITY);
     }
   }
