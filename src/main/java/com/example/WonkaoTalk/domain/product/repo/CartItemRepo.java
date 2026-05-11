@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface CartItemRepository extends JpaRepository<CartItem, Long> {
+public interface CartItemRepo extends JpaRepository<CartItem, Long> {
 
   @Query("SELECT ci FROM CartItem ci JOIN FETCH ci.productVariant pv JOIN FETCH pv.product WHERE ci.cart.id = :cartId")
   List<CartItem> findAllWithVariantAndProductByCartId(@Param("cartId") Long cartId);
@@ -16,11 +16,18 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
   @Query("SELECT ci FROM CartItem ci JOIN FETCH ci.productVariant pv JOIN FETCH pv.product WHERE ci.id = :id")
   Optional<CartItem> findWithVariantAndProductById(@Param("id") Long id);
 
-  Optional<CartItem> findByCart_IdAndProductVariant_Id(Long cartId, Long variantId);
+  @Query("SELECT ci FROM CartItem ci JOIN FETCH ci.productVariant pv JOIN FETCH pv.product WHERE ci.id = :id AND ci.cart.user.id = :userId")
+  Optional<CartItem> findWithVariantAndProductByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
 
-  List<CartItem> findAllByIdInAndCart_Id(List<Long> ids, Long cartId);
+  Optional<CartItem> findByCartIdAndProductVariantId(Long cartId, Long variantId);
+
+  int countByIdInAndCartId(List<Long> ids, Long cartId);
+
+  @Modifying
+  @Query("DELETE FROM CartItem ci WHERE ci.id IN :ids AND ci.cart.id = :cartId")
+  void deleteAllByIdInAndCartId(@Param("ids") List<Long> ids, @Param("cartId") Long cartId);
 
   @Modifying
   @Query("DELETE FROM CartItem ci WHERE ci.cart.id = :cartId")
-  void deleteByCart_Id(@Param("cartId") Long cartId);
+  void deleteByCartId(@Param("cartId") Long cartId);
 }

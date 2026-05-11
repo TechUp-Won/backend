@@ -10,7 +10,7 @@ import com.example.WonkaoTalk.domain.product.entity.Category;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.enums.ProductSortType;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
-import com.example.WonkaoTalk.domain.product.repo.ProductRepository;
+import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
 import jakarta.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,7 +32,7 @@ class SearchRepositoryCustomImplTest {
   private EntityManager em;
 
   @Autowired
-  private ProductRepository productRepository;
+  private ProductRepo productRepository;
 
   private Category category;
 

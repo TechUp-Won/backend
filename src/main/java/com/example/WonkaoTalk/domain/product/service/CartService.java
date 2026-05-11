@@ -17,10 +17,12 @@ import com.example.WonkaoTalk.domain.product.entity.CartItem;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
-import com.example.WonkaoTalk.domain.product.repo.CartItemRepository;
-import com.example.WonkaoTalk.domain.product.repo.CartRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepository;
+import com.example.WonkaoTalk.domain.product.repo.CartItemRepo;
+import com.example.WonkaoTalk.domain.product.repo.CartRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepo;
+import com.example.WonkaoTalk.domain.user.entity.User;
+import com.example.WonkaoTalk.domain.user.repo.UserRepo;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -33,12 +35,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class CartService {
 
-  private final CartRepository cartRepository;
-  private final CartItemRepository cartItemRepository;
-  private final ProductRepository productRepository;
-  private final ProductVariantRepository productVariantRepository;
+  private final CartRepo cartRepository;
+  private final CartItemRepo cartItemRepository;
+  private final ProductRepo productRepository;
+  private final ProductVariantRepo productVariantRepository;
+  private final UserRepo userRepo;
 
-  public CartResponse getCart(Long userId) {
+  public CartResponse getCart(Long authId) {
+    Long userId = resolveUser(authId).getId();
     Optional<Cart> cartOpt = cartRepository.findByUserId(userId);
 
     if (cartOpt.isEmpty()) {
@@ -74,7 +78,7 @@ public class CartService {
   }
 
   @Transactional
-  public CartAddResponse addToCart(Long userId, CartAddRequest request) {
+  public CartAddResponse addToCart(Long authId, CartAddRequest request) {
     if (request.getProductId() == null || request.getVariantId() == null
         || request.getQuantity() == null || request.getQuantity() <= 0) {
       throw new BusinessException(ErrorCode.BAD_REQUEST);
@@ -94,13 +98,16 @@ public class CartService {
       throw new BusinessException(ErrorCode.PROD_VARIANT_UNAVAILABLE);
     }
 
+    User user = resolveUser(authId);
+    Long userId = user.getId();
+
     Cart cart;
     Optional<Cart> cartOpt = cartRepository.findByUserIdWithLock(userId);
     if (cartOpt.isPresent()) {
       cart = cartOpt.get();
     } else {
       try {
-        cart = cartRepository.save(Cart.builder().userId(userId).build());
+        cart = cartRepository.save(Cart.builder().user(user).build());
       } catch (DataIntegrityViolationException e) {
         cart = cartRepository.findByUserIdWithLock(userId)
             .orElseThrow(() -> new BusinessException(ErrorCode.SERVER_ERROR));
@@ -108,7 +115,7 @@ public class CartService {
     }
 
     Optional<CartItem> existingItem =
-        cartItemRepository.findByCart_IdAndProductVariant_Id(cart.getId(), variant.getId());
+        cartItemRepository.findByCartIdAndProductVariantId(cart.getId(), variant.getId());
 
     CartItem cartItem;
     if (existingItem.isPresent()) {
@@ -135,21 +142,16 @@ public class CartService {
   }
 
   @Transactional
-  public CartQuantityUpdateResponse updateCartItemQuantity(Long userId, Long cartItemId,
+  public CartQuantityUpdateResponse updateCartItemQuantity(Long authId, Long cartItemId,
       CartQuantityUpdateRequest request) {
     if (request.getQuantity() == null || request.getQuantity() <= 0) {
       throw new BusinessException(ErrorCode.PROD_INVALID_QUANTITY);
     }
 
-    CartItem cartItem = cartItemRepository.findWithVariantAndProductById(cartItemId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+    Long userId = resolveUser(authId).getId();
 
-    Cart cart = cartRepository.findByUserId(userId)
+    CartItem cartItem = cartItemRepository.findWithVariantAndProductByIdAndUserId(cartItemId, userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-
-    if (!cartItem.getCart().getId().equals(cart.getId())) {
-      throw new BusinessException(ErrorCode.FORBIDDEN);
-    }
 
     ProductVariant variant = cartItem.getProductVariant();
     if (variant.getStatus() != SaleStatus.ON_SALE || variant.getDeletedAt() != null) {
@@ -162,7 +164,7 @@ public class CartService {
 
     cartItem.updateQuantity(request.getQuantity());
 
-    List<CartItem> allItems = cartItemRepository.findAllWithVariantAndProductByCartId(cart.getId());
+    List<CartItem> allItems = cartItemRepository.findAllWithVariantAndProductByCartId(cartItem.getCart().getId());
     int originalTotal = calculateOriginalTotal(allItems);
     int discountTotal = calculateDiscountTotal(allItems);
 
@@ -188,21 +190,18 @@ public class CartService {
   }
 
   @Transactional
-  public CartOptionUpdateResponse updateCartItemOption(Long userId, Long cartItemId,
+  public CartOptionUpdateResponse updateCartItemOption(Long authId, Long cartItemId,
       CartOptionUpdateRequest request) {
     if (request.getVariantId() == null) {
       throw new BusinessException(ErrorCode.BAD_REQUEST);
     }
 
-    CartItem currentItem = cartItemRepository.findWithVariantAndProductById(cartItemId)
+    Long userId = resolveUser(authId).getId();
+
+    CartItem currentItem = cartItemRepository.findWithVariantAndProductByIdAndUserId(cartItemId, userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
-    Cart cart = cartRepository.findByUserId(userId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-
-    if (!currentItem.getCart().getId().equals(cart.getId())) {
-      throw new BusinessException(ErrorCode.FORBIDDEN);
-    }
+    Long cartId = currentItem.getCart().getId();
 
     ProductVariant targetVariant = productVariantRepository.findById(request.getVariantId())
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
@@ -212,7 +211,7 @@ public class CartService {
     }
 
     Optional<CartItem> duplicateOpt =
-        cartItemRepository.findByCart_IdAndProductVariant_Id(cart.getId(), targetVariant.getId());
+        cartItemRepository.findByCartIdAndProductVariantId(cartId, targetVariant.getId());
 
     CartItem resultItem;
     boolean isMerged;
@@ -236,7 +235,7 @@ public class CartService {
       isMerged = false;
     }
 
-    List<CartItem> allItems = cartItemRepository.findAllWithVariantAndProductByCartId(cart.getId());
+    List<CartItem> allItems = cartItemRepository.findAllWithVariantAndProductByCartId(cartId);
     int originalTotal = calculateOriginalTotal(allItems);
     int discountTotal = calculateDiscountTotal(allItems);
 
@@ -263,13 +262,14 @@ public class CartService {
   }
 
   @Transactional
-  public CartDeleteResponse deleteFromCart(Long userId, List<Long> cartItemIds,
+  public CartDeleteResponse deleteFromCart(Long authId, List<Long> cartItemIds,
       boolean isAllDelete) {
+    Long userId = resolveUser(authId).getId();
     Cart cart = cartRepository.findByUserId(userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
     if (isAllDelete) {
-      cartItemRepository.deleteByCart_Id(cart.getId());
+      cartItemRepository.deleteByCartId(cart.getId());
       return CartDeleteResponse.builder().cartId(cart.getId()).build();
     }
 
@@ -277,13 +277,19 @@ public class CartService {
       throw new BusinessException(ErrorCode.BAD_REQUEST);
     }
 
-    List<CartItem> items = cartItemRepository.findAllByIdInAndCart_Id(cartItemIds, cart.getId());
-    if (items.size() != cartItemIds.size()) {
+    int count = cartItemRepository.countByIdInAndCartId(cartItemIds, cart.getId());
+    if (count != cartItemIds.size()) {
       throw new BusinessException(ErrorCode.NOT_FOUND);
     }
 
-    cartItemRepository.deleteAll(items);
+    cartItemRepository.deleteAllByIdInAndCartId(cartItemIds, cart.getId());
     return CartDeleteResponse.builder().cartId(cart.getId()).build();
+  }
+
+  // TODO: CustomUserDetails에 userId 필드 추가 후 이 메서드 제거하고 authId 대신 userId를 직접 파라미터로 받도록 변경
+  private User resolveUser(Long authId) {
+    return userRepo.findByAuthId(authId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
   }
 
   private int calculateOriginalTotal(List<CartItem> items) {
