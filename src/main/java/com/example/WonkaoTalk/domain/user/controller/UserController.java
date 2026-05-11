@@ -14,6 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -37,9 +38,12 @@ public class UserController {
 
   @DeleteMapping("/withdraw")
   public ResponseEntity<ApiResponse<Void>> withdraw(
-      @AuthenticationPrincipal CustomUserDetails userDetails
+      @AuthenticationPrincipal CustomUserDetails userDetails,
+      @RequestHeader("Authorization") String authHeader
   ) {
-    accountWithdraw.withdrawUser(userDetails.getAuthId());
+    String accessToken = authHeader.substring(7);
+
+    accountWithdraw.withdrawUser(userDetails.getAuthId(), userDetails.getUsername(), accessToken);
 
     return ResponseEntity.ok(ApiResponse.success("회원 탈퇴가 완료되었습니다.", null));
   }

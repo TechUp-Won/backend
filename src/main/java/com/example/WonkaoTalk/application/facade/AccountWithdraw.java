@@ -16,21 +16,22 @@ public class AccountWithdraw {
   private final AuthService authService;
 
   @Transactional
-  public void withdrawUser(Long authId) {
+  public void withdrawUser(Long authId, String email, String accessToken) {
     userService.withdrawUser(authId);
 
     if (!sellerService.existsActiveSeller(authId)) {
       authService.withdraw(authId);
     }
+    authService.invalidateToken(email, accessToken);
   }
 
   @Transactional
-  public void withdrawSeller(Long authId) {
+  public void withdrawSeller(Long authId, String email, String accessToken) {
     sellerService.withdrawSeller(authId);
 
     if (!userService.existsActiveUser(authId)) {
       authService.withdraw(authId);
     }
+    authService.invalidateToken(email, accessToken);
   }
-
 }
