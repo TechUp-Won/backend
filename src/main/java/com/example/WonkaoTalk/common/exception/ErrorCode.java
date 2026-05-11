@@ -23,6 +23,7 @@ public enum ErrorCode {
   AUTH_EXPIRED_TOKEN(401, "AUTH-EXPIRED-TOKEN", "토큰이 만료되었습니다."),
   AUTH_INVALID_TOKEN(401, "AUTH-INVALID-TOKEN", "유효하지 않은 토큰입니다."),
   AUTH_LOGGED_OUT_TOKEN(401, "AUTH-LOGGED-OUT-TOKEN", "이미 로그아웃 된 토큰입니다."),
+  AUTH_NOT_FOUND(404, "AUTH-NOT-FOUND", "회원 정보를 찾을 수 없습니다."),
 
   // 유저 도메인
   USER_NOT_FOUND(404, "USER-NOT-FOUND-ID", "해당 사용자 ID를 찾을 수 없습니다."),

@@ -117,6 +117,14 @@ public class AuthService {
     redisService.setValues("BlackList:" + accessToken, "logout", Duration.ofMillis(expiration));
   }
 
+  @Transactional
+  public void withdraw(Long authId) {
+    Auth auth = authRepo.findById(authId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_NOT_FOUND));
+
+    authRepo.delete(auth);
+  }
+
   private void saveLoginHistory(Auth auth, LoginStatus status, HttpServletRequest request) {
     String userAgent = request.getHeader("User-Agent");
     String ipAddress = request.getHeader("X-Forwarded-For");

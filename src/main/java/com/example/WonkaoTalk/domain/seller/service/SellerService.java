@@ -30,7 +30,7 @@ public class SellerService {
     if (!request.password().equals(request.passwordCheck())) {
       throw new BusinessException(ErrorCode.AUTH_MISMATCH_PASSWORD);
     }
-    
+
     if (sellerRepo.existsByBuzNo(request.buzNo())) {
       throw new BusinessException(ErrorCode.SELLER_DUPLICATE_BUZNO);
     }
@@ -75,5 +75,18 @@ public class SellerService {
 
     return SellerSignUpResponse.of(seller, auth.getRole());
   }
+
+  @Transactional
+  public void withdrawSeller(Long authId) {
+    Seller seller = sellerRepo.findByAuthId(authId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.SELLER_NOT_FOUND));
+    sellerRepo.delete(seller);
+  }
+
+  @Transactional(readOnly = true)
+  public boolean existsActiveSeller(Long authId) {
+    return sellerRepo.existsByAuthId(authId);
+  }
+
 
 }
