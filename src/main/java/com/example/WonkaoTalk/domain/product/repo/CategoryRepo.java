@@ -4,7 +4,7 @@ import com.example.WonkaoTalk.domain.product.entity.Category;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface CategoryRepository extends JpaRepository<Category, Long> {
+public interface CategoryRepo extends JpaRepository<Category, Long> {
 
   List<Category> findByParentCategoryId(Long parentId);
 }

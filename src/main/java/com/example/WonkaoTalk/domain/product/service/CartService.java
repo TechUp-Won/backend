@@ -17,10 +17,10 @@ import com.example.WonkaoTalk.domain.product.entity.CartItem;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
-import com.example.WonkaoTalk.domain.product.repo.CartItemRepository;
-import com.example.WonkaoTalk.domain.product.repo.CartRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepository;
+import com.example.WonkaoTalk.domain.product.repo.CartItemRepo;
+import com.example.WonkaoTalk.domain.product.repo.CartRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepo;
 import com.example.WonkaoTalk.domain.user.entity.User;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
 import java.util.List;
@@ -35,10 +35,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class CartService {
 
-  private final CartRepository cartRepository;
-  private final CartItemRepository cartItemRepository;
-  private final ProductRepository productRepository;
-  private final ProductVariantRepository productVariantRepository;
+  private final CartRepo cartRepository;
+  private final CartItemRepo cartItemRepository;
+  private final ProductRepo productRepository;
+  private final ProductVariantRepo productVariantRepository;
   private final UserRepo userRepo;
 
   public CartResponse getCart(Long authId) {

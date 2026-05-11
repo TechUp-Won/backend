@@ -16,14 +16,14 @@ import com.example.WonkaoTalk.domain.product.entity.ProductOption;
 import com.example.WonkaoTalk.domain.product.entity.ProductOptionGroup;
 import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
 import com.example.WonkaoTalk.domain.product.enums.ProductSortType;
-import com.example.WonkaoTalk.domain.product.repo.CategoryRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductDetailRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductImageRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductOptionGroupRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductOptionRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepository;
-import com.example.WonkaoTalk.domain.product.repo.VariantOptionMapRepository;
+import com.example.WonkaoTalk.domain.product.repo.CategoryRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductDetailRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductImageRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductOptionGroupRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductOptionRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepo;
+import com.example.WonkaoTalk.domain.product.repo.VariantOptionMapRepo;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,14 +38,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ProductService {
 
-  private final ProductRepository productRepository;
-  private final CategoryRepository categoryRepository;
-  private final ProductImageRepository productImageRepository;
-  private final ProductDetailRepository productDetailRepository;
-  private final ProductOptionGroupRepository productOptionGroupRepository;
-  private final ProductOptionRepository productOptionRepository;
-  private final ProductVariantRepository productVariantRepository;
-  private final VariantOptionMapRepository variantOptionMapRepository;
+  private final ProductRepo productRepository;
+  private final CategoryRepo categoryRepository;
+  private final ProductImageRepo productImageRepository;
+  private final ProductDetailRepo productDetailRepository;
+  private final ProductOptionGroupRepo productOptionGroupRepository;
+  private final ProductOptionRepo productOptionRepository;
+  private final ProductVariantRepo productVariantRepository;
+  private final VariantOptionMapRepo variantOptionMapRepository;
 
   public ProductListResponse getProductList(ProductListRequest request) {
     int size = request.getSize() != null ? request.getSize() : 20;

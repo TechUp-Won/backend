@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface CartItemRepository extends JpaRepository<CartItem, Long> {
+public interface CartItemRepo extends JpaRepository<CartItem, Long> {
 
   @Query("SELECT ci FROM CartItem ci JOIN FETCH ci.productVariant pv JOIN FETCH pv.product WHERE ci.cart.id = :cartId")
   List<CartItem> findAllWithVariantAndProductByCartId(@Param("cartId") Long cartId);

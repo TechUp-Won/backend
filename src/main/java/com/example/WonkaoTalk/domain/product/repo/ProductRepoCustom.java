@@ -4,7 +4,7 @@ import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.enums.ProductSortType;
 import java.util.List;
 
-public interface ProductRepositoryCustom {
+public interface ProductRepoCustom {
 
   List<Product> findWithFilters(
       List<Long> categoryIds,

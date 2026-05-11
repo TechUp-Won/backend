@@ -24,10 +24,10 @@ import com.example.WonkaoTalk.domain.product.entity.CartItem;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
-import com.example.WonkaoTalk.domain.product.repo.CartItemRepository;
-import com.example.WonkaoTalk.domain.product.repo.CartRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepository;
+import com.example.WonkaoTalk.domain.product.repo.CartItemRepo;
+import com.example.WonkaoTalk.domain.product.repo.CartRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepo;
 import com.example.WonkaoTalk.domain.user.entity.User;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
 import java.time.LocalDateTime;
@@ -49,13 +49,13 @@ import org.springframework.dao.DataIntegrityViolationException;
 class CartServiceTest {
 
   @Mock
-  private CartRepository cartRepository;
+  private CartRepo cartRepository;
   @Mock
-  private CartItemRepository cartItemRepository;
+  private CartItemRepo cartItemRepository;
   @Mock
-  private ProductRepository productRepository;
+  private ProductRepo productRepository;
   @Mock
-  private ProductVariantRepository productVariantRepository;
+  private ProductVariantRepo productVariantRepository;
   @Mock
   private UserRepo userRepo;
 

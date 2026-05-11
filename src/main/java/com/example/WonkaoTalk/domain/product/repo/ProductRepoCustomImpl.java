@@ -19,7 +19,7 @@ import java.util.List;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class ProductRepositoryCustomImpl implements ProductRepositoryCustom {
+public class ProductRepoCustomImpl implements ProductRepoCustom {
 
   @PersistenceContext
   private EntityManager em;
