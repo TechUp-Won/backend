@@ -20,13 +20,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 @DataJpaTest
 @Import(JpaConfig.class)
-class ChatRoomRepositoryTest {
+class ChatRoomRepoTest {
 
   @Autowired
-  private ChatRoomRepository chatRoomRepository;
+  private ChatRoomRepo chatRoomRepo;
 
   @Autowired
-  private ChatParticipantRepository chatParticipantRepository;
+  private ChatParticipantRepo chatParticipantRepo;
 
   @Test
   @DisplayName("마지막 메시지 시간(lastMessageAt) 기준으로 내림차순 정렬되어야 한다")
@@ -52,7 +52,7 @@ class ChatRoomRepositoryTest {
     joinRoom(room1, receiverId);
 
     // when
-    Slice<ChatParticipant> result = chatParticipantRepository.findMyChatRooms(
+    Slice<ChatParticipant> result = chatParticipantRepo.findMyChatRooms(
         myId, null, null, PageRequest.of(0, 10)
     );
 
@@ -82,7 +82,7 @@ class ChatRoomRepositoryTest {
     joinRoom(room3, myId);
 
     // when
-    Slice<ChatParticipant> result = chatParticipantRepository.findMyChatRooms(
+    Slice<ChatParticipant> result = chatParticipantRepo.findMyChatRooms(
         myId,
         room3.getLastMessageAt(),
         room3.getId(),
@@ -97,18 +97,18 @@ class ChatRoomRepositoryTest {
 
   // -- 헬퍼 메서드 --
   private ChatRoom createRoom(String title, LocalDateTime createdAt, LocalDateTime lastAt) {
-    ChatRoom room = chatRoomRepository.save(ChatRoom.builder()
+    ChatRoom room = chatRoomRepo.save(ChatRoom.builder()
         .roomType(RoomType.SINGLE)
         .participantCount(2)
         .lastMessageAt(lastAt)
         .build());
 
     ReflectionTestUtils.setField(room, "createdAt", createdAt);
-    return chatRoomRepository.save(room);
+    return chatRoomRepo.save(room);
   }
 
   private void joinRoom(ChatRoom room, Long userId) {
-    chatParticipantRepository.save(ChatParticipant.builder()
+    chatParticipantRepo.save(ChatParticipant.builder()
         .chatRoom(room)
         .userId(userId)
         .roomTitle("임시방제목")

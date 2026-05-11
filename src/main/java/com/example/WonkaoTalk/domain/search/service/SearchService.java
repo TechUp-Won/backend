@@ -4,8 +4,8 @@ import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.enums.ProductSortType;
-import com.example.WonkaoTalk.domain.product.repo.CategoryRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductRepository;
+import com.example.WonkaoTalk.domain.product.repo.CategoryRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
 import com.example.WonkaoTalk.domain.search.dto.SearchRequest;
 import com.example.WonkaoTalk.domain.search.dto.SearchResponse;
 import com.example.WonkaoTalk.domain.search.dto.SearchResponse.ProductResult;
@@ -22,8 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class SearchService {
 
-  private final ProductRepository productRepository;
-  private final CategoryRepository categoryRepository;
+  private final ProductRepo productRepository;
+  private final CategoryRepo categoryRepository;
 
   public SearchResponse search(SearchRequest request) {
     if (request.keyword() == null || request.keyword().isBlank()) {
@@ -109,7 +109,7 @@ public class SearchService {
   private List<Long> getAllCategoryIds(Long categoryId) {
     List<Long> result = new ArrayList<>();
     result.add(categoryId);
-    categoryRepository.findByParentCategory_Id(categoryId)
+    categoryRepository.findByParentCategoryId(categoryId)
         .forEach(child -> result.add(child.getId()));
     return result;
   }

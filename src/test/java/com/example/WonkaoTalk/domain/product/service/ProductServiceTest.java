@@ -17,14 +17,14 @@ import com.example.WonkaoTalk.domain.product.entity.ProductOption;
 import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
 import com.example.WonkaoTalk.domain.product.entity.VariantOptionMap;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
-import com.example.WonkaoTalk.domain.product.repo.CategoryRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductDetailRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductImageRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductOptionGroupRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductOptionRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductRepository;
-import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepository;
-import com.example.WonkaoTalk.domain.product.repo.VariantOptionMapRepository;
+import com.example.WonkaoTalk.domain.product.repo.CategoryRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductDetailRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductImageRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductOptionGroupRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductOptionRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepo;
+import com.example.WonkaoTalk.domain.product.repo.VariantOptionMapRepo;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -44,28 +44,28 @@ import org.mockito.quality.Strictness;
 class ProductServiceTest {
 
   @Mock
-  private ProductRepository productRepository;
+  private ProductRepo productRepository;
 
   @Mock
-  private CategoryRepository categoryRepository;
+  private CategoryRepo categoryRepository;
 
   @Mock
-  private ProductImageRepository productImageRepository;
+  private ProductImageRepo productImageRepository;
 
   @Mock
-  private ProductDetailRepository productDetailRepository;
+  private ProductDetailRepo productDetailRepository;
 
   @Mock
-  private ProductOptionGroupRepository productOptionGroupRepository;
+  private ProductOptionGroupRepo productOptionGroupRepository;
 
   @Mock
-  private ProductOptionRepository productOptionRepository;
+  private ProductOptionRepo productOptionRepository;
 
   @Mock
-  private ProductVariantRepository productVariantRepository;
+  private ProductVariantRepo productVariantRepository;
 
   @Mock
-  private VariantOptionMapRepository variantOptionMapRepository;
+  private VariantOptionMapRepo variantOptionMapRepository;
 
   @InjectMocks
   private ProductService productService;
@@ -287,7 +287,7 @@ class ProductServiceTest {
     when(variant.getName()).thenReturn("화이트 / M");
     when(variant.getStock()).thenReturn(50);
     when(variant.getStatus()).thenReturn(SaleStatus.ON_SALE);
-    when(productVariantRepository.findByProduct_Id(1L)).thenReturn(List.of(variant));
+    when(productVariantRepository.findByProductId(1L)).thenReturn(List.of(variant));
 
     ProductOption option1 = mock(ProductOption.class);
     when(option1.getId()).thenReturn(201L);
@@ -300,7 +300,7 @@ class ProductServiceTest {
     VariantOptionMap map2 = mock(VariantOptionMap.class);
     when(map2.getProductVariant()).thenReturn(variant);
     when(map2.getProductOption()).thenReturn(option2);
-    when(variantOptionMapRepository.findByProductVariant_IdIn(List.of(10L))).thenReturn(List.of(map1, map2));
+    when(variantOptionMapRepository.findByProductVariantIdIn(List.of(10L))).thenReturn(List.of(map1, map2));
 
     ProductDetailResponse response = productService.getProductDetail(1L);
 
