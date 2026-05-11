@@ -32,19 +32,21 @@ public class SecurityConfig {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
                 "/api/v1/auth/check-email",
+                "/api/v1/auth/login",
                 "/api/v1/users/signup",
                 "/api/v1/sellers/signup",
                 "/api/v1/products",
                 "/api/v1/products/*",
                 "/api/v1/search",
-                "/api/v1/auth/login",
-                "/api/v1/sellers/signup",
                 "/api/v1/chats/**"
             ).permitAll() // 인증 없이 접근 허용
             .requestMatchers(
                 "/api/v1/auth/logout",
                 "/api/v1/sellers/register"
             ).authenticated()
+            .requestMatchers(
+                "/api/v1/users/**"
+            ).hasRole("USER")
             .requestMatchers(
                 "/api/v1/sellers/**"
             ).hasRole("SELLER")

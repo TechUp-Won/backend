@@ -16,11 +16,14 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -31,6 +34,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
+@SQLDelete(sql = "UPDATE users SET deleted_at = NOW() WHERE id = ?")
+@SQLRestriction("deleted_at IS NULL")
 @Table(name = "users")
 public class User {
 
@@ -74,4 +79,17 @@ public class User {
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
 
+  @Column(name = "deleted_at")
+  private LocalDateTime deletedAt;
+
+  public void withdraw() {
+    this.nickname = "탈퇴한사용자" + UUID.randomUUID().toString().substring(0, 8);
+    this.image = "http://defaultImage.png";
+    this.birthDate = null;
+    this.name = "Unknown";
+    this.phone = "000-0000-" + UUID.randomUUID().toString().substring(0, 4);
+    this.gender = Gender.NONE;
+    this.marketingAgree = false;
+    this.deletedAt = LocalDateTime.now();
+  }
 }

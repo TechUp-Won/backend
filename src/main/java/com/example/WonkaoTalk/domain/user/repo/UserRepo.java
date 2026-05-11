@@ -10,4 +10,6 @@ public interface UserRepo extends JpaRepository<User, Long> {
   Optional<User> findByAuth(Auth auth);
 
   Optional<User> findByAuthId(Long authId);
+
+  boolean existsByAuthId(Long authId);
 }
