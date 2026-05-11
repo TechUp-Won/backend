@@ -16,6 +16,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -81,4 +82,13 @@ public class User {
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
 
+  public void anonymize() {
+    this.nickname = "탈퇴한사용자" + UUID.randomUUID().toString().substring(0, 8);
+    this.image = "http://defaultImage.png";
+    this.birthDate = null;
+    this.name = "Unknown";
+    this.phone = "000-0000-" + UUID.randomUUID().toString().substring(0, 4);
+    this.gender = Gender.NONE;
+    this.marketingAgree = false;
+  }
 }

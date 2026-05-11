@@ -75,4 +75,8 @@ public class Auth {
   public void updateRole(Role newRole) {
     this.role = newRole;
   }
+
+  public void anonymize() {
+    this.status = AccountStatus.DELETED;
+  }
 }

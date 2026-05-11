@@ -80,6 +80,9 @@ public class SellerService {
   public void withdrawSeller(Long authId) {
     Seller seller = sellerRepo.findByAuthId(authId)
         .orElseThrow(() -> new BusinessException(ErrorCode.SELLER_NOT_FOUND));
+
+    seller.anonymize();
+
     sellerRepo.delete(seller);
   }
 

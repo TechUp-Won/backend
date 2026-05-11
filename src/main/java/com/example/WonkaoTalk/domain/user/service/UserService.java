@@ -43,11 +43,14 @@ public class UserService {
 
     return UserSignUpResponse.of(auth, user);
   }
-  
+
   @Transactional
   public void withdrawUser(Long authId) {
     User user = userRepo.findByAuthId(authId)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+    user.anonymize();
+
     userRepo.delete(user);
   }
 

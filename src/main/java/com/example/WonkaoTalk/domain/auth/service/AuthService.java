@@ -121,7 +121,13 @@ public class AuthService {
   public void withdraw(Long authId) {
     Auth auth = authRepo.findById(authId)
         .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_NOT_FOUND));
+    
+    authLocalRepo.findByAuth(auth).ifPresent(authLocal -> {
+      authLocal.anonymize();
+      authLocalRepo.delete(authLocal);
+    });
 
+    auth.anonymize();
     authRepo.delete(auth);
   }
 

@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -61,4 +62,10 @@ public class Seller {
 
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
+
+  public void anonymize() {
+    this.buzNo = UUID.randomUUID().toString().substring(0, 10);
+    this.name = "Unknown";
+    this.phone = "000-0000-0000";
+  }
 }
