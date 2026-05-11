@@ -25,7 +25,7 @@ public class SecurityConfig {
             .requestMatchers(
                 "/api/v1/auth/check-email",
                 "/api/v1/auth/signup",
-                "/chats/**"
+                "/api/v1/chats/**"
             ).permitAll()
 
             // 그 외의 다른 모든 요청은 인증을 거쳐야 함

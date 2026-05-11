@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/chats")
+@RequestMapping("/api/v1/chats")
 public class ChatMessageController {
 
   private final ChatMessageService chatMessageService;
@@ -46,7 +46,7 @@ public class ChatMessageController {
   ) {
     // TODO 연동 전 임시로 ID넣어둠
     Long myId = 1L;
-    
+
     ChatMessageListResponse data = chatMessageService.getMessageList(myId, chatRoomId, cursorId,
         size);
 
