@@ -8,8 +8,8 @@ import lombok.Getter;
 public enum ErrorCode {
   // 공통
   BAD_REQUEST(400, "SYS-INVALID-INPUT", "입력값이 올바르지 않습니다."),
-  UNAUTHORIZED(401, "AUTH-EXPIRED-TOKEN", "토큰이 만료되었습니다."),
-  FORBIDDEN(403, "AUTH-FORBIDDEN-ACCESS", "권한이 없습니다."),
+  UNAUTHORIZED(401, "SYS-EXPIRED-TOKEN", "토큰이 만료되었습니다."),
+  FORBIDDEN(403, "SYS-FORBIDDEN-ACCESS", "권한이 없습니다."),
   NOT_FOUND(404, "SYS-NOT-FOUND", "데이터가 없습니다."),
   SERVER_ERROR(500, "SYS-INTERNAL-ERROR", "서버 내부 에러가 발생했습니다."),
   SERVICE_UNAVAILABLE(503, "SYS-SERVICE-UNAVAILABLE", "서버 점검 중입니다."),
