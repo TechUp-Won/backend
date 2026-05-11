@@ -49,6 +49,9 @@ dependencies {
     implementation 'software.amazon.awssdk:s3'
     implementation 'software.amazon.awssdk:s3-transfer-manager'
 
+    // --- XSS Sanitizer
+    implementation 'org.jsoup:jsoup:1.18.3'
+
     // --- Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
