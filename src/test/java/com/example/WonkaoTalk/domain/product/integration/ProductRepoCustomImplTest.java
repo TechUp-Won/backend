@@ -3,11 +3,14 @@ package com.example.WonkaoTalk.domain.product.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.WonkaoTalk.config.TestContainerConfig;
+import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.product.entity.Category;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.enums.ProductSortType;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
 import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
+import com.example.WonkaoTalk.domain.seller.entity.Seller;
+import com.example.WonkaoTalk.domain.store.entity.Store;
 import jakarta.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,10 +35,14 @@ class ProductRepoCustomImplTest {
   private ProductRepo productRepository;
 
   private Category category;
+  private Store store1;
+  private Store store2;
 
   @BeforeEach
   void setUp() {
     category = saveCategory("테스트카테고리");
+    store1 = saveStore("스토어1");
+    store2 = saveStore("스토어2");
   }
 
   // ── 기본 필터 ────────────────────────────────────────────────────────────────
@@ -43,8 +50,8 @@ class ProductRepoCustomImplTest {
   @Test
   @DisplayName("deletedAt이 있는 상품은 조회되지 않는다")
   void excludesDeletedProducts() {
-    saveProduct(1L, category, 10000, null, 0, null);
-    saveProduct(1L, category, 8000, null, 0, LocalDateTime.now()); // 삭제됨
+    saveProduct(store1, category, 10000, null, 0, null);
+    saveProduct(store1, category, 8000, null, 0, LocalDateTime.now()); // 삭제됨
     flushAndClear();
 
     List<Product> result = productRepository.findWithFilters(
@@ -57,15 +64,15 @@ class ProductRepoCustomImplTest {
   @Test
   @DisplayName("storeId로 필터링된다")
   void filtersProductsByStoreId() {
-    saveProduct(1L, category, 10000, null, 0, null);
-    saveProduct(2L, category, 8000, null, 0, null);
+    saveProduct(store1, category, 10000, null, 0, null);
+    saveProduct(store2, category, 8000, null, 0, null);
     flushAndClear();
 
     List<Product> result = productRepository.findWithFilters(
-        null, 1L, null, null, ProductSortType.POPULAR, null, null, 10);
+        null, store1.getId(), null, null, ProductSortType.POPULAR, null, null, 10);
 
     assertThat(result).hasSize(1);
-    assertThat(result.get(0).getStoreId()).isEqualTo(1L);
+    assertThat(result.get(0).getStore().getId()).isEqualTo(store1.getId());
   }
 
   // ── 가격 필터 (할인가 기준) ──────────────────────────────────────────────────
@@ -74,9 +81,9 @@ class ProductRepoCustomImplTest {
   @DisplayName("minPrice 필터는 discountedPrice 기준으로 동작한다")
   void filtersProductsByMinDiscountedPrice() {
     // discountedPrice = 10000 * (100 - 20) / 100 = 8000
-    saveProduct(1L, category, 10000, 20, 0, null);
+    saveProduct(store1, category, 10000, 20, 0, null);
     // discountedPrice = 10000 * (100 - 0) / 100 = 10000
-    saveProduct(1L, category, 10000, null, 0, null);
+    saveProduct(store1, category, 10000, null, 0, null);
     flushAndClear();
 
     // minPrice=9000 → discountedPrice 10000짜리만 해당
@@ -91,9 +98,9 @@ class ProductRepoCustomImplTest {
   @DisplayName("maxPrice 필터는 discountedPrice 기준으로 동작한다")
   void filtersProductsByMaxDiscountedPrice() {
     // discountedPrice = 10000 * (100 - 20) / 100 = 8000
-    saveProduct(1L, category, 10000, 20, 0, null);
+    saveProduct(store1, category, 10000, 20, 0, null);
     // discountedPrice = 10000 * (100 - 0) / 100 = 10000
-    saveProduct(1L, category, 10000, null, 0, null);
+    saveProduct(store1, category, 10000, null, 0, null);
     flushAndClear();
 
     // maxPrice=9000 → discountedPrice 8000짜리만 해당
@@ -110,9 +117,9 @@ class ProductRepoCustomImplTest {
   @DisplayName("PRICE_ASC 정렬은 discountedPrice 오름차순이다")
   void sortsByDiscountedPriceAscending() {
     // discountedPrice: 7000, 5000, 7200
-    saveProduct(1L, category, 10000, 30, 0, null); // 10000 * 70 / 100 = 7000
-    saveProduct(1L, category, 5000, null, 0, null); // 5000
-    saveProduct(1L, category, 8000, 10, 0, null);  // 8000 * 90 / 100 = 7200
+    saveProduct(store1, category, 10000, 30, 0, null); // 10000 * 70 / 100 = 7000
+    saveProduct(store1, category, 5000, null, 0, null); // 5000
+    saveProduct(store1, category, 8000, 10, 0, null);  // 8000 * 90 / 100 = 7200
     flushAndClear();
 
     List<Product> result = productRepository.findWithFilters(
@@ -128,9 +135,9 @@ class ProductRepoCustomImplTest {
   @DisplayName("PRICE_DESC 정렬은 discountedPrice 내림차순이다")
   void sortsByDiscountedPriceDescending() {
     // discountedPrice: 7000, 5000, 7200
-    saveProduct(1L, category, 10000, 30, 0, null); // 7000
-    saveProduct(1L, category, 5000, null, 0, null); // 5000
-    saveProduct(1L, category, 8000, 10, 0, null);  // 7200
+    saveProduct(store1, category, 10000, 30, 0, null); // 7000
+    saveProduct(store1, category, 5000, null, 0, null); // 5000
+    saveProduct(store1, category, 8000, 10, 0, null);  // 7200
     flushAndClear();
 
     List<Product> result = productRepository.findWithFilters(
@@ -147,9 +154,9 @@ class ProductRepoCustomImplTest {
   @Test
   @DisplayName("PRICE_ASC 커서 이후의 항목만 조회된다")
   void returnsOnlyItemsAfterCursor_whenSortByPriceAsc() {
-    saveProduct(1L, category, 5000, null, 0, null);  // discountedPrice=5000
-    Product mid = saveProduct(1L, category, 8000, null, 0, null);  // discountedPrice=8000
-    saveProduct(1L, category, 12000, null, 0, null); // discountedPrice=12000
+    saveProduct(store1, category, 5000, null, 0, null);  // discountedPrice=5000
+    Product mid = saveProduct(store1, category, 8000, null, 0, null);  // discountedPrice=8000
+    saveProduct(store1, category, 12000, null, 0, null); // discountedPrice=12000
     Long midId = mid.getId();
     flushAndClear();
 
@@ -164,9 +171,9 @@ class ProductRepoCustomImplTest {
   @Test
   @DisplayName("동일한 discountedPrice 내에서 id 내림차순으로 tiebreak된다")
   void tiebreaksById_whenDiscountedPriceIsEqual() {
-    Product p1 = saveProduct(1L, category, 5000, null, 0, null);
-    Product p2 = saveProduct(1L, category, 5000, null, 0, null);
-    saveProduct(1L, category, 5000, null, 0, null);
+    Product p1 = saveProduct(store1, category, 5000, null, 0, null);
+    Product p2 = saveProduct(store1, category, 5000, null, 0, null);
+    saveProduct(store1, category, 5000, null, 0, null);
     Long p2Id = p2.getId();
     flushAndClear();
 
@@ -188,11 +195,33 @@ class ProductRepoCustomImplTest {
     return cat;
   }
 
-  private Product saveProduct(Long storeId, Category cat, int price, Integer discountRate,
+  private Store saveStore(String name) {
+    Auth auth = Auth.builder().build();
+    em.persist(auth);
+
+    Seller seller = Seller.builder()
+        .buzNo(String.valueOf(System.nanoTime()).substring(0, 10))
+        .name(name + "판매자")
+        .phone("010-0000-0000")
+        .auth(auth)
+        .build();
+    em.persist(seller);
+
+    Store store = Store.builder()
+        .name(name)
+        .description("설명")
+        .phone("010-0000-0000")
+        .seller(seller)
+        .build();
+    em.persist(store);
+    return store;
+  }
+
+  private Product saveProduct(Store store, Category cat, int price, Integer discountRate,
       int likeCount, LocalDateTime deletedAt) {
     int discountedPrice = discountRate != null ? price * (100 - discountRate) / 100 : price;
     Product product = new Product();
-    ReflectionTestUtils.setField(product, "storeId", storeId);
+    ReflectionTestUtils.setField(product, "store", store);
     ReflectionTestUtils.setField(product, "name", "상품-" + price);
     ReflectionTestUtils.setField(product, "category", cat);
     ReflectionTestUtils.setField(product, "price", price);

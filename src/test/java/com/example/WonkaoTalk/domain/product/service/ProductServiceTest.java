@@ -25,6 +25,7 @@ import com.example.WonkaoTalk.domain.product.repo.ProductOptionRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepo;
 import com.example.WonkaoTalk.domain.product.repo.VariantOptionMapRepo;
+import com.example.WonkaoTalk.domain.store.entity.Store;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -143,7 +144,8 @@ class ProductServiceTest {
     request.setSize(2);
 
     List<Product> products = mockProducts(3);
-    when(productRepository.findWithFilters(any(), any(), any(), any(), any(), any(), any(), anyInt()))
+    when(productRepository.findWithFilters(any(), any(), any(), any(), any(), any(), any(),
+        anyInt()))
         .thenReturn(products);
 
     ProductListResponse response = productService.getProductList(request);
@@ -161,7 +163,8 @@ class ProductServiceTest {
     request.setSize(5);
 
     List<Product> products = mockProducts(3);
-    when(productRepository.findWithFilters(any(), any(), any(), any(), any(), any(), any(), anyInt()))
+    when(productRepository.findWithFilters(any(), any(), any(), any(), any(), any(), any(),
+        anyInt()))
         .thenReturn(products);
 
     ProductListResponse response = productService.getProductList(request);
@@ -182,7 +185,8 @@ class ProductServiceTest {
 
     Product first = mockProduct(1L, 10000, 20, 8000, 42, LocalDateTime.now());
     Product second = mockProduct(2L, 5000, 0, 5000, 10, LocalDateTime.now());
-    when(productRepository.findWithFilters(any(), any(), any(), any(), any(), any(), any(), anyInt()))
+    when(productRepository.findWithFilters(any(), any(), any(), any(), any(), any(), any(),
+        anyInt()))
         .thenReturn(List.of(first, second));
 
     ProductListResponse response = productService.getProductList(request);
@@ -202,7 +206,8 @@ class ProductServiceTest {
 
     Product first = mockProduct(1L, 10000, 20, 8000, 5, createdAt);
     Product second = mockProduct(2L, 5000, 0, 5000, 3, LocalDateTime.now());
-    when(productRepository.findWithFilters(any(), any(), any(), any(), any(), any(), any(), anyInt()))
+    when(productRepository.findWithFilters(any(), any(), any(), any(), any(), any(), any(),
+        anyInt()))
         .thenReturn(List.of(first, second));
 
     ProductListResponse response = productService.getProductList(request);
@@ -220,7 +225,8 @@ class ProductServiceTest {
     // price=10000, discountRate=20 → discountedPrice=8000
     Product first = mockProduct(1L, 10000, 20, 8000, 5, LocalDateTime.now());
     Product second = mockProduct(2L, 15000, 0, 15000, 3, LocalDateTime.now());
-    when(productRepository.findWithFilters(any(), any(), any(), any(), any(), any(), any(), anyInt()))
+    when(productRepository.findWithFilters(any(), any(), any(), any(), any(), any(), any(),
+        anyInt()))
         .thenReturn(List.of(first, second));
 
     ProductListResponse response = productService.getProductList(request);
@@ -266,14 +272,16 @@ class ProductServiceTest {
   }
 
   @Test
-  @DisplayName("store는 항상 null을 반환한다")
-  void store_isAlwaysNull() {
+  @DisplayName("store 정보가 응답에 포함된다")
+  void store_isIncludedInResponse() {
     Product product = mockProduct(1L, 10000, 0, 10000, 0, LocalDateTime.now());
     when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
     ProductDetailResponse response = productService.getProductDetail(1L);
 
-    assertThat(response.getStore()).isNull();
+    assertThat(response.getStore()).isNotNull();
+    assertThat(response.getStore().getStoreId()).isEqualTo(10L);
+    assertThat(response.getStore().getStoreName()).isEqualTo("테스트스토어");
   }
 
   @Test
@@ -300,12 +308,14 @@ class ProductServiceTest {
     VariantOptionMap map2 = mock(VariantOptionMap.class);
     when(map2.getProductVariant()).thenReturn(variant);
     when(map2.getProductOption()).thenReturn(option2);
-    when(variantOptionMapRepository.findByProductVariantIdIn(List.of(10L))).thenReturn(List.of(map1, map2));
+    when(variantOptionMapRepository.findByProductVariantIdIn(List.of(10L))).thenReturn(
+        List.of(map1, map2));
 
     ProductDetailResponse response = productService.getProductDetail(1L);
 
     assertThat(response.getVariants()).hasSize(1);
-    assertThat(response.getVariants().get(0).getCombinationIds()).containsExactlyInAnyOrder(201L, 301L);
+    assertThat(response.getVariants().get(0).getCombinationIds()).containsExactlyInAnyOrder(201L,
+        301L);
   }
 
   // ── 헬퍼 ────────────────────────────────────────────────────────────────────
@@ -319,6 +329,10 @@ class ProductServiceTest {
 
   private Product mockProduct(Long id, int price, int discountRate, int discountedPrice,
       int likeCount, LocalDateTime createdAt) {
+    Store store = mock(Store.class);
+    when(store.getId()).thenReturn(10L);
+    when(store.getName()).thenReturn("테스트스토어");
+
     Product product = mock(Product.class);
     when(product.getId()).thenReturn(id);
     when(product.getName()).thenReturn("상품" + id);
@@ -328,6 +342,7 @@ class ProductServiceTest {
     when(product.getLikeCount()).thenReturn(likeCount);
     when(product.getCreatedAt()).thenReturn(createdAt);
     when(product.getStatus()).thenReturn(SaleStatus.ON_SALE);
+    when(product.getStore()).thenReturn(store);
     return product;
   }
 
