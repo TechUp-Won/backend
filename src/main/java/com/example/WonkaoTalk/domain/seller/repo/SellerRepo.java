@@ -12,4 +12,6 @@ public interface SellerRepo extends JpaRepository<Seller, Long> {
   Optional<Seller> findByAuth(Auth auth);
 
   Optional<Seller> findByAuthId(Long authId);
+
+  boolean existsByAuthId(Long authId);
 }
