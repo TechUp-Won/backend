@@ -144,12 +144,12 @@ public class OrderService {
 
           // 계산용 변수들 선언
           int quantity = item.quantity();
-          int price = product.getPrice();
-          int discountPrice = product.getDiscountedPrice();
+          long price = product.getPrice().longValue();
+          long discountPrice = product.getDiscountedPrice().longValue();
 
-          int itemOriginalAmount = price * quantity;
-          int itemFinalAmount = discountPrice * quantity;
-          int itemDiscountAmount = itemOriginalAmount - itemFinalAmount;
+          long itemOriginalAmount = price * quantity;
+          long itemFinalAmount = discountPrice * quantity;
+          long itemDiscountAmount = itemOriginalAmount - itemFinalAmount;
 
           return new OrderPreviewItemDto(
               product.getId(),
@@ -169,13 +169,13 @@ public class OrderService {
   }
 
   public SummaryDto createSummary(List<OrderPreviewItemDto> items) {
-    int originalAmount = items.stream()
-        .mapToInt(OrderPreviewItemDto::itemOriginalAmount)
+    long originalAmount = items.stream()
+        .mapToLong(OrderPreviewItemDto::itemOriginalAmount)
         .sum();
-    int discountAmount = items.stream()
-        .mapToInt(OrderPreviewItemDto::itemDiscountAmount)
+    long discountAmount = items.stream()
+        .mapToLong(OrderPreviewItemDto::itemDiscountAmount)
         .sum();
-    int finalAmount = originalAmount - discountAmount;
+    long finalAmount = originalAmount - discountAmount;
 
     return new SummaryDto(originalAmount, discountAmount, finalAmount);
   }

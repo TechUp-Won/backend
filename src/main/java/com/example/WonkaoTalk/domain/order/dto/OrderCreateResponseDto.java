@@ -4,8 +4,8 @@ public record OrderCreateResponseDto(
     Long orderId,
     String orderNumber,
     String orderTitle,
-    Integer originalAmount,
-    Integer discountAmount,
-    Integer finalAmount
+    Long originalAmount,
+    Long discountAmount,
+    Long finalAmount
 ) {
 }

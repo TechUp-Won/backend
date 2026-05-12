@@ -36,13 +36,13 @@ public class Order {
   private OrderStatus orderStatus;
 
   @Column(name = "original_amount")
-  private Integer originalAmount;
+  private Long originalAmount;
 
   @Column(name = "discount_amount")
-  private Integer discountAmount;
+  private Long discountAmount;
 
   @Column(name = "final_amount", nullable = false)
-  private Integer finalAmount;
+  private Long finalAmount;
 
   @CreatedDate
   @Column(name = "created_at", nullable = false)
@@ -59,9 +59,9 @@ public class Order {
   public static Order createOrder(
       String orderNumber,
       Long userId,
-      Integer originalAmount,
-      Integer discountAmount,
-      Integer finalAmount,
+      Long originalAmount,
+      Long discountAmount,
+      Long finalAmount,
       String orderTitle
   ) {
     Order order = new Order();

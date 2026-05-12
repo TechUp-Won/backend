@@ -13,19 +13,19 @@ public record OrderPreviewResponseDto(
       String productName,
       String variantName,
       String thumbnailUrl,
-      Integer price,
-      Integer discountedPrice,
+      Long price,
+      Long discountedPrice,
       Integer quantity,
-      Integer itemOriginalAmount,
-      Integer itemDiscountAmount,
-      Integer itemFinalAmount
+      Long itemOriginalAmount,
+      Long itemDiscountAmount,
+      Long itemFinalAmount
   ) {
   }
 
   public record SummaryDto(
-      Integer originalAmount,
-      Integer discountAmount,
-      Integer finalAmount
+      Long originalAmount,
+      Long discountAmount,
+      Long finalAmount
   ) {
   }
 }
