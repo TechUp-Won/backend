@@ -43,7 +43,8 @@ public class SecurityConfig {
                 "/api/v1/users/signup",
                 "/api/v1/sellers/signup",
                 "/api/v1/search",
-                "/api/v1/chats/**"
+                "/api/v1/chats/**",
+                "/ws/**"
             ).permitAll() // 인증 없이 접근 허용
             .requestMatchers(
                 "/api/v1/auth/logout",

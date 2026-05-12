@@ -16,8 +16,11 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +30,7 @@ public class ChatMessageService {
   private final ChatMessageRepo chatMessageRepo;
   private final ChatRoomRepo chatRoomRepo;
   private final ChatParticipantRepo chatParticipantRepo;
+  private final SimpMessagingTemplate messagingTemplate;
 
   @Transactional
   public ChatMessageResponse sendMessage(Long userId, Long chatRoomId, ChatMessageRequest request) {
@@ -52,12 +56,19 @@ public class ChatMessageService {
         .build();
 
     chatMessageRepo.saveAndFlush(chatMessage);
-
     chatRoom.updateLastMessage(chatMessage.getContent(), chatMessage.getCreatedAt());
-
     participant.updateLastReadMessage(chatMessage);
 
-    return ChatMessageResponse.from(chatMessage);
+    ChatMessageResponse response = ChatMessageResponse.from(chatMessage);
+
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+      @Override
+      public void afterCommit() {
+        messagingTemplate.convertAndSend("/sub/chat/room/" + chatRoomId, response);
+      }
+    });
+
+    return response;
   }
 
   @Transactional
