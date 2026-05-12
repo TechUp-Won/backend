@@ -10,6 +10,7 @@ import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponseDto.OrderPrev
 import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponseDto.SummaryDto;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
+import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
 import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepository;
 import java.util.HashSet;
 import java.util.List;
@@ -51,6 +52,9 @@ public class OrderService {
 
     // 4. 판매자 상태 확인 -> 지금은 그냥 하드코딩 더미데이터로 해결하기
     validateSellerStatus();
+
+    // 추가. 상품 상태 확인
+    validateVariantSaleStatus(productVariants);
 
     // 5. 재고 상태 확인 (요청 수량에 맞게 주문할 수 있는지)
     validateVariantStock(requestDto.items(), productVariants);
@@ -112,6 +116,15 @@ public class OrderService {
   // 판매자 상태 확인
   // TODO: 추후 구현
   public void validateSellerStatus() {
+  }
+
+  // 판매 상태 확인
+  public void validateVariantSaleStatus(Map<Long, ProductVariant> variantMap) {
+    for (ProductVariant variant : variantMap.values()) {
+      if (variant.getStatus() != SaleStatus.ON_SALE) {
+        throw new BusinessException(ErrorCode.PROD_VARIANT_UNAVAILABLE);
+      }
+    }
   }
 
   // 재고 상태 확인
