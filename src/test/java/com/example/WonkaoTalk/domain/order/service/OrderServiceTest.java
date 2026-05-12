@@ -7,7 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
-import com.example.WonkaoTalk.domain.order.dto.OrderItemRequestDto;
+import com.example.WonkaoTalk.domain.order.dto.OrderItemDto;
 import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
 import java.util.List;
 import java.util.Map;
@@ -30,8 +30,8 @@ public class OrderServiceTest {
   @DisplayName("중복 variantId가 있으면 Bad_Request 예외를 던진다.")
   public void DuplicatedVariantId() {
     //given
-    OrderItemRequestDto item1 = new OrderItemRequestDto(1L, 1);
-    OrderItemRequestDto item2 = new OrderItemRequestDto(1L, 2);
+    OrderItemDto item1 = new OrderItemDto(1L, 1);
+    OrderItemDto item2 = new OrderItemDto(1L, 2);
 
     //then
     assertThatThrownBy(() -> orderService.validateDuplicateVariant(List.of(item1, item2)))
@@ -43,8 +43,8 @@ public class OrderServiceTest {
   @DisplayName("중복 variantId가 없으면 예외가 발생하지 않는다.")
   public void Duplication_DoesNotThrowException_WhenVariantIdNotDuplicated() {
     //given
-    OrderItemRequestDto item1 = new OrderItemRequestDto(1L, 1);
-    OrderItemRequestDto item2 = new OrderItemRequestDto(2L, 2);
+    OrderItemDto item1 = new OrderItemDto(1L, 1);
+    OrderItemDto item2 = new OrderItemDto(2L, 2);
 
     //then
     assertThatCode(() -> orderService.validateDuplicateVariant(List.of(item1, item2)))
@@ -84,8 +84,8 @@ public class OrderServiceTest {
   @DisplayName("요청한 수량보다 재고가 많으면 예외가 발생하지 않는다.")
   public void validateVariantStock_DoesNotThrowException_WhenVariantStockEnough() {
     //given
-    OrderItemRequestDto item1 = new OrderItemRequestDto(1L, 1);
-    OrderItemRequestDto item2 = new OrderItemRequestDto(2L, 2);
+    OrderItemDto item1 = new OrderItemDto(1L, 1);
+    OrderItemDto item2 = new OrderItemDto(2L, 2);
 
     ProductVariant variant1 = mock(ProductVariant.class);
     ProductVariant variant2 = mock(ProductVariant.class);
@@ -104,8 +104,8 @@ public class OrderServiceTest {
   @DisplayName("요청한 수량보다 재고가 적으면 예외를 던진다.")
   public void validateVariantStock_ThrowError_WhenVariantStockIsNotEnough() {
     //given
-    OrderItemRequestDto item1 = new OrderItemRequestDto(1L, 1);
-    OrderItemRequestDto item2 = new OrderItemRequestDto(2L, 2);
+    OrderItemDto item1 = new OrderItemDto(1L, 1);
+    OrderItemDto item2 = new OrderItemDto(2L, 2);
 
     ProductVariant variant1 = mock(ProductVariant.class);
     ProductVariant variant2 = mock(ProductVariant.class);

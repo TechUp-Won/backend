@@ -1,6 +1,6 @@
 package com.example.WonkaoTalk.domain.order.dto;
 
-public record OrderCreateResponseDto(
+public record OrderCreateResponse(
     Long orderId,
     String orderNumber,
     String orderTitle,

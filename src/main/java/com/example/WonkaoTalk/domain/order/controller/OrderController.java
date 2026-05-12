@@ -1,8 +1,8 @@
 package com.example.WonkaoTalk.domain.order.controller;
 
 import com.example.WonkaoTalk.common.response.ApiResponse;
-import com.example.WonkaoTalk.domain.order.dto.OrderPreviewRequestDto;
-import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponseDto;
+import com.example.WonkaoTalk.domain.order.dto.OrderPreviewRequest;
+import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponse;
 import com.example.WonkaoTalk.domain.order.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class OrderController {
 //  public ResponseEntity<ApiResponse<Void>> createOrder(
 //      // Todo: 추후 진행
 //      @RequestHeader("X-User-Id") Long userId,
-//      @Valid @RequestBody OrderCreateRequestDto requestDto
+//      @Valid @RequestBody OrderCreateRequest requestDto
 //  ) {
 //    orderService.createOrder(userId, requestDto);
 //    return ResponseEntity.status(HttpStatus.CREATED)
@@ -31,10 +31,10 @@ public class OrderController {
 //  }
 
   @PostMapping("/preview")
-  public ResponseEntity<ApiResponse<OrderPreviewResponseDto>> previewOrder(
-      @Valid @RequestBody OrderPreviewRequestDto requestDto
+  public ResponseEntity<ApiResponse<OrderPreviewResponse>> previewOrder(
+      @Valid @RequestBody OrderPreviewRequest requestDto
   ) {
-    OrderPreviewResponseDto responseDto = orderService.previewOrder(requestDto);
+    OrderPreviewResponse responseDto = orderService.previewOrder(requestDto);
     return ResponseEntity.ok(ApiResponse.success("주문 미리보기가 생성되었습니다.", responseDto));
   }
 }

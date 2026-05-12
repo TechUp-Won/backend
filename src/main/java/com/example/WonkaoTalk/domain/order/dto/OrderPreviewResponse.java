@@ -2,7 +2,7 @@ package com.example.WonkaoTalk.domain.order.dto;
 
 import java.util.List;
 
-public record OrderPreviewResponseDto(
+public record OrderPreviewResponse(
     List<OrderPreviewItemDto> items,
     SummaryDto summary
 ) {

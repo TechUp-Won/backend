@@ -6,10 +6,10 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
-public record OrderCreateRequestDto(
+public record OrderCreateRequest(
     @Valid
     @NotEmpty
-    List<OrderItemRequestDto> items,
+    List<OrderItemDto> items,
 
     @Valid
     @NotNull

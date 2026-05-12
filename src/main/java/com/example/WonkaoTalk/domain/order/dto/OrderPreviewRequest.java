@@ -5,9 +5,9 @@ import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
 // 주문 전 주문 요청서 생성용 API
-public record OrderPreviewRequestDto(
+public record OrderPreviewRequest(
     @Valid
     @NotEmpty
-    List<OrderItemRequestDto> items
+    List<OrderItemDto> items
 ) {
 }

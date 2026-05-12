@@ -2,12 +2,12 @@ package com.example.WonkaoTalk.domain.order.service;
 
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
-import com.example.WonkaoTalk.domain.order.dto.OrderCreateRequestDto;
-import com.example.WonkaoTalk.domain.order.dto.OrderItemRequestDto;
-import com.example.WonkaoTalk.domain.order.dto.OrderPreviewRequestDto;
-import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponseDto;
-import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponseDto.OrderPreviewItemDto;
-import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponseDto.SummaryDto;
+import com.example.WonkaoTalk.domain.order.dto.OrderCreateRequest;
+import com.example.WonkaoTalk.domain.order.dto.OrderItemDto;
+import com.example.WonkaoTalk.domain.order.dto.OrderPreviewRequest;
+import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponse;
+import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponse.OrderPreviewItemDto;
+import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponse.SummaryDto;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
@@ -33,13 +33,13 @@ public class OrderService {
   // 응답값으로 Order로 생성 요청한 값들의 성공적으로 생성 되었는지만 전달해주면됨.
   // 주문 생성 시 재고 차감 진행. 만약 주문이 실패로 끝나면 재고 원상복귀.
   public void createOrder(Long userId,
-      OrderCreateRequestDto dto) {
+      OrderCreateRequest dto) {
     // 주문 번호 생
   }
 
   // 이때는 결제가 이루어지지 않기때문에 재고 조회에 대한 lock을 크게 고려하지 않아도 될듯.
   @Transactional(readOnly = true)
-  public OrderPreviewResponseDto previewOrder(OrderPreviewRequestDto requestDto) {
+  public OrderPreviewResponse previewOrder(OrderPreviewRequest requestDto) {
     // 1. variantId 중복 검증
     validateDuplicateVariant(requestDto.items());
 
@@ -67,14 +67,14 @@ public class OrderService {
     SummaryDto summaryDto = createSummary(orderPreviewItemDtos);
 
     // 8. response dto 생성 및 return
-    return new OrderPreviewResponseDto(orderPreviewItemDtos, summaryDto);
+    return new OrderPreviewResponse(orderPreviewItemDtos, summaryDto);
   }
 
   // 옵션 중복 검증 메서드
-  public void validateDuplicateVariant(List<OrderItemRequestDto> items) {
+  public void validateDuplicateVariant(List<OrderItemDto> items) {
     Set<Long> validateIds = new HashSet<>();
 
-    for (OrderItemRequestDto item : items) {
+    for (OrderItemDto item : items) {
       if (!validateIds.add(item.variantId())) {
         // TODO : Exception 따로 만들어야함.
         throw new BusinessException(ErrorCode.BAD_REQUEST);
@@ -82,9 +82,9 @@ public class OrderService {
     }
   }
 
-  public List<Long> extractVariantIds(List<OrderItemRequestDto> items) {
+  public List<Long> extractVariantIds(List<OrderItemDto> items) {
     return items.stream()
-        .map(OrderItemRequestDto::variantId)
+        .map(OrderItemDto::variantId)
         .toList();
   }
 
@@ -128,11 +128,11 @@ public class OrderService {
   }
 
   // 재고 상태 확인
-  public void validateVariantStock(List<OrderItemRequestDto> items,
+  public void validateVariantStock(List<OrderItemDto> items,
       Map<Long, ProductVariant> variantMap) {
     // 먼저 옵션 Stock들을 읽어와야함. Map으로 가지고 오면 이것도 비교하기 좋을것같음.
     // 요청 받은 dto에서 id->quantity 를 가지고 와서 검증해야함.
-    for (OrderItemRequestDto item : items) {
+    for (OrderItemDto item : items) {
       Long variantId = item.variantId();
       Integer requestedQuantity = item.quantity();
 
@@ -146,7 +146,7 @@ public class OrderService {
 
   // orderPreviewItems List 생성
   public List<OrderPreviewItemDto> createOrderPreviewItems(
-      List<OrderItemRequestDto> items,
+      List<OrderItemDto> items,
       Map<Long, ProductVariant> variantMap
   ) {
     // TODO: Lazy Loading으로 성능개선이 필요할수도..??

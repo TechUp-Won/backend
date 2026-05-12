@@ -3,7 +3,7 @@ package com.example.WonkaoTalk.domain.order.dto;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
-public record OrderItemRequestDto(
+public record OrderItemDto(
     @NotNull
     Long variantId,
 
