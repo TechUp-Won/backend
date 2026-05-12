@@ -1,5 +1,7 @@
 package com.example.WonkaoTalk.domain.auth.controller;
 
+import com.example.WonkaoTalk.common.exception.BusinessException;
+import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.common.response.ApiResponse;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckRequest;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckResponse;
@@ -16,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -67,14 +70,13 @@ public class AuthController {
 
   @PostMapping("/logout")
   public ResponseEntity<ApiResponse<Void>> logout(
-      HttpServletRequest request,
+      @RequestHeader("Authorization") String authHeader,
       Authentication authentication
   ) {
-    String bearerToken = request.getHeader("Authorization");
-    String accessToken = null;
-    if (bearerToken != null && bearerToken.startsWith("Bearer")) {
-      accessToken = bearerToken.substring(7);
+    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+      throw new BusinessException(ErrorCode.AUTH_INVALID_TOKEN);
     }
+    String accessToken = authHeader.substring(7);
     String email = authentication.getName();
 
     authService.logout(accessToken, email);

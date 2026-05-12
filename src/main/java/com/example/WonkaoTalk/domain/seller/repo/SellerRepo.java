@@ -10,4 +10,8 @@ public interface SellerRepo extends JpaRepository<Seller, Long> {
   boolean existsByBuzNo(String buzNo);
 
   Optional<Seller> findByAuth(Auth auth);
+
+  Optional<Seller> findByAuthId(Long authId);
+
+  boolean existsByAuthId(Long authId);
 }

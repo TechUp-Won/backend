@@ -3,6 +3,7 @@ package com.example.WonkaoTalk.domain.product.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.WonkaoTalk.config.TestContainerConfig;
+import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.product.dto.ProductDetailResponse;
 import com.example.WonkaoTalk.domain.product.entity.Category;
 import com.example.WonkaoTalk.domain.product.entity.Product;
@@ -14,6 +15,8 @@ import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
 import com.example.WonkaoTalk.domain.product.entity.VariantOptionMap;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
 import com.example.WonkaoTalk.domain.product.service.ProductService;
+import com.example.WonkaoTalk.domain.seller.entity.Seller;
+import com.example.WonkaoTalk.domain.store.entity.Store;
 import jakarta.persistence.EntityManager;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,7 +45,8 @@ class ProductDetailIntegrationTest {
   @BeforeEach
   void setUp() {
     category = saveCategory();
-    product = saveProduct(category);
+    Store store = saveStore();
+    product = saveProduct(store, category);
     em.flush();
     em.clear();
   }
@@ -137,9 +141,31 @@ class ProductDetailIntegrationTest {
     return cat;
   }
 
-  private Product saveProduct(Category cat) {
+  private Store saveStore() {
+    Auth auth = Auth.builder().build();
+    em.persist(auth);
+
+    Seller seller = Seller.builder()
+        .buzNo(String.valueOf(System.nanoTime()).substring(0, 10))
+        .name("테스트판매자")
+        .phone("010-0000-0000")
+        .auth(auth)
+        .build();
+    em.persist(seller);
+
+    Store store = Store.builder()
+        .name("테스트스토어")
+        .description("설명")
+        .phone("010-0000-0000")
+        .seller(seller)
+        .build();
+    em.persist(store);
+    return store;
+  }
+
+  private Product saveProduct(Store store, Category cat) {
     Product p = new Product();
-    ReflectionTestUtils.setField(p, "storeId", 1L);
+    ReflectionTestUtils.setField(p, "store", store);
     ReflectionTestUtils.setField(p, "name", "테스트상품");
     ReflectionTestUtils.setField(p, "category", cat);
     ReflectionTestUtils.setField(p, "price", 10000);
