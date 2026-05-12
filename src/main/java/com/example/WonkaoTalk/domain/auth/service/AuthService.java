@@ -106,15 +106,19 @@ public class AuthService {
 
   @Transactional
   public void logout(String accessToken, String email) {
-    String redisKey = "RT:" + email;
-    if (redisService.hasKey(redisKey)) {
-      redisService.deleteValues(redisKey);
-    }
+    invalidateToken(email, accessToken);
+  }
 
-    Long expiration = jwtTokenProvider.getExpiration(accessToken);
-    log.info("블랙리스트 등록 토큰: {}", accessToken);
-    log.info("남은 만료 시간: {}", expiration);
-    redisService.setValues("BlackList:" + accessToken, "logout", Duration.ofMillis(expiration));
+  @Transactional
+  public void withdraw(Long authId) {
+    Auth auth = authRepo.findById(authId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_NOT_FOUND));
+
+    authLocalRepo.findByAuth(auth).ifPresent(authLocal -> {
+      authLocal.withdraw();
+    });
+
+    auth.withdraw();
   }
 
   private void saveLoginHistory(Auth auth, LoginStatus status, HttpServletRequest request) {
@@ -152,6 +156,18 @@ public class AuthService {
       return "관리자";
     }
     return "알 수 없는 사용자";
+  }
+
+  public void invalidateToken(String email, String accessToken) {
+    String redisKey = "RT:" + email;
+    if (redisService.hasKey(redisKey)) {
+      redisService.deleteValues(redisKey);
+    }
+
+    Long expiration = jwtTokenProvider.getExpiration(accessToken);
+    log.info("블랙리스트 등록 토큰: {}", accessToken);
+    log.info("남은 만료 시간: {}", expiration);
+    redisService.setValues("BlackList:" + accessToken, "logout", Duration.ofMillis(expiration));
   }
 
 }

@@ -22,6 +22,8 @@ import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
 import com.example.WonkaoTalk.domain.product.service.CartService;
+import com.example.WonkaoTalk.domain.seller.entity.Seller;
+import com.example.WonkaoTalk.domain.store.entity.Store;
 import com.example.WonkaoTalk.domain.user.entity.User;
 import com.example.WonkaoTalk.domain.user.enums.Gender;
 import jakarta.persistence.EntityManager;
@@ -69,8 +71,9 @@ class CartServiceIntegrationTest {
     newUser = saveUser("새유저");
     newAuthId = newUser.getAuth().getId();
     category = saveCategory();
-    productA = saveProduct(category, "상품A", 10000, 8000);
-    productB = saveProduct(category, "상품B", 5000, 4000);
+    Store store = saveStore();
+    productA = saveProduct(store, category, "상품A", 10000, 8000);
+    productB = saveProduct(store, category, "상품B", 5000, 4000);
     variantA1 = saveVariant(productA, "옵션A-1", 10, SaleStatus.ON_SALE);
     variantA2 = saveVariant(productA, "옵션A-2", 5, SaleStatus.ON_SALE);
     variantB1 = saveVariant(productB, "옵션B-1", 20, SaleStatus.ON_SALE);
@@ -140,7 +143,8 @@ class CartServiceIntegrationTest {
   @Test
   @DisplayName("장바구니가 없을 때 addToCart 호출 시 Cart가 자동 생성된다")
   void addToCart_createsCart_whenCartNotExists() {
-    CartAddResponse response = cartService.addToCart(newAuthId, addRequest(productA.getId(), variantA1.getId(), 2));
+    CartAddResponse response = cartService.addToCart(newAuthId,
+        addRequest(productA.getId(), variantA1.getId(), 2));
 
     assertThat(response.getCartItemId()).isNotNull();
 
@@ -210,7 +214,8 @@ class CartServiceIntegrationTest {
     em.clear();
 
     BusinessException ex = assertThrows(BusinessException.class,
-        () -> cartService.addToCart(testAuthId, addRequest(productA.getId(), variantA2.getId(), 2))); // 4+2=6 > 5
+        () -> cartService.addToCart(testAuthId,
+            addRequest(productA.getId(), variantA2.getId(), 2))); // 4+2=6 > 5
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_STOCK_INSUFFICIENT);
   }
@@ -262,7 +267,8 @@ class CartServiceIntegrationTest {
     em.clear();
 
     BusinessException ex = assertThrows(BusinessException.class,
-        () -> cartService.updateCartItemQuantity(testAuthId, otherItem.getId(), quantityUpdateRequest(3)));
+        () -> cartService.updateCartItemQuantity(testAuthId, otherItem.getId(),
+            quantityUpdateRequest(3)));
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
   }
@@ -278,7 +284,8 @@ class CartServiceIntegrationTest {
     em.clear();
 
     CartOptionUpdateResponse response =
-        cartService.updateCartItemOption(testAuthId, item.getId(), optionUpdateRequest(variantA2.getId()));
+        cartService.updateCartItemOption(testAuthId, item.getId(),
+            optionUpdateRequest(variantA2.getId()));
 
     assertThat(response.isMerged()).isFalse();
     assertThat(response.getCartItem().getVariantId()).isEqualTo(variantA2.getId());
@@ -301,7 +308,8 @@ class CartServiceIntegrationTest {
     em.clear();
 
     CartOptionUpdateResponse response =
-        cartService.updateCartItemOption(testAuthId, itemA1.getId(), optionUpdateRequest(variantA2.getId()));
+        cartService.updateCartItemOption(testAuthId, itemA1.getId(),
+            optionUpdateRequest(variantA2.getId()));
 
     assertThat(response.isMerged()).isTrue();
     assertThat(response.getCartItem().getVariantId()).isEqualTo(variantA2.getId());
@@ -325,7 +333,8 @@ class CartServiceIntegrationTest {
     em.clear();
 
     BusinessException ex = assertThrows(BusinessException.class,
-        () -> cartService.updateCartItemOption(testAuthId, itemA1.getId(), optionUpdateRequest(variantA2.getId())));
+        () -> cartService.updateCartItemOption(testAuthId, itemA1.getId(),
+            optionUpdateRequest(variantA2.getId())));
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_STOCK_INSUFFICIENT);
   }
@@ -423,9 +432,32 @@ class CartServiceIntegrationTest {
     return cat;
   }
 
-  private Product saveProduct(Category cat, String name, int price, int discountedPrice) {
+  private Store saveStore() {
+    Auth auth = Auth.builder().build();
+    em.persist(auth);
+
+    Seller seller = Seller.builder()
+        .buzNo(String.valueOf(System.nanoTime()).substring(0, 10))
+        .name("테스트판매자")
+        .phone("010-0000-0000")
+        .auth(auth)
+        .build();
+    em.persist(seller);
+
+    Store store = Store.builder()
+        .name("테스트스토어")
+        .description("설명")
+        .phone("010-0000-0000")
+        .seller(seller)
+        .build();
+    em.persist(store);
+    return store;
+  }
+
+  private Product saveProduct(Store store, Category cat, String name, int price,
+      int discountedPrice) {
     Product p = new Product();
-    ReflectionTestUtils.setField(p, "storeId", 1L);
+    ReflectionTestUtils.setField(p, "store", store);
     ReflectionTestUtils.setField(p, "name", name);
     ReflectionTestUtils.setField(p, "category", cat);
     ReflectionTestUtils.setField(p, "price", price);

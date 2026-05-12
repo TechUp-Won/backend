@@ -16,6 +16,8 @@ import com.example.WonkaoTalk.domain.product.repo.CategoryRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
 import com.example.WonkaoTalk.domain.search.dto.SearchRequest;
 import com.example.WonkaoTalk.domain.search.dto.SearchResponse;
+import com.example.WonkaoTalk.domain.store.entity.Store;
+import com.example.WonkaoTalk.domain.store.repo.StoreRepo;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -39,6 +41,9 @@ class SearchServiceTest {
 
   @Mock
   private CategoryRepo categoryRepository;
+
+  @Mock
+  private StoreRepo storeRepository;
 
   @InjectMocks
   private SearchService searchService;
@@ -211,15 +216,24 @@ class SearchServiceTest {
   // ── 응답 구조 ────────────────────────────────────────────────────────────────
 
   @Test
-  @DisplayName("stores는 항상 null이다")
-  void stores_isAlwaysNull() {
+  @DisplayName("stores는 키워드로 검색된 스토어 목록을 반환한다")
+  void stores_returnsMatchingStores() {
     SearchRequest request = defaultRequest("셔츠");
     when(productRepository.findWithSearch(anyString(), any(), any(), any(), any(), any(), any(), anyInt()))
         .thenReturn(List.of());
 
+    Store store = mock(Store.class);
+    when(store.getId()).thenReturn(1L);
+    when(store.getName()).thenReturn("셔츠스토어");
+    when(store.getThumbnail()).thenReturn("http://thumbnail.png");
+    when(store.getDescription()).thenReturn("셔츠 전문점");
+    when(storeRepository.findByNameContaining("셔츠")).thenReturn(List.of(store));
+
     SearchResponse response = searchService.search(request);
 
-    assertThat(response.stores()).isNull();
+    assertThat(response.stores()).hasSize(1);
+    assertThat(response.stores().get(0).storeId()).isEqualTo(1L);
+    assertThat(response.stores().get(0).storeName()).isEqualTo("셔츠스토어");
   }
 
   // ── 헬퍼 ────────────────────────────────────────────────────────────────────
@@ -230,10 +244,14 @@ class SearchServiceTest {
 
   private Product mockProduct(Long id, int price, int discountedPrice, int likeCount,
       LocalDateTime createdAt) {
+    Store store = mock(Store.class);
+    when(store.getId()).thenReturn(1L);
+    when(store.getName()).thenReturn("테스트스토어");
+
     Product product = mock(Product.class);
     when(product.getId()).thenReturn(id);
     when(product.getName()).thenReturn("상품" + id);
-    when(product.getStoreId()).thenReturn(1L);
+    when(product.getStore()).thenReturn(store);
     when(product.getPrice()).thenReturn(price);
     when(product.getDiscountedPrice()).thenReturn(discountedPrice);
     when(product.getDiscountRate()).thenReturn(0);

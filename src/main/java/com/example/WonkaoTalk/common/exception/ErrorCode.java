@@ -8,8 +8,8 @@ import lombok.Getter;
 public enum ErrorCode {
   // 공통
   BAD_REQUEST(400, "SYS-INVALID-INPUT", "입력값이 올바르지 않습니다."),
-  UNAUTHORIZED(401, "AUTH-EXPIRED-TOKEN", "토큰이 만료되었습니다."),
-  FORBIDDEN(403, "AUTH-FORBIDDEN-ACCESS", "권한이 없습니다."),
+  UNAUTHORIZED(401, "SYS-EXPIRED-TOKEN", "토큰이 만료되었습니다."),
+  FORBIDDEN(403, "SYS-FORBIDDEN-ACCESS", "권한이 없습니다."),
   NOT_FOUND(404, "SYS-NOT-FOUND", "데이터가 없습니다."),
   SERVER_ERROR(500, "SYS-INTERNAL-ERROR", "서버 내부 에러가 발생했습니다."),
   SERVICE_UNAVAILABLE(503, "SYS-SERVICE-UNAVAILABLE", "서버 점검 중입니다."),
@@ -23,6 +23,7 @@ public enum ErrorCode {
   AUTH_EXPIRED_TOKEN(401, "AUTH-EXPIRED-TOKEN", "토큰이 만료되었습니다."),
   AUTH_INVALID_TOKEN(401, "AUTH-INVALID-TOKEN", "유효하지 않은 토큰입니다."),
   AUTH_LOGGED_OUT_TOKEN(401, "AUTH-LOGGED-OUT-TOKEN", "이미 로그아웃 된 토큰입니다."),
+  AUTH_NOT_FOUND(404, "AUTH-NOT-FOUND", "회원 정보를 찾을 수 없습니다."),
 
   // 유저 도메인
   USER_NOT_FOUND(404, "USER-NOT-FOUND-ID", "해당 사용자 ID를 찾을 수 없습니다."),
@@ -44,6 +45,16 @@ public enum ErrorCode {
   PROD_STOCK_INSUFFICIENT(400, "PROD-INSUFFICIENT-STOCK", "재고가 부족합니다."),
   PROD_VARIANT_UNAVAILABLE(400, "PROD-UNAVAILABLE-VARIANT", "구매 불가능한 상품 옵션입니다."),
   PROD_INVALID_QUANTITY(400, "PROD-INVALID-QUANTITY", "수량은 최소 1개 이상이어야 합니다."),
+  PROD_INVALID_PRICE(400, "PROD-INVALID-PRICE", "가격은 0 이상이어야 합니다."),
+  PROD_INVALID_DISCOUNT_RATE(400, "PROD-INVALID-DISCOUNT-RATE", "할인율은 0에서 100 사이여야 합니다."),
+  PROD_MISMATCH_VARIANT_OPTION(400, "PROD-MISMATCH-VARIANT-OPTION", "variant의 옵션 이름이 등록된 옵션 목록과 일치하지 않습니다."),
+  PROD_INVALID_STOCK_OPTION(400, "PROD-INVALID-STOCK-OPTION", "옵션이 있는 상품은 stock을 직접 입력할 수 없습니다."),
+  PROD_DUPLICATE_SORT_ORDER(400, "PROD-DUPLICATE-SORT-ORDER", "sortOrder 값이 중복되었습니다."),
+
+  // 이미지 도메인
+  IMAGE_INVALID_TYPE(400, "IMAGE-INVALID-TYPE", "허용되지 않는 파일 형식입니다. (jpg, jpeg, png, webp)"),
+  IMAGE_INVALID_KEY(400, "IMAGE-INVALID-KEY", "유효하지 않은 이미지 키 형식입니다."),
+  IMAGE_NOT_FOUND_KEY(400, "IMAGE-NOT-FOUND-KEY", "업로드되지 않았거나 만료된 이미지 키입니다."),
 
   // 주문 도메인
 

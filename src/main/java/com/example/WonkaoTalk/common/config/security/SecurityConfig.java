@@ -5,6 +5,7 @@ import com.example.WonkaoTalk.common.config.security.jwt.JwtExceptionFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -30,15 +31,18 @@ public class SecurityConfig {
         .csrf(AbstractHttpConfigurer::disable)
         // HTTP 요청에 대한 접근 권한 설정
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers(
-                "/api/v1/auth/check-email",
-                "/api/v1/users/signup",
-                "/api/v1/sellers/signup",
+            .requestMatchers(HttpMethod.GET,
                 "/api/v1/products",
                 "/api/v1/products/*",
-                "/api/v1/search",
+                "/api/v1/products/categories"
+            ).permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/v1/products").hasRole("SELLER")
+            .requestMatchers(
+                "/api/v1/auth/check-email",
                 "/api/v1/auth/login",
+                "/api/v1/users/signup",
                 "/api/v1/sellers/signup",
+                "/api/v1/search",
                 "/api/v1/chats/**",
                 "/ws/**"
             ).permitAll() // 인증 없이 접근 허용
@@ -47,7 +51,11 @@ public class SecurityConfig {
                 "/api/v1/sellers/register"
             ).authenticated()
             .requestMatchers(
-                "/api/v1/sellers/**"
+                "/api/v1/users/**"
+            ).hasRole("USER")
+            .requestMatchers(
+                "/api/v1/sellers/**",
+                "/api/v1/images/**"
             ).hasRole("SELLER")
 
             // SecurityTest용 엔드포인트

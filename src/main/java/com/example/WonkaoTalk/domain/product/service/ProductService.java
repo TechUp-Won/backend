@@ -158,7 +158,10 @@ public class ProductService {
         .status(product.getStatus().name())
         .likeCount(product.getLikeCount())
         .isLiked(false) // TODO: 로그인 사용자의 좋아요 여부 반영 필요 (PRODUCT_LIKE 테이블 조회)
-        .store(null) // TODO: Store 엔티티 구현 시 실제 스토어 정보 반환
+        .store(ProductDetailResponse.StoreInfo.builder()
+            .storeId(product.getStore().getId())
+            .storeName(product.getStore().getName())
+            .build())
         .images(images)
         .detail(detail)
         .optionGroups(optionGroups)
@@ -222,8 +225,10 @@ public class ProductService {
         .discountRate(product.getDiscountRate())
         .likeCount(product.getLikeCount())
         .status(product.getStatus().name())
-        // TODO: Store 엔티티 구현 시 product.getStore()를 통해 StoreInfo 생성하도록 수정
-        .store(null)
+        .store(ProductListResponse.StoreInfo.builder()
+            .storeId(product.getStore().getId())
+            .storeName(product.getStore().getName())
+            .build())
         .build();
   }
 }

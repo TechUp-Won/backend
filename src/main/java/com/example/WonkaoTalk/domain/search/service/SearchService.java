@@ -10,6 +10,9 @@ import com.example.WonkaoTalk.domain.search.dto.SearchRequest;
 import com.example.WonkaoTalk.domain.search.dto.SearchResponse;
 import com.example.WonkaoTalk.domain.search.dto.SearchResponse.ProductResult;
 import com.example.WonkaoTalk.domain.search.dto.SearchResponse.StoreInfo;
+import com.example.WonkaoTalk.domain.search.dto.SearchResponse.StoreResult;
+import com.example.WonkaoTalk.domain.store.entity.Store;
+import com.example.WonkaoTalk.domain.store.repo.StoreRepo;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +27,7 @@ public class SearchService {
 
   private final ProductRepo productRepository;
   private final CategoryRepo categoryRepository;
+  private final StoreRepo storeRepository;
 
   public SearchResponse search(SearchRequest request) {
     if (request.keyword() == null || request.keyword().isBlank()) {
@@ -78,13 +82,18 @@ public class SearchService {
         .map(this::toProductResult)
         .toList();
 
-    // TODO: Store 엔티티 구현 후 storeRepository.findByNameContaining(keyword)로 스토어 검색 결과 반환
     // TODO: ElasticSearch 등 검색 엔진 도입 시 동의어(예: 레드-빨강) 처리 및 스코어 기반 정렬 고도화 필요
-    return new SearchResponse(null, productResults, hasNext, nextCursorId, nextCursorSortValue);
+    List<StoreResult> storeResults = storeRepository.findByNameContaining(request.keyword())
+        .stream()
+        .map(s -> new StoreResult(s.getId(), s.getName(), s.getThumbnail(), s.getDescription()))
+        .toList();
+
+    return new SearchResponse(storeResults, productResults, hasNext, nextCursorId,
+        nextCursorSortValue);
   }
 
   private ProductResult toProductResult(Product product) {
-    // TODO: Store 엔티티 구현 시 product.getStore()로 StoreInfo 생성하도록 수정
+    Store store = product.getStore();
     return new ProductResult(
         product.getId(),
         product.getName(),
@@ -94,7 +103,7 @@ public class SearchService {
         product.getDiscountRate(),
         product.getLikeCount(),
         product.getStatus().name(),
-        new StoreInfo(product.getStoreId(), null)
+        new StoreInfo(store.getId(), store.getName())
     );
   }
 

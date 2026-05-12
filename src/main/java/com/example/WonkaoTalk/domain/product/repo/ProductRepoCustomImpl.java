@@ -8,6 +8,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
@@ -42,13 +43,13 @@ public class ProductRepoCustomImpl implements ProductRepoCustom {
     List<Predicate> predicates = new ArrayList<>();
     predicates.add(cb.isNull(p.get("deletedAt")));
 
-    // TODO: Store 엔티티 구현 시, N+1 문제 방지를 위해 fetch join(p.fetch("store")) 검토 필요
+    p.fetch("store", JoinType.LEFT);
 
     if (categoryIds != null && !categoryIds.isEmpty()) {
       predicates.add(p.get("category").get("id").in(categoryIds));
     }
     if (storeId != null) {
-      predicates.add(cb.equal(p.get("storeId"), storeId));
+      predicates.add(cb.equal(p.get("store").get("id"), storeId));
     }
     if (minPrice != null) {
       predicates.add(cb.greaterThanOrEqualTo(p.get("discountedPrice"), minPrice));
@@ -87,7 +88,7 @@ public class ProductRepoCustomImpl implements ProductRepoCustom {
     predicates.add(cb.isNull(p.get("deletedAt")));
     predicates.add(cb.notEqual(p.get("status"), SaleStatus.STOP_SALE));
 
-    // TODO: Store 엔티티 구현 시, N+1 문제 방지를 위해 fetch join(p.fetch("store")) 검토 필요
+    p.fetch("store", JoinType.LEFT);
     // TODO: ElasticSearch 등 검색 엔진 도입 시 동의어(예: 레드-빨강) 처리 및 스코어 기반 정렬로 교체 필요
 
     predicates.add(cb.like(p.get("name"), "%" + keyword + "%"));
