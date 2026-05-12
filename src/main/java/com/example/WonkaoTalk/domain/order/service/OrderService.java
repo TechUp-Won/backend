@@ -3,8 +3,8 @@ package com.example.WonkaoTalk.domain.order.service;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.order.dto.OrderCreateRequestDto;
+import com.example.WonkaoTalk.domain.order.dto.OrderItemRequestDto;
 import com.example.WonkaoTalk.domain.order.dto.OrderPreviewRequestDto;
-import com.example.WonkaoTalk.domain.order.dto.OrderPreviewRequestDto.OrderItemRequest;
 import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponseDto;
 import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponseDto.OrderPreviewItemDto;
 import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponseDto.SummaryDto;
@@ -40,11 +40,10 @@ public class OrderService {
   @Transactional(readOnly = true)
   public OrderPreviewResponseDto previewOrder(OrderPreviewRequestDto requestDto) {
     // 1. variantId 중복 검증
-    // 똑같은 variantId가 들어오면 그냥 수량이 늘어나야함. 왜냐하면 같은 상품을 주문했다는 뜻이 되니까. 뭔가 Front에서 오류가 있는거임.
-    validateDuplicateVariant(requestDto.getItems());
+    validateDuplicateVariant(requestDto.items());
 
     // 2. ProductVariant 조회
-    List<Long> requestVariantIds = extractVariantIds(requestDto.getItems());
+    List<Long> requestVariantIds = extractVariantIds(requestDto.items());
     Map<Long, ProductVariant> productVariants = findVariantMapByIds(requestVariantIds);
 
     // 3. 조회하지 않는 variantId 검증 에러처리
@@ -54,37 +53,34 @@ public class OrderService {
     validateSellerStatus();
 
     // 5. 재고 상태 확인 (요청 수량에 맞게 주문할 수 있는지)
-    validateVariantStock(requestDto.getItems(), productVariants);
+    validateVariantStock(requestDto.items(), productVariants);
 
     // 6. item 응답 생성
-    List<OrderPreviewItemDto> orderPreviewItemDtos = createOrderPreviewItems(requestDto.getItems(),
+    List<OrderPreviewItemDto> orderPreviewItemDtos = createOrderPreviewItems(requestDto.items(),
         productVariants);
 
     // 7. summary 계산
     SummaryDto summaryDto = createSummary(orderPreviewItemDtos);
 
     // 8. response dto 생성 및 return
-    return OrderPreviewResponseDto.builder()
-        .items(orderPreviewItemDtos)
-        .summary(summaryDto)
-        .build();
+    return new OrderPreviewResponseDto(orderPreviewItemDtos, summaryDto);
   }
 
   // 옵션 중복 검증 메서드
-  public void validateDuplicateVariant(List<OrderItemRequest> items) {
+  public void validateDuplicateVariant(List<OrderItemRequestDto> items) {
     Set<Long> validateIds = new HashSet<>();
 
-    for (OrderItemRequest item : items) {
-      if (!validateIds.add(item.getVariantId())) {
+    for (OrderItemRequestDto item : items) {
+      if (!validateIds.add(item.variantId())) {
         // TODO : Exception 따로 만들어야함.
         throw new BusinessException(ErrorCode.BAD_REQUEST);
       }
     }
   }
 
-  public List<Long> extractVariantIds(List<OrderItemRequest> items) {
+  public List<Long> extractVariantIds(List<OrderItemRequestDto> items) {
     return items.stream()
-        .map(OrderItemRequest::getVariantId)
+        .map(OrderItemRequestDto::variantId)
         .toList();
   }
 
@@ -119,13 +115,13 @@ public class OrderService {
   }
 
   // 재고 상태 확인
-  public void validateVariantStock(List<OrderItemRequest> items,
+  public void validateVariantStock(List<OrderItemRequestDto> items,
       Map<Long, ProductVariant> variantMap) {
     // 먼저 옵션 Stock들을 읽어와야함. Map으로 가지고 오면 이것도 비교하기 좋을것같음.
     // 요청 받은 dto에서 id->quantity 를 가지고 와서 검증해야함.
-    for (OrderItemRequest item : items) {
-      Long variantId = item.getVariantId();
-      Integer requestedQuantity = item.getQuantity();
+    for (OrderItemRequestDto item : items) {
+      Long variantId = item.variantId();
+      Integer requestedQuantity = item.quantity();
 
       ProductVariant productVariant = variantMap.get(variantId);
 
@@ -137,17 +133,17 @@ public class OrderService {
 
   // orderPreviewItems List 생성
   public List<OrderPreviewItemDto> createOrderPreviewItems(
-      List<OrderItemRequest> items,
+      List<OrderItemRequestDto> items,
       Map<Long, ProductVariant> variantMap
   ) {
     // TODO: Lazy Loading으로 성능개선이 필요할수도..??
     return items.stream()
         .map(item -> {
-          ProductVariant productVariant = variantMap.get(item.getVariantId());
+          ProductVariant productVariant = variantMap.get(item.variantId());
           Product product = productVariant.getProduct();
 
           // 계산용 변수들 선언
-          int quantity = item.getQuantity();
+          int quantity = item.quantity();
           int price = product.getPrice();
           int discountPrice = product.getDiscountedPrice();
 
@@ -155,37 +151,33 @@ public class OrderService {
           int itemFinalAmount = discountPrice * quantity;
           int itemDiscountAmount = itemOriginalAmount - itemFinalAmount;
 
-          return OrderPreviewItemDto.builder()
-              .productId(product.getId())
-              .variantId(productVariant.getId())
-              .productName(product.getName())
-              .variantName(productVariant.getName())
-              .thumbnailUrl(product.getThumbnail())
-              .price(price)
-              .discountedPrice(discountPrice)
-              .quantity(quantity)
-              .itemOriginalAmount(itemOriginalAmount)
-              .itemFinalAmount(itemFinalAmount)
-              .itemDiscountAmount(itemDiscountAmount)
-              .build();
+          return new OrderPreviewItemDto(
+              product.getId(),
+              productVariant.getId(),
+              product.getName(),
+              productVariant.getName(),
+              product.getThumbnail(),
+              price,
+              discountPrice,
+              quantity,
+              itemOriginalAmount,
+              itemDiscountAmount,
+              itemFinalAmount
+          );
         })
         .toList();
   }
 
   public SummaryDto createSummary(List<OrderPreviewItemDto> items) {
     int originalAmount = items.stream()
-        .mapToInt(OrderPreviewItemDto::getItemOriginalAmount)
+        .mapToInt(OrderPreviewItemDto::itemOriginalAmount)
         .sum();
     int discountAmount = items.stream()
-        .mapToInt(OrderPreviewItemDto::getItemDiscountAmount)
+        .mapToInt(OrderPreviewItemDto::itemDiscountAmount)
         .sum();
     int finalAmount = originalAmount - discountAmount;
 
-    return SummaryDto.builder()
-        .originalAmount(originalAmount)
-        .discountAmount(discountAmount)
-        .finalAmount(finalAmount)
-        .build();
+    return new SummaryDto(originalAmount, discountAmount, finalAmount);
   }
 
 }
