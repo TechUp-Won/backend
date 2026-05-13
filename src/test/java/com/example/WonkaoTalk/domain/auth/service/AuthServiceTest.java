@@ -142,7 +142,8 @@ class AuthServiceTest {
     given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
     given(userRepo.findByAuth(any(Auth.class))).willReturn(Optional.of(user));
 
-    given(jwtTokenProvider.createAccessToken(anyString(), any(Long.class), anyString()))
+    given(jwtTokenProvider.createAccessToken(anyString(), any(Long.class), any(Long.class),
+        any(Long.class), anyString()))
         .willReturn("mockAccessToken");
     given(jwtTokenProvider.createRefreshToken(anyString())).willReturn("mockRefreshToken");
     given(jwtTokenProvider.getRefreshTokenValidTime()).willReturn(1209600000L);
