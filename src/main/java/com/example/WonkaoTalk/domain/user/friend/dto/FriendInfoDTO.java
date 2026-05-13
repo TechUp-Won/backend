@@ -4,7 +4,7 @@ import com.example.WonkaoTalk.domain.user.friend.entity.Friend;
 import lombok.Builder;
 
 @Builder
-public record FriendInfo(
+public record FriendInfoDTO(
     Long friendId,
     Long targetId,
     String name,
@@ -13,8 +13,8 @@ public record FriendInfo(
     boolean isFavorite
 ) {
 
-  public static FriendInfo from(Friend friend) {
-    return FriendInfo.builder()
+  public static FriendInfoDTO from(Friend friend) {
+    return FriendInfoDTO.builder()
         .friendId(friend.getId())
         .targetId(friend.getTarget().getId())
         .name(friend.getTarget().getName())

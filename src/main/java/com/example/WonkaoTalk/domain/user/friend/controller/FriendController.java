@@ -4,7 +4,7 @@ import com.example.WonkaoTalk.common.response.ApiResponse;
 import com.example.WonkaoTalk.domain.auth.dto.CustomUserDetails;
 import com.example.WonkaoTalk.domain.user.friend.dto.FriendAddRequest;
 import com.example.WonkaoTalk.domain.user.friend.dto.FriendAddResponse;
-import com.example.WonkaoTalk.domain.user.friend.dto.FriendInfo;
+import com.example.WonkaoTalk.domain.user.friend.dto.FriendInfoDTO;
 import com.example.WonkaoTalk.domain.user.friend.dto.FriendListResponse;
 import com.example.WonkaoTalk.domain.user.friend.dto.FriendStatusRequest;
 import com.example.WonkaoTalk.domain.user.friend.dto.FriendUpdateRequest;
@@ -46,9 +46,9 @@ public class FriendController {
   public ResponseEntity<ApiResponse<FriendListResponse>> getFriends(
       @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
-    List<FriendInfo> friendInfos = friendService.getFriends(userDetails.getUserId())
+    List<FriendInfoDTO> friendInfos = friendService.getFriends(userDetails.getUserId())
         .stream()
-        .map(FriendInfo::from)
+        .map(FriendInfoDTO::from)
         .toList();
 
     FriendListResponse response = FriendListResponse.of(friendInfos);

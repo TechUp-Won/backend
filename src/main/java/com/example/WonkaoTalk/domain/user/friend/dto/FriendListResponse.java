@@ -5,11 +5,11 @@ import lombok.Builder;
 
 @Builder
 public record FriendListResponse(
-    List<FriendInfo> friends,
+    List<FriendInfoDTO> friends,
     int totalCount
 ) {
 
-  public static FriendListResponse of(List<FriendInfo> friends) {
+  public static FriendListResponse of(List<FriendInfoDTO> friends) {
     return FriendListResponse.builder()
         .friends(friends)
         .totalCount(friends.size())
