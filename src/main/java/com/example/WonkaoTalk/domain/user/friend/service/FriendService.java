@@ -3,8 +3,11 @@ package com.example.WonkaoTalk.domain.user.friend.service;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.user.entity.User;
-import com.example.WonkaoTalk.domain.user.friend.dto.FriendRequest;
-import com.example.WonkaoTalk.domain.user.friend.dto.FriendResponse;
+import com.example.WonkaoTalk.domain.user.friend.dto.FriendAddRequest;
+import com.example.WonkaoTalk.domain.user.friend.dto.FriendAddResponse;
+import com.example.WonkaoTalk.domain.user.friend.dto.FriendStatusRequest;
+import com.example.WonkaoTalk.domain.user.friend.dto.FriendUpdateRequest;
+import com.example.WonkaoTalk.domain.user.friend.dto.FriendUpdateResponse;
 import com.example.WonkaoTalk.domain.user.friend.entity.Friend;
 import com.example.WonkaoTalk.domain.user.friend.repo.FriendRepo;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
@@ -23,7 +26,7 @@ public class FriendService {
   private final UserRepo userRepo;
 
   @Transactional
-  public FriendResponse.AddResponse addFriend(Long userId, FriendRequest.AddRequest request) {
+  public FriendAddResponse addFriend(Long userId, FriendAddRequest request) {
     if (userId.equals(request.targetId())) {
       throw new BusinessException(ErrorCode.FRND_SELF_REF);
     }
@@ -44,7 +47,7 @@ public class FriendService {
         .build();
 
     Friend savedFriend = friendRepo.save(newFriend);
-    return FriendResponse.AddResponse.of(savedFriend.getId());
+    return FriendAddResponse.of(savedFriend.getId());
   }
 
   @Transactional
@@ -53,18 +56,18 @@ public class FriendService {
   }
 
   @Transactional
-  public FriendResponse.UpdateResponse updateFriendsInfo(Long userId, Long friendId,
-      FriendRequest.UpdateRequest request) {
+  public FriendUpdateResponse updateFriendsInfo(Long userId, Long friendId,
+      FriendUpdateRequest request) {
     Friend friend = friendRepo.findByIdAndUserId(friendId, userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.FRND_NOT_FOUND));
     friend.updateAlias(request.alias());
     friend.updateMemo(request.memo());
 
-    return FriendResponse.UpdateResponse.from(friend);
+    return FriendUpdateResponse.from(friend);
   }
 
   @Transactional
-  public void changeFriendStatus(Long userId, Long friendId, FriendRequest.StatusRequest request) {
+  public void changeFriendStatus(Long userId, Long friendId, FriendStatusRequest request) {
     Friend friend = friendRepo.findByIdAndUserId(friendId, userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.FRND_NOT_FOUND));
 

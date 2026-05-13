@@ -2,8 +2,13 @@ package com.example.WonkaoTalk.domain.user.friend.controller;
 
 import com.example.WonkaoTalk.common.response.ApiResponse;
 import com.example.WonkaoTalk.domain.auth.dto.CustomUserDetails;
-import com.example.WonkaoTalk.domain.user.friend.dto.FriendRequest;
-import com.example.WonkaoTalk.domain.user.friend.dto.FriendResponse;
+import com.example.WonkaoTalk.domain.user.friend.dto.FriendAddRequest;
+import com.example.WonkaoTalk.domain.user.friend.dto.FriendAddResponse;
+import com.example.WonkaoTalk.domain.user.friend.dto.FriendInfo;
+import com.example.WonkaoTalk.domain.user.friend.dto.FriendListResponse;
+import com.example.WonkaoTalk.domain.user.friend.dto.FriendStatusRequest;
+import com.example.WonkaoTalk.domain.user.friend.dto.FriendUpdateRequest;
+import com.example.WonkaoTalk.domain.user.friend.dto.FriendUpdateResponse;
 import com.example.WonkaoTalk.domain.user.friend.service.FriendService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -28,35 +33,35 @@ public class FriendController {
   private final FriendService friendService;
 
   @PostMapping
-  public ResponseEntity<ApiResponse<FriendResponse.AddResponse>> addFriend(
+  public ResponseEntity<ApiResponse<FriendAddResponse>> addFriend(
       @AuthenticationPrincipal CustomUserDetails userDetails,
-      @Valid @RequestBody FriendRequest.AddRequest request
+      @Valid @RequestBody FriendAddRequest request
   ) {
-    FriendResponse.AddResponse response = friendService.addFriend(userDetails.getUserId(), request);
+    FriendAddResponse response = friendService.addFriend(userDetails.getUserId(), request);
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success("친구 추가가 완료되었습니다.", response));
   }
 
   @GetMapping
-  public ResponseEntity<ApiResponse<FriendResponse.FriendListResponse>> getFriends(
+  public ResponseEntity<ApiResponse<FriendListResponse>> getFriends(
       @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
-    List<FriendResponse.Info> friendInfos = friendService.getFriends(userDetails.getUserId())
+    List<FriendInfo> friendInfos = friendService.getFriends(userDetails.getUserId())
         .stream()
-        .map(FriendResponse.Info::from)
+        .map(FriendInfo::from)
         .toList();
 
-    FriendResponse.FriendListResponse response = FriendResponse.FriendListResponse.of(friendInfos);
+    FriendListResponse response = FriendListResponse.of(friendInfos);
     return ResponseEntity.ok(ApiResponse.success("친구 조회를 완료했습니다.", response));
   }
 
   @PatchMapping("/{friendId}")
-  public ResponseEntity<ApiResponse<FriendResponse.UpdateResponse>> updateFriendInfo(
+  public ResponseEntity<ApiResponse<FriendUpdateResponse>> updateFriendInfo(
       @AuthenticationPrincipal CustomUserDetails userDetails,
       @PathVariable Long friendId,
-      @Valid @RequestBody FriendRequest.UpdateRequest request
+      @Valid @RequestBody FriendUpdateRequest request
   ) {
-    FriendResponse.UpdateResponse response = friendService.updateFriendsInfo(
+    FriendUpdateResponse response = friendService.updateFriendsInfo(
         userDetails.getUserId(), friendId, request);
     return ResponseEntity.ok(ApiResponse.success("친구 정보가 수정되었습니다.", response));
   }
@@ -65,7 +70,7 @@ public class FriendController {
   public ResponseEntity<ApiResponse<Void>> changeFriendStatus(
       @AuthenticationPrincipal CustomUserDetails userDetails,
       @PathVariable Long friendId,
-      @Valid @RequestBody FriendRequest.StatusRequest request
+      @Valid @RequestBody FriendStatusRequest request
   ) {
     friendService.changeFriendStatus(userDetails.getUserId(), friendId, request);
     return ResponseEntity.ok(ApiResponse.success("친구 상태가 변경 되었습니다.", null));
