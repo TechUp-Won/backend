@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.verify;
 
 import com.example.WonkaoTalk.common.exception.BusinessException;
@@ -196,20 +197,14 @@ class ShippingAddressServiceTest {
     ShippingAddressUpdateRequest request = new ShippingAddressUpdateRequest(
         null, null, null, null, null, null, true);
 
-    ShippingAddress previousDefault = ShippingAddress.builder()
-        .user(user).recipientName("이전기본").recipientPhone("010-0000-0000")
-        .zipCode("12345").address1("기존 주소").isDefault(true)
-        .build();
-    ReflectionTestUtils.setField(previousDefault, "id", 20L);
-
     given(shippingAddressRepo.findByIdAndUserId(10L, 1L)).willReturn(Optional.of(address));
-    given(shippingAddressRepo.findDefaultByUserId(1L)).willReturn(Optional.of(previousDefault));
+    willDoNothing().given(shippingAddressRepo).unsetDefaultByUserId(1L);
 
     // when
     shippingAddressService.update(1L, 10L, request);
 
     // then
-    assertThat(previousDefault.isDefault()).isFalse();
+    verify(shippingAddressRepo).unsetDefaultByUserId(1L);
     assertThat(address.isDefault()).isTrue();
   }
 
@@ -296,20 +291,14 @@ class ShippingAddressServiceTest {
   @DisplayName("기본 배송지 설정 성공 - 기존 기본 배송지가 해제된다")
   void setDefault_Success() {
     // given
-    ShippingAddress previousDefault = ShippingAddress.builder()
-        .user(user).recipientName("이전기본").recipientPhone("010-0000-0000")
-        .zipCode("12345").address1("기존 주소").isDefault(true)
-        .build();
-    ReflectionTestUtils.setField(previousDefault, "id", 20L);
-
     given(shippingAddressRepo.findByIdAndUserId(10L, 1L)).willReturn(Optional.of(address));
-    given(shippingAddressRepo.findDefaultByUserId(1L)).willReturn(Optional.of(previousDefault));
+    willDoNothing().given(shippingAddressRepo).unsetDefaultByUserId(1L);
 
     // when
     ShippingAddressResponse response = shippingAddressService.setDefault(1L, 10L);
 
     // then
-    assertThat(previousDefault.isDefault()).isFalse();
+    verify(shippingAddressRepo).unsetDefaultByUserId(1L);
     assertThat(address.isDefault()).isTrue();
     assertThat(response).isNotNull();
   }

@@ -62,8 +62,7 @@ public class ShippingAddressService {
         request.address1(), request.address2(), request.memo());
 
     if (Boolean.TRUE.equals(request.isDefault())) {
-      shippingAddressRepo.findDefaultByUserId(userId)
-          .ifPresent(ShippingAddress::unsetDefault);
+      shippingAddressRepo.unsetDefaultByUserId(userId);
       address.setAsDefault();
     }
 
@@ -87,8 +86,7 @@ public class ShippingAddressService {
     ShippingAddress address = shippingAddressRepo.findByIdAndUserId(shippingAddressId, userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.SHIP_NOT_FOUND));
 
-    shippingAddressRepo.findDefaultByUserId(userId)
-        .ifPresent(ShippingAddress::unsetDefault);
+    shippingAddressRepo.unsetDefaultByUserId(userId);
 
     address.setAsDefault();
 
