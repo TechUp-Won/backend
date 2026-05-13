@@ -46,6 +46,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       String email = jwtTokenProvider.getEmailFromToken(token);
       String role = jwtTokenProvider.getRoleFromToken(token);
       Long authId = jwtTokenProvider.getAuthId(token);
+      Long userId = jwtTokenProvider.getUserId(token);
+      Long sellerId = jwtTokenProvider.getSellerId(token);
 
       // 시큐리티 권한 객체로 반환
       List<GrantedAuthority> authorities = Collections.singletonList(
@@ -55,6 +57,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       CustomUserDetails userDetails = CustomUserDetails.customBuilder()
           .email(email)
           .authId(authId)
+          .userId(userId)
+          .sellerId(sellerId)
           .authorities(authorities)
           .build();
 
