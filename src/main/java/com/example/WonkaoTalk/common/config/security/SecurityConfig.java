@@ -45,7 +45,8 @@ public class SecurityConfig {
                 "/api/v1/sellers/register"
             ).authenticated()
             .requestMatchers(
-                "/api/v1/users/**"
+                "/api/v1/users/**",
+                "/api/v1/friends/**"
             ).hasRole("USER")
             .requestMatchers(
                 "/api/v1/sellers/**"
