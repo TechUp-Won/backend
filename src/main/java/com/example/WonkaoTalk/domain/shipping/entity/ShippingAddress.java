@@ -68,4 +68,22 @@ public class ShippingAddress {
   @LastModifiedDate
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
+
+  public void update(String recipientName, String recipientPhone, String zipCode,
+      String address1, String address2, String memo) {
+    if (recipientName != null) this.recipientName = recipientName;
+    if (recipientPhone != null) this.recipientPhone = recipientPhone;
+    if (zipCode != null) this.zipCode = zipCode;
+    if (address1 != null) this.address1 = address1;
+    if (address2 != null) this.address2 = address2;
+    if (memo != null) this.memo = memo;
+  }
+
+  public void setAsDefault() {
+    this.isDefault = true;
+  }
+
+  public void unsetDefault() {
+    this.isDefault = false;
+  }
 }
