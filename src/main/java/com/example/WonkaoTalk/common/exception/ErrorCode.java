@@ -27,7 +27,10 @@ public enum ErrorCode {
 
   // 유저 도메인
   USER_NOT_FOUND(404, "USER-NOT-FOUND-ID", "해당 사용자 ID를 찾을 수 없습니다."),
-
+  // 친구 도메인
+  FRND_SELF_REF(400, "FRND-SELF-REF", "자기 자신을 참조 할 수 없습니다."),
+  FRND_REGISTERED_ALREADY(400, "FRND-REGISTERED-ALREADY", "이미 친구로 등록된 사용자입니다."),
+  FRND_NOT_FOUND(404, "FRND-NOT-FOUND", "친구 정보를 찾을 수 없습니다."),
   // 판매자 도메인
   SELLER_NOT_FOUND(404, "SELLER-NOT-FOUND", "해당 판매자 ID를 찾을 수 없습니다."),
   SELLER_REGISTERED_ACCOUNT(400, "SELLER-REGISTERED-ACCOUNT", "이미 사업자 등록된 계정입니다."),
