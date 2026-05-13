@@ -91,6 +91,25 @@ class ProductVariantRepoTest {
     ProductVariant updated = productVariantRepo.findById(variant.getId()).orElseThrow();
     assertThat(updated.getStatus()).isEqualTo(SaleStatus.STOP_SALE);
   }
+
+  @Test
+  @DisplayName("STOP_SALE 상태에서는 재고가 0이 되어도 상태가 변경되지 않는다")
+  void decreaseStockAtomic_DoesNotChangeStatus_WhenStopSale() {
+    // given (상태를 STOP_SALE로 변경)
+    ProductVariant v = productVariantRepo.findById(variant.getId()).orElseThrow();
+    ReflectionTestUtils.setField(v, "status", SaleStatus.STOP_SALE);
+    em.persist(v);
+    flushAndClear();
+
+    // when (재고를 0으로 만듬)
+    productVariantRepo.decreaseStockAtomic(variant.getId(), 10);
+
+    // then
+    ProductVariant updated = productVariantRepo.findById(variant.getId()).orElseThrow();
+    assertThat(updated.getStock()).isEqualTo(0);
+    assertThat(updated.getStatus()).isEqualTo(SaleStatus.STOP_SALE);
+  }
+
   @Test
   @DisplayName("재고가 부족하면 감소시키지 않고 0을 반환한다")
   void decreaseStockAtomic_Fail_InsufficientStock() {

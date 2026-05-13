@@ -1,6 +1,7 @@
 package com.example.WonkaoTalk.domain.product.repo;
 
 import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
+import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -14,14 +15,32 @@ public interface ProductVariantRepo extends JpaRepository<ProductVariant, Long> 
   @Modifying(clearAutomatically = true)
   @Query("UPDATE ProductVariant pv " +
       "SET pv.stock = pv.stock - :quantity, " +
-      "pv.status = CASE WHEN (pv.stock - :quantity) = 0 THEN com.example.WonkaoTalk.domain.product.enums.SaleStatus.OUT_OF_STOCK ELSE pv.status END " +
+      "pv.status = CASE WHEN (pv.stock - :quantity) = 0 AND pv.status = :onSale THEN :outOfStock ELSE pv.status END " +
       "WHERE pv.id = :id AND pv.stock >= :quantity")
-  int decreaseStockAtomic(@Param("id") Long id, @Param("quantity") int quantity);
+  int decreaseStock(
+      @Param("id") Long id,
+      @Param("quantity") int quantity,
+      @Param("onSale") SaleStatus onSale,
+      @Param("outOfStock") SaleStatus outOfStock
+  );
 
   @Modifying(clearAutomatically = true)
   @Query("UPDATE ProductVariant pv " +
       "SET pv.stock = pv.stock + :quantity, " +
-      "pv.status = CASE WHEN pv.status = com.example.WonkaoTalk.domain.product.enums.SaleStatus.OUT_OF_STOCK THEN com.example.WonkaoTalk.domain.product.enums.SaleStatus.ON_SALE ELSE pv.status END " +
+      "pv.status = CASE WHEN pv.status = :outOfStock THEN :onSale ELSE pv.status END " +
       "WHERE pv.id = :id")
-  void increaseStockAtomic(@Param("id") Long id, @Param("quantity") int quantity);
+  int increaseStock(
+      @Param("id") Long id,
+      @Param("quantity") int quantity,
+      @Param("outOfStock") SaleStatus outOfStock,
+      @Param("onSale") SaleStatus onSale
+  );
+
+  default int decreaseStockAtomic(Long id, int quantity) {
+    return decreaseStock(id, quantity, SaleStatus.ON_SALE, SaleStatus.OUT_OF_STOCK);
+  }
+
+  default int increaseStockAtomic(Long id, int quantity) {
+    return increaseStock(id, quantity, SaleStatus.OUT_OF_STOCK, SaleStatus.ON_SALE);
+  }
 }
