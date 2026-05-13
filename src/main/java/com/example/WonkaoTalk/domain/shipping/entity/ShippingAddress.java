@@ -75,8 +75,8 @@ public class ShippingAddress {
     if (recipientPhone != null) this.recipientPhone = recipientPhone;
     if (zipCode != null) this.zipCode = zipCode;
     if (address1 != null) this.address1 = address1;
-    if (address2 != null) this.address2 = address2;
-    if (memo != null) this.memo = memo;
+    this.address2 = address2;
+    this.memo = memo;
   }
 
   public void setAsDefault() {
