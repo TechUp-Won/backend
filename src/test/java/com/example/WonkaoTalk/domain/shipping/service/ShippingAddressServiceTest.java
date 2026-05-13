@@ -115,7 +115,7 @@ class ShippingAddressServiceTest {
         .build();
     ReflectionTestUtils.setField(saved, "id", 10L);
 
-    given(userRepo.findById(1L)).willReturn(Optional.of(user));
+    given(userRepo.findByIdForUpdate(1L)).willReturn(Optional.of(user));
     given(shippingAddressRepo.countByUserId(1L)).willReturn(0L);
     given(shippingAddressRepo.save(any(ShippingAddress.class))).willReturn(saved);
 
@@ -140,7 +140,7 @@ class ShippingAddressServiceTest {
         .build();
     ReflectionTestUtils.setField(saved, "id", 11L);
 
-    given(userRepo.findById(1L)).willReturn(Optional.of(user));
+    given(userRepo.findByIdForUpdate(1L)).willReturn(Optional.of(user));
     given(shippingAddressRepo.countByUserId(1L)).willReturn(1L);
     given(shippingAddressRepo.save(any(ShippingAddress.class))).willReturn(saved);
 
@@ -158,7 +158,7 @@ class ShippingAddressServiceTest {
     ShippingAddressCreateRequest request = new ShippingAddressCreateRequest(
         "홍길동", "010-1234-5678", "06234", "서울특별시 강남구 테헤란로 427", null, null);
 
-    given(userRepo.findById(1L)).willReturn(Optional.empty());
+    given(userRepo.findByIdForUpdate(1L)).willReturn(Optional.empty());
 
     // when & then
     assertThatThrownBy(() -> shippingAddressService.create(1L, request))

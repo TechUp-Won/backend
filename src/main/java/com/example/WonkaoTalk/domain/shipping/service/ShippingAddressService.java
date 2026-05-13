@@ -33,7 +33,7 @@ public class ShippingAddressService {
 
   @Transactional
   public ShippingAddressResponse create(Long userId, ShippingAddressCreateRequest request) {
-    User user = userRepo.findById(userId)
+    User user = userRepo.findByIdForUpdate(userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
     boolean isFirst = shippingAddressRepo.countByUserId(userId) == 0;
