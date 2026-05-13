@@ -3,6 +3,7 @@ package com.example.WonkaoTalk.domain.shipping.controller;
 import com.example.WonkaoTalk.common.response.ApiResponse;
 import com.example.WonkaoTalk.domain.auth.dto.CustomUserDetails;
 import com.example.WonkaoTalk.domain.shipping.dto.ShippingAddressCreateRequest;
+import com.example.WonkaoTalk.domain.shipping.dto.ShippingAddressListResponse;
 import com.example.WonkaoTalk.domain.shipping.dto.ShippingAddressResponse;
 import com.example.WonkaoTalk.domain.shipping.dto.ShippingAddressUpdateRequest;
 import com.example.WonkaoTalk.domain.shipping.service.ShippingAddressService;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +27,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class ShippingAddressController {
 
   private final ShippingAddressService shippingAddressService;
+
+  @GetMapping
+  public ResponseEntity<ApiResponse<ShippingAddressListResponse>> getList(
+      @AuthenticationPrincipal CustomUserDetails userDetails
+  ) {
+    ShippingAddressListResponse response = shippingAddressService.getList(userDetails.getUserId());
+    return ResponseEntity.ok(ApiResponse.success("배송지 목록을 조회했습니다.", response));
+  }
 
   @PostMapping
   public ResponseEntity<ApiResponse<ShippingAddressResponse>> create(

@@ -9,12 +9,14 @@ import static org.mockito.Mockito.verify;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.shipping.dto.ShippingAddressCreateRequest;
+import com.example.WonkaoTalk.domain.shipping.dto.ShippingAddressListResponse;
 import com.example.WonkaoTalk.domain.shipping.dto.ShippingAddressResponse;
 import com.example.WonkaoTalk.domain.shipping.dto.ShippingAddressUpdateRequest;
 import com.example.WonkaoTalk.domain.shipping.entity.ShippingAddress;
 import com.example.WonkaoTalk.domain.shipping.repo.ShippingAddressRepo;
 import com.example.WonkaoTalk.domain.user.entity.User;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -56,6 +58,44 @@ class ShippingAddressServiceTest {
         .build();
     ReflectionTestUtils.setField(address, "id", 10L);
     ReflectionTestUtils.setField(address, "isDefault", false);
+  }
+
+  // ============================
+  // getList
+  // ============================
+
+  @Test
+  @DisplayName("배송지 목록 조회 성공")
+  void getList_Success() {
+    // given
+    ShippingAddress address2 = ShippingAddress.builder()
+        .user(user).recipientName("홍길동").recipientPhone("010-9999-8888")
+        .zipCode("04524").address1("서울특별시 중구 세종대로 110").isDefault(true)
+        .build();
+    ReflectionTestUtils.setField(address2, "id", 20L);
+
+    given(shippingAddressRepo.findByUserId(1L)).willReturn(List.of(address, address2));
+
+    // when
+    ShippingAddressListResponse response = shippingAddressService.getList(1L);
+
+    // then
+    assertThat(response.addresses()).hasSize(2);
+    assertThat(response.addresses().get(0).shippingAddressId()).isEqualTo(10L);
+    assertThat(response.addresses().get(1).shippingAddressId()).isEqualTo(20L);
+  }
+
+  @Test
+  @DisplayName("배송지가 없으면 빈 목록을 반환한다")
+  void getList_Empty_ReturnsEmptyList() {
+    // given
+    given(shippingAddressRepo.findByUserId(1L)).willReturn(List.of());
+
+    // when
+    ShippingAddressListResponse response = shippingAddressService.getList(1L);
+
+    // then
+    assertThat(response.addresses()).isEmpty();
   }
 
   // ============================

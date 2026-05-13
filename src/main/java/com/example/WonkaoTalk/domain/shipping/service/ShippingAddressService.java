@@ -3,12 +3,14 @@ package com.example.WonkaoTalk.domain.shipping.service;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.shipping.dto.ShippingAddressCreateRequest;
+import com.example.WonkaoTalk.domain.shipping.dto.ShippingAddressListResponse;
 import com.example.WonkaoTalk.domain.shipping.dto.ShippingAddressResponse;
 import com.example.WonkaoTalk.domain.shipping.dto.ShippingAddressUpdateRequest;
 import com.example.WonkaoTalk.domain.shipping.entity.ShippingAddress;
 import com.example.WonkaoTalk.domain.shipping.repo.ShippingAddressRepo;
 import com.example.WonkaoTalk.domain.user.entity.User;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,15 @@ public class ShippingAddressService {
 
   private final ShippingAddressRepo shippingAddressRepo;
   private final UserRepo userRepo;
+
+  @Transactional(readOnly = true)
+  public ShippingAddressListResponse getList(Long userId) {
+    List<ShippingAddressResponse> addresses = shippingAddressRepo.findByUserId(userId)
+        .stream()
+        .map(ShippingAddressResponse::from)
+        .toList();
+    return ShippingAddressListResponse.of(addresses);
+  }
 
   @Transactional
   public ShippingAddressResponse create(Long userId, ShippingAddressCreateRequest request) {
