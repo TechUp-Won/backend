@@ -129,4 +129,22 @@ public class JwtTokenProvider {
         .getBody()
         .get("authId", Long.class);
   }
+
+  public Long getUserId(String token) {
+    return Jwts.parserBuilder()
+        .setSigningKey(key)
+        .build()
+        .parseClaimsJws(token)
+        .getBody()
+        .get("userId", Long.class);
+  }
+
+  public Long getSellerId(String token) {
+    return Jwts.parserBuilder()
+        .setSigningKey(key)
+        .build()
+        .parseClaimsJws(token)
+        .getBody()
+        .get("sellerId", Long.class);
+  }
 }

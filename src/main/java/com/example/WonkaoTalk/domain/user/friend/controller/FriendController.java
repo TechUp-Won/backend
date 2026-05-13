@@ -28,35 +28,37 @@ public class FriendController {
   private final FriendService friendService;
 
   @PostMapping
-  public ResponseEntity<ApiResponse<Void>> addFriend(
+  public ResponseEntity<ApiResponse<FriendResponse.AddResponse>> addFriend(
       @AuthenticationPrincipal CustomUserDetails userDetails,
       @Valid @RequestBody FriendRequest.AddRequest request
   ) {
-    friendService.addFriend(userDetails.getUserId(), request);
+    FriendResponse.AddResponse response = friendService.addFriend(userDetails.getUserId(), request);
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(ApiResponse.success("친구 추가가 완료되었습니다.", null));
+        .body(ApiResponse.success("친구 추가가 완료되었습니다.", response));
   }
 
   @GetMapping
-  public ResponseEntity<ApiResponse<List<FriendResponse>>> getFriends(
+  public ResponseEntity<ApiResponse<FriendResponse.FriendListResponse>> getFriends(
       @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
-    List<FriendResponse> responses = friendService.getFriends(userDetails.getUserId())
+    List<FriendResponse.Info> friendInfos = friendService.getFriends(userDetails.getUserId())
         .stream()
-        .map(FriendResponse::from)
+        .map(FriendResponse.Info::from)
         .toList();
 
-    return ResponseEntity.ok(ApiResponse.success("친구 조회를 완료했습니다.", responses));
+    FriendResponse.FriendListResponse response = FriendResponse.FriendListResponse.of(friendInfos);
+    return ResponseEntity.ok(ApiResponse.success("친구 조회를 완료했습니다.", response));
   }
 
   @PatchMapping("/{friendId}")
-  public ResponseEntity<ApiResponse<Void>> updateFriendInfo(
+  public ResponseEntity<ApiResponse<FriendResponse.UpdateResponse>> updateFriendInfo(
       @AuthenticationPrincipal CustomUserDetails userDetails,
       @PathVariable Long friendId,
       @Valid @RequestBody FriendRequest.UpdateRequest request
   ) {
-    friendService.updateFriendsInfo(userDetails.getUserId(), friendId, request);
-    return ResponseEntity.ok(ApiResponse.success("친구 정보가 수정되었습니다.", null));
+    FriendResponse.UpdateResponse response = friendService.updateFriendsInfo(
+        userDetails.getUserId(), friendId, request);
+    return ResponseEntity.ok(ApiResponse.success("친구 정보가 수정되었습니다.", response));
   }
 
   @PatchMapping("/{friendId}/status")

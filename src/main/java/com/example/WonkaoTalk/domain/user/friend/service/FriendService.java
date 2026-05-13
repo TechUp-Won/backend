@@ -4,6 +4,7 @@ import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.user.entity.User;
 import com.example.WonkaoTalk.domain.user.friend.dto.FriendRequest;
+import com.example.WonkaoTalk.domain.user.friend.dto.FriendResponse;
 import com.example.WonkaoTalk.domain.user.friend.entity.Friend;
 import com.example.WonkaoTalk.domain.user.friend.repo.FriendRepo;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
@@ -22,12 +23,12 @@ public class FriendService {
   private final UserRepo userRepo;
 
   @Transactional
-  public void addFriend(Long userId, FriendRequest.AddRequest request) {
+  public FriendResponse.AddResponse addFriend(Long userId, FriendRequest.AddRequest request) {
     if (userId.equals(request.targetId())) {
       throw new BusinessException(ErrorCode.FRND_SELF_REF);
     }
 
-    if (friendRepo.existsByUserIdAndFriendId(userId, request.targetId())) {
+    if (friendRepo.existsByUserIdAndTargetId(userId, request.targetId())) {
       throw new BusinessException(ErrorCode.FRND_REGISTERED_ALREADY);
     }
 
@@ -42,7 +43,8 @@ public class FriendService {
         .alias(target.getName())
         .build();
 
-    friendRepo.save(newFriend);
+    Friend savedFriend = friendRepo.save(newFriend);
+    return FriendResponse.AddResponse.of(savedFriend.getId());
   }
 
   @Transactional
@@ -51,11 +53,14 @@ public class FriendService {
   }
 
   @Transactional
-  public void updateFriendsInfo(Long userId, Long friendId, FriendRequest.UpdateRequest request) {
+  public FriendResponse.UpdateResponse updateFriendsInfo(Long userId, Long friendId,
+      FriendRequest.UpdateRequest request) {
     Friend friend = friendRepo.findByIdAndUserId(friendId, userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.FRND_NOT_FOUND));
     friend.updateAlias(request.alias());
     friend.updateMemo(request.memo());
+
+    return FriendResponse.UpdateResponse.from(friend);
   }
 
   @Transactional
