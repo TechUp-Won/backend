@@ -87,8 +87,11 @@ public class AuthService {
 
     String profileName = extractProfileNameByRole(auth);
     String email = authLocal.getEmail();
-    String accessToken = jwtTokenProvider.createAccessToken(email, auth.getId(),
-        auth.getRole().name());
+    String role = auth.getRole().name();
+    Long userId = extractUserIdIfPresent(auth);
+    Long sellerId = extractSellerIdIfPresent(auth);
+    String accessToken =
+        jwtTokenProvider.createAccessToken(email, auth.getId(), userId, sellerId, role);
     String refreshToken = jwtTokenProvider.createRefreshToken(email);
 
     long refreshExpirationTime = jwtTokenProvider.getRefreshTokenValidTime();
@@ -114,9 +117,7 @@ public class AuthService {
     Auth auth = authRepo.findById(authId)
         .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_NOT_FOUND));
 
-    authLocalRepo.findByAuth(auth).ifPresent(authLocal -> {
-      authLocal.withdraw();
-    });
+    authLocalRepo.findByAuth(auth).ifPresent(AuthLocal::withdraw);
 
     auth.withdraw();
   }
@@ -141,6 +142,18 @@ public class AuthService {
     loginHistoryRepo.save(history);
   }
 
+  public void invalidateToken(String email, String accessToken) {
+    String redisKey = "RT:" + email;
+    if (redisService.hasKey(redisKey)) {
+      redisService.deleteValues(redisKey);
+    }
+
+    Long expiration = jwtTokenProvider.getExpiration(accessToken);
+    log.info("블랙리스트 등록 토큰: {}", accessToken);
+    log.info("남은 만료 시간: {}", expiration);
+    redisService.setValues("BlackList:" + accessToken, "logout", Duration.ofMillis(expiration));
+  }
+
   private String extractProfileNameByRole(Auth auth) {
     Role role = auth.getRole();
 
@@ -158,16 +171,23 @@ public class AuthService {
     return "알 수 없는 사용자";
   }
 
-  public void invalidateToken(String email, String accessToken) {
-    String redisKey = "RT:" + email;
-    if (redisService.hasKey(redisKey)) {
-      redisService.deleteValues(redisKey);
+  private Long extractUserIdIfPresent(Auth auth) {
+    Role role = auth.getRole();
+    if (role == Role.USER || role == Role.USER_SELLER) {
+      return userRepo.findByAuth(auth)
+          .map(User::getId)
+          .orElse(null);
     }
-
-    Long expiration = jwtTokenProvider.getExpiration(accessToken);
-    log.info("블랙리스트 등록 토큰: {}", accessToken);
-    log.info("남은 만료 시간: {}", expiration);
-    redisService.setValues("BlackList:" + accessToken, "logout", Duration.ofMillis(expiration));
+    return null;
   }
 
+  private Long extractSellerIdIfPresent(Auth auth) {
+    Role role = auth.getRole();
+    if (role == Role.SELLER || role == Role.USER_SELLER) {
+      return sellerRepo.findByAuth(auth)
+          .map(Seller::getId)
+          .orElse(null);
+    }
+    return null;
+  }
 }

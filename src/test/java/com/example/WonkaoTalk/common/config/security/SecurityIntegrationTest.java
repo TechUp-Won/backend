@@ -35,7 +35,7 @@ class SecurityIntegrationTest {
   @DisplayName("유효한 JWT 토큰으로 인증을 시도하면 정상적으로 접근이 가능하다.(200)")
   public void requestWithValidTokenSuccess() throws Exception {
     //given
-    String validToken = jwtTokenProvider.createAccessToken("test@test.com", 1L, "USER");
+    String validToken = jwtTokenProvider.createAccessToken("test@test.com", 1L, 1L, null, "USER");
 
     //when & then
     mockMvc.perform(get("/api/v1/health/user")
@@ -84,7 +84,7 @@ class SecurityIntegrationTest {
   @DisplayName("권한에 맞지 않은 접근을 시도하면 예외 발생(403)")
   public void requestWithRoleMismatchFailure() throws Exception {
     //given
-    String userToken = jwtTokenProvider.createAccessToken("user@user.com", 1L, "USER");
+    String userToken = jwtTokenProvider.createAccessToken("user@user.com", 1L, 1L, null, "USER");
 
     //when & then
     mockMvc.perform(get("/api/v1/health/seller")
@@ -102,7 +102,7 @@ class SecurityIntegrationTest {
   @Test
   @DisplayName("USER 권한을 가진 사용자는 USER 엔드포인트에 접근 가능하다.")
   void userAccess_Success() throws Exception {
-    String token = jwtTokenProvider.createAccessToken("user@test.com", 1L, "USER");
+    String token = jwtTokenProvider.createAccessToken("user@test.com", 1L, 1L, null, "USER");
     mockMvc.perform(get("/api/v1/health/user")
             .header("Authorization", "Bearer " + token))
         .andExpect(status().isOk());
@@ -111,7 +111,7 @@ class SecurityIntegrationTest {
   @Test
   @DisplayName("SELLER 권한을 가진 사용자는 SELLER 엔드포인트에 접근 가능하다.")
   void sellerAccess_Success() throws Exception {
-    String token = jwtTokenProvider.createAccessToken("seller@test.com", 2L, "SELLER");
+    String token = jwtTokenProvider.createAccessToken("seller@test.com", 2L, null, 3L, "SELLER");
     mockMvc.perform(get("/api/v1/health/seller")
             .header("Authorization", "Bearer " + token))
         .andExpect(status().isOk());
