@@ -27,7 +27,7 @@ public class FriendService {
 
   @Transactional
   public FriendAddResponse addFriend(Long userId, FriendAddRequest request) {
-    if (userId.equals(request.targetId())) {
+    if (userId == null || userId.equals(request.targetId())) {
       throw new BusinessException(ErrorCode.FRND_SELF_REF);
     }
 
@@ -50,7 +50,7 @@ public class FriendService {
     return FriendAddResponse.of(savedFriend.getId());
   }
 
-  @Transactional
+  @Transactional(readOnly = true)
   public List<Friend> getFriends(Long userId) {
     return friendRepo.findAllActiveFriendsByUserId(userId);
   }
@@ -60,8 +60,12 @@ public class FriendService {
       FriendUpdateRequest request) {
     Friend friend = friendRepo.findByIdAndUserId(friendId, userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.FRND_NOT_FOUND));
-    friend.updateAlias(request.alias());
-    friend.updateMemo(request.memo());
+    if (request.alias() != null) {
+      friend.updateAlias(request.alias());
+    }
+    if (request.memo() != null) {
+      friend.updateMemo(request.memo());
+    }
 
     return FriendUpdateResponse.from(friend);
   }
