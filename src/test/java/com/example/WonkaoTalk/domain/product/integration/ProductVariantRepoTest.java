@@ -46,18 +46,51 @@ class ProductVariantRepoTest {
   // ── 재고 관리 (Atomic) ───────────────────────────────────────────────────────
 
   @Test
-  @DisplayName("재고를 성공적으로 감소시키면 1을 반환하고 DB에 반영된다")
-  void decreaseStockAtomic_Success() {
+  @DisplayName("재고가 0이 되면 상태가 OUT_OF_STOCK으로 변경된다")
+  void decreaseStockAtomic_ChangesStatusToOutOfStock_WhenStockHitsZero() {
     // when
-    int updatedCount = productVariantRepo.decreaseStockAtomic(variant.getId(), 5);
+    int updatedCount = productVariantRepo.decreaseStockAtomic(variant.getId(), 10);
 
     // then
     assertThat(updatedCount).isEqualTo(1);
 
     ProductVariant updated = productVariantRepo.findById(variant.getId()).orElseThrow();
-    assertThat(updated.getStock()).isEqualTo(5);
+    assertThat(updated.getStock()).isEqualTo(0);
+    assertThat(updated.getStatus()).isEqualTo(SaleStatus.OUT_OF_STOCK);
   }
 
+  @Test
+  @DisplayName("OUT_OF_STOCK 상태에서 재고가 증가하면 ON_SALE로 변경된다")
+  void increaseStockAtomic_ChangesStatusToOnSale_WhenPreviouslyOutOfStock() {
+    // given (재고를 0으로 만들어 OUT_OF_STOCK 상태로 변경)
+    productVariantRepo.decreaseStockAtomic(variant.getId(), 10);
+    flushAndClear();
+
+    // when
+    productVariantRepo.increaseStockAtomic(variant.getId(), 5);
+
+    // then
+    ProductVariant updated = productVariantRepo.findById(variant.getId()).orElseThrow();
+    assertThat(updated.getStock()).isEqualTo(5);
+    assertThat(updated.getStatus()).isEqualTo(SaleStatus.ON_SALE);
+  }
+
+  @Test
+  @DisplayName("STOP_SALE 상태에서는 재고가 증가해도 상태가 변경되지 않는다")
+  void increaseStockAtomic_DoesNotChangeStatus_WhenStopSale() {
+    // given (상태를 STOP_SALE로 변경)
+    ProductVariant v = productVariantRepo.findById(variant.getId()).orElseThrow();
+    ReflectionTestUtils.setField(v, "status", SaleStatus.STOP_SALE);
+    em.persist(v);
+    flushAndClear();
+
+    // when
+    productVariantRepo.increaseStockAtomic(variant.getId(), 5);
+
+    // then
+    ProductVariant updated = productVariantRepo.findById(variant.getId()).orElseThrow();
+    assertThat(updated.getStatus()).isEqualTo(SaleStatus.STOP_SALE);
+  }
   @Test
   @DisplayName("재고가 부족하면 감소시키지 않고 0을 반환한다")
   void decreaseStockAtomic_Fail_InsufficientStock() {
