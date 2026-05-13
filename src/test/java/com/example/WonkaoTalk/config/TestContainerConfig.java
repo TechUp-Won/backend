@@ -34,7 +34,7 @@ public class TestContainerConfig {
 
   @Bean
   public GenericContainer<?> minioContainer(ConfigurableEnvironment environment) {
-    GenericContainer<?> minio = new GenericContainer<>("minio/minio:latest")
+    GenericContainer<?> minio = new GenericContainer<>("minio/minio:RELEASE.2025-09-07T16-13-09Z")
         .withEnv("MINIO_ROOT_USER", "minioadmin")
         .withEnv("MINIO_ROOT_PASSWORD", "minioadmin")
         .withCommand("server /data")
