@@ -61,4 +61,8 @@ public class ProductVariant {
 
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
+
+  public boolean isSellable() {
+    return this.product.isOnSale() && this.status == SaleStatus.ON_SALE;
+  }
 }

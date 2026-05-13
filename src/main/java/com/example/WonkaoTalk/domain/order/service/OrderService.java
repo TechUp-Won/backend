@@ -11,7 +11,7 @@ import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponse.SummaryDto;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
-import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepository;
+import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepo;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class OrderService {
 
-  private final ProductVariantRepository productVariantRepository;
+  private final ProductVariantRepo productVariantRepo;
 
   // 주문 생성 로직 작성
   // 응답값으로 Order로 생성 요청한 값들의 성공적으로 생성 되었는지만 전달해주면됨.
@@ -91,7 +91,7 @@ public class OrderService {
   // variantId 목록으로 ProductVariant 조회 후 Map으로 변환
   public Map<Long, ProductVariant> findVariantMapByIds(List<Long> variantIds) {
 
-    List<ProductVariant> variants = productVariantRepository.findAllById(variantIds);
+    List<ProductVariant> variants = productVariantRepo.findAllById(variantIds);
 
     return variants.stream().collect(Collectors.toMap(
         ProductVariant::getId,
