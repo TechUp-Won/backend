@@ -34,7 +34,7 @@ class UserServiceTest {
   private AuthService authService;
 
   @Test
-  @DisplayName("정상적으로 일반 사용자  회원가입에 성공")
+  @DisplayName("정상적으로 일반 사용자 회원가입에 성공")
   public void signUpSuccess() {
     //given
     UserSignUpRequest request = new UserSignUpRequest(

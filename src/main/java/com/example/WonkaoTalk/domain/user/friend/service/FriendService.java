@@ -85,5 +85,4 @@ public class FriendService {
 
     friendRepo.delete(friend);
   }
-
 }
