@@ -75,7 +75,10 @@ public class UserService {
     String image = StringUtils.hasText(request.image()) ? request.image() : user.getImage();
     Gender gender = request.gender() != null ? request.gender() : user.getGender();
     LocalDate birthDate = request.birthDate() != null ? request.birthDate() : user.getBirthDate();
-    user.update(nickname, image, gender, birthDate, request.marketingAgree());
+    boolean marketingAgree =
+        request.marketingAgree() != null ? request.marketingAgree() : user.isMarketingAgree();
+
+    user.update(nickname, image, gender, birthDate, marketingAgree);
 
     return UserResponse.from(user);
   }
