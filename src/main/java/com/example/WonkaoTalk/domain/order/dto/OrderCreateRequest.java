@@ -1,9 +1,9 @@
 package com.example.WonkaoTalk.domain.order.dto;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
@@ -18,6 +18,7 @@ public record OrderCreateRequest(
 
     // TODO: 포인트 도메인 구현 후 보유 포인트/사용 정책 검증 추가
     @Min(0)
+    @NotNull
     Long pointUsedAmount
 ) {
 
@@ -41,5 +42,6 @@ public record OrderCreateRequest(
       // 메모는 필수사항이 아님
       String memo
   ) {
+
   }
 }
