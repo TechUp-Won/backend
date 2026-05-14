@@ -12,9 +12,13 @@ import com.example.WonkaoTalk.domain.chat.entity.ChatRoom;
 import com.example.WonkaoTalk.domain.chat.repo.ChatMessageRepo;
 import com.example.WonkaoTalk.domain.chat.repo.ChatParticipantRepo;
 import com.example.WonkaoTalk.domain.chat.repo.ChatRoomRepo;
-import com.example.WonkaoTalk.domain.user.entity.User;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -88,16 +92,22 @@ public class ChatMessageService {
     List<Long> allReadMessageIds = chatParticipantRepo.findAllParticipantsLastReadMessageIds(
         chatRoomId);
 
+    Set<Long> senderIds = messageSlice.getContent().stream()
+        .map(ChatMessage::getSenderId)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+
+    Map<Long, String> senderNicknameMap = new HashMap<>();
+    for (Long senderId : senderIds) {
+      userRepo.findByAuthId(senderId)
+          .ifPresent(user -> senderNicknameMap.put(senderId, user.getNickname()));
+    }
+
     List<ChatMessageDto> messageDtoList = messageSlice.getContent().stream()
         .map(message -> {
           int unreadCount = calculateUnreadCount(message.getId(), allReadMessageIds);
 
-          String senderNickname = "(알 수 없음)"; // 기본 값
-          if (message.getSenderId() != null) {
-            senderNickname = userRepo.findByAuthId(message.getSenderId())
-                .map(User::getNickname)
-                .orElse("(알 수 없음)");
-          }
+          String senderNickname = senderNicknameMap.getOrDefault(message.getSenderId(), "(알 수 없음)");
 
           return ChatMessageDto.of(message, userId, senderNickname, unreadCount);
         }).toList();
