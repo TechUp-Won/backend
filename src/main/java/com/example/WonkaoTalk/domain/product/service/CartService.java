@@ -288,12 +288,14 @@ public class CartService {
 
   private int calculateOriginalTotal(List<CartItem> items) {
     return items.stream()
+        .filter(ci -> ci.getProductVariant().isSellable())
         .mapToInt(ci -> ci.getProductVariant().getProduct().getPrice() * ci.getQuantity())
         .sum();
   }
 
   private int calculateDiscountTotal(List<CartItem> items) {
     return items.stream()
+        .filter(ci -> ci.getProductVariant().isSellable())
         .mapToInt(ci -> ci.getProductVariant().getProduct().getDiscountedPrice() * ci.getQuantity())
         .sum();
   }
