@@ -414,7 +414,7 @@ class CartServiceTest {
   void updateQuantity_throwsUnavailable_whenVariantNotOnSale() {
     Cart cart = mockCart(1L, 1L);
     ProductVariant variant = mockVariantWithProduct(1L, 10000, 8000);
-    when(variant.getStatus()).thenReturn(SaleStatus.STOP_SALE);
+    when(variant.isSellable()).thenReturn(false);
     CartItem cartItem = mockCartItem(1L, cart, variant, 2);
     when(cartItemRepository.findWithVariantAndProductByIdAndUserId(1L, 1L)).thenReturn(Optional.of(cartItem));
 
@@ -784,6 +784,7 @@ class CartServiceTest {
     when(variant.getProduct()).thenReturn(product);
     when(variant.getStock()).thenReturn(stock);
     when(variant.getStatus()).thenReturn(status);
+    when(variant.isSellable()).thenReturn(status == SaleStatus.ON_SALE);
     when(variant.getDeletedAt()).thenReturn(deletedAt);
     when(variant.getName()).thenReturn("옵션" + id);
     return variant;
@@ -801,6 +802,7 @@ class CartServiceTest {
     when(variant.getProduct()).thenReturn(product);
     when(variant.getStock()).thenReturn(50);
     when(variant.getStatus()).thenReturn(SaleStatus.ON_SALE);
+    when(variant.isSellable()).thenReturn(true);
     when(variant.getDeletedAt()).thenReturn(null);
     when(variant.getName()).thenReturn("옵션" + id);
     return variant;

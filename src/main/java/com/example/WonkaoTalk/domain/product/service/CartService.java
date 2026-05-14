@@ -16,7 +16,6 @@ import com.example.WonkaoTalk.domain.product.entity.Cart;
 import com.example.WonkaoTalk.domain.product.entity.CartItem;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
-import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
 import com.example.WonkaoTalk.domain.product.repo.CartItemRepo;
 import com.example.WonkaoTalk.domain.product.repo.CartRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
@@ -94,7 +93,7 @@ public class CartService {
       throw new BusinessException(ErrorCode.NOT_FOUND);
     }
 
-    if (variant.getDeletedAt() != null || variant.getStatus() != SaleStatus.ON_SALE) {
+    if (variant.getDeletedAt() != null || !variant.isSellable()) {
       throw new BusinessException(ErrorCode.PROD_VARIANT_UNAVAILABLE);
     }
 
@@ -154,7 +153,7 @@ public class CartService {
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
     ProductVariant variant = cartItem.getProductVariant();
-    if (variant.getStatus() != SaleStatus.ON_SALE || variant.getDeletedAt() != null) {
+    if (!variant.isSellable() || variant.getDeletedAt() != null) {
       throw new BusinessException(ErrorCode.PROD_VARIANT_UNAVAILABLE);
     }
 
@@ -206,7 +205,7 @@ public class CartService {
     ProductVariant targetVariant = productVariantRepository.findById(request.getVariantId())
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
-    if (targetVariant.getStatus() != SaleStatus.ON_SALE || targetVariant.getDeletedAt() != null) {
+    if (!targetVariant.isSellable() || targetVariant.getDeletedAt() != null) {
       throw new BusinessException(ErrorCode.PROD_VARIANT_UNAVAILABLE);
     }
 
