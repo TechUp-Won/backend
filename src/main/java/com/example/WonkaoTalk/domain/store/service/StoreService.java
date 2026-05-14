@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -30,10 +31,14 @@ public class StoreService {
       throw new BusinessException(ErrorCode.STORE_EXISTS_NAME);
     }
 
+    String thumbnail =
+        request.thumbnail() != null ? request.thumbnail() : "http://defaultThumbnail.png";
+    
     Store store = Store.builder()
         .name(request.name())
         .description(request.description())
         .phone(request.phone())
+        .thumbnail(thumbnail)
         .seller(seller)
         .build();
 
@@ -54,11 +59,16 @@ public class StoreService {
     Store store = storeRepo.findBySeller(seller)
         .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
 
-    String name = request.name() != null ? request.name() : store.getName();
+    if (storeRepo.existsByName(request.name())) {
+      throw new BusinessException(ErrorCode.STORE_EXISTS_NAME);
+    }
+
+    String name = StringUtils.hasText(request.name()) ? request.name() : store.getName();
     String description =
-        request.description() != null ? request.description() : store.getDescription();
-    String phone = request.phone() != null ? request.phone() : store.getPhone();
-    String thumbnail = request.thumbnail() != null ? request.thumbnail() : store.getThumbnail();
+        StringUtils.hasText(request.description()) ? request.description() : store.getDescription();
+    String phone = StringUtils.hasText(request.phone()) ? request.phone() : store.getPhone();
+    String thumbnail =
+        StringUtils.hasText(request.thumbnail()) ? request.thumbnail() : store.getThumbnail();
 
     store.updateInfo(name, description, phone, thumbnail);
     return StoreResponse.from(store);
