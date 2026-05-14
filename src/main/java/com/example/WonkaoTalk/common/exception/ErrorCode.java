@@ -59,6 +59,10 @@ public enum ErrorCode {
   IMAGE_INVALID_KEY(400, "IMAGE-INVALID-KEY", "유효하지 않은 이미지 키 형식입니다."),
   IMAGE_NOT_FOUND_KEY(400, "IMAGE-NOT-FOUND-KEY", "업로드되지 않았거나 만료된 이미지 키입니다."),
 
+  // 배송지 도메인
+  SHIP_NOT_FOUND(404, "SHIP-NOT-FOUND", "존재하지 않는 배송지입니다."),
+  SHIP_CANNOT_DELETE_DEFAULT(409, "SHIP-CANNOT-DELETE-DEFAULT", "기본 배송지는 삭제할 수 없습니다. 먼저 다른 배송지를 기본으로 설정해 주세요."),
+
   // 주문 도메인
 
   // 채팅 도메인
