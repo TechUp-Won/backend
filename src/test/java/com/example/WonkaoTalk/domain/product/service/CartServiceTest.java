@@ -117,6 +117,44 @@ class CartServiceTest {
   }
 
   @Test
+  @DisplayName("판매 불가 상품은 totalAmount 계산에서 제외된다")
+  void getCart_excludesUnsellableItems_fromTotalAmount() {
+    Cart cart = mockCart(1L, 1L);
+    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+
+    CartItem sellableItem = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 2);
+    ProductVariant unsellableVariant = mockVariantWithProduct(2L, 5000, 4000);
+    when(unsellableVariant.isSellable()).thenReturn(false);
+    CartItem unsellableItem = mockCartItem(2L, cart, unsellableVariant, 3);
+    when(cartItemRepository.findAllWithVariantAndProductByCartId(1L))
+        .thenReturn(List.of(sellableItem, unsellableItem));
+
+    CartResponse response = cartService.getCart(1L);
+
+    assertThat(response.getSummary().getOriginalTotalAmount()).isEqualTo(20000); // 10000*2만 포함
+    assertThat(response.getSummary().getDiscountTotalAmount()).isEqualTo(16000); // 8000*2만 포함
+  }
+
+  @Test
+  @DisplayName("cartItem의 sellable 필드는 variant의 isSellable() 결과를 반영한다")
+  void getCart_cartItemInfo_sellable_reflectsIsSellable() {
+    Cart cart = mockCart(1L, 1L);
+    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+
+    CartItem sellableItem = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 1);
+    ProductVariant unsellableVariant = mockVariantWithProduct(2L, 5000, 4000);
+    when(unsellableVariant.isSellable()).thenReturn(false);
+    CartItem unsellableItem = mockCartItem(2L, cart, unsellableVariant, 1);
+    when(cartItemRepository.findAllWithVariantAndProductByCartId(1L))
+        .thenReturn(List.of(sellableItem, unsellableItem));
+
+    CartResponse response = cartService.getCart(1L);
+
+    assertThat(response.getCartItems().get(0).getSellable()).isTrue();
+    assertThat(response.getCartItems().get(1).getSellable()).isFalse();
+  }
+
+  @Test
   @DisplayName("authId에 해당하는 User가 없으면 NOT_FOUND를 던진다")
   void getCart_throwsNotFound_whenUserNotFound() {
     when(userRepo.findByAuthId(anyLong())).thenReturn(Optional.empty());

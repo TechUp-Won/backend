@@ -317,6 +317,7 @@ public class CartService {
         .quantity(cartItem.getQuantity())
         .stock(variant.getStock())
         .status(variant.getStatus().name())
+        .sellable(variant.isSellable())
         .updatedAt(cartItem.getUpdatedAt())
         .build();
   }
