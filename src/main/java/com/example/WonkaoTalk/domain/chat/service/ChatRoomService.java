@@ -11,6 +11,8 @@ import com.example.WonkaoTalk.domain.chat.entity.ChatRoom;
 import com.example.WonkaoTalk.domain.chat.enums.RoomType;
 import com.example.WonkaoTalk.domain.chat.repo.ChatParticipantRepo;
 import com.example.WonkaoTalk.domain.chat.repo.ChatRoomRepo;
+import com.example.WonkaoTalk.domain.user.entity.User;
+import com.example.WonkaoTalk.domain.user.repo.UserRepo;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,8 @@ public class ChatRoomService {
   private final ChatRoomRepo chatRoomRepo;
   private final ChatParticipantRepo chatParticipantRepo;
 
+  private final UserRepo userRepo;
+
   @Transactional
   public ChatRoomResponse createChatRoom(Long myId, ChatRoomCreateRequest request) {
     Long receiverId = request.receiverId();
@@ -35,8 +39,25 @@ public class ChatRoomService {
       throw new BusinessException(ErrorCode.CANNOT_CHAT_SELF);
     }
 
+    User me = userRepo.findByAuthId(myId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    User receiver = userRepo.findByAuthId(receiverId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+    List<ChatRoomResponse.ParticipantDto> participants = List.of(
+        ChatRoomResponse.ParticipantDto.builder()
+            .userId(myId)
+            .nickname(me.getNickname())
+            .build(),
+        ChatRoomResponse.ParticipantDto.builder()
+            .userId(receiverId)
+            .nickname(receiver.getNickname())
+            .build()
+    );
+
     return chatParticipantRepo.findChatRoomByUsers(myId, receiverId)
-        .map(room -> ChatRoomResponse.from(room, createTempParticipants(myId, receiverId)))
+        .map(room -> ChatRoomResponse.from(room, participants))
+
         .orElseGet(() -> {
           ChatRoom newRoom = chatRoomRepo.save(
               ChatRoom.builder()
@@ -45,25 +66,23 @@ public class ChatRoomService {
                   .build()
           );
 
-          // 내 참여 정보
           chatParticipantRepo.save(
               ChatParticipant.builder()
                   .chatRoom(newRoom)
                   .userId(myId)
-                  .roomTitle("상대방 닉네임") // TODO: UserService 연동 시 receiver nickname/profile 주입
-                  .roomImage("상대방 이미지URL")
+                  .roomTitle(receiver.getNickname())
+                  .roomImage(receiver.getImage())
                   .build());
 
-          // 상대방 참여 정보
           chatParticipantRepo.save(
               ChatParticipant.builder()
                   .chatRoom(newRoom)
                   .userId(receiverId)
-                  .roomTitle("나의 닉네임") // TODO: UserService 연동 시 my nickname/profile 주입
-                  .roomImage("나의 이미지URL")
+                  .roomTitle(me.getNickname())
+                  .roomImage(me.getImage())
                   .build());
 
-          return ChatRoomResponse.from(newRoom, createTempParticipants(myId, receiverId));
+          return ChatRoomResponse.from(newRoom, participants);
         });
   }
 
@@ -94,13 +113,5 @@ public class ChatRoomService {
         .nextCursorId(nextCursorId)
         .nextLastMessageAt(nextLastMessageAt)
         .build();
-  }
-
-  // TODO: 유저 연동 전 임시 데이터임
-  private List<ChatRoomResponse.ParticipantDto> createTempParticipants(Long myId, Long receiverId) {
-    return List.of(
-        ChatRoomResponse.ParticipantDto.builder().userId(myId).nickname("나").build(),
-        ChatRoomResponse.ParticipantDto.builder().userId(receiverId).nickname("상대방").build()
-    );
   }
 }
