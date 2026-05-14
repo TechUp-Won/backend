@@ -63,7 +63,7 @@ public class Payment {
   @Column(name = "fail_message")
   private String failMessage;
 
-  @Column(nullable = false)
+  @Column(name = "requested_at", nullable = false)
   private LocalDateTime requestedAt;
 
   @Column(name = "approved_at")
@@ -80,21 +80,32 @@ public class Payment {
   @Column(name = "updated_at", nullable = false)
   private LocalDateTime updatedAt;
 
+  private Payment(Order order, PgProvider pgProvider, String tossOrderId, String idempotencyKey,
+      Long totalAmount, PaymentStatus status, LocalDateTime requestedAt) {
+    this.order = order;
+    this.pgProvider = pgProvider;
+    this.tossOrderId = tossOrderId;
+    this.idempotencyKey = idempotencyKey;
+    this.totalAmount = totalAmount;
+    this.status = status;
+    this.requestedAt = requestedAt;
+  }
+
   public static Payment createReadyPayment(
       Order order,
       String tossOrderId,
       String idempotencyKey,
       Long totalAmount
   ) {
-    Payment payment = new Payment();
-    payment.order = order;
-    payment.pgProvider = PgProvider.TOSS_PAYMENTS;
-    payment.tossOrderId = tossOrderId;
-    payment.idempotencyKey = idempotencyKey;
-    payment.totalAmount = totalAmount;
-    payment.status = PaymentStatus.READY;
-    payment.requestedAt = LocalDateTime.now();
-    return payment;
+    return new Payment(
+        order,
+        PgProvider.TOSS_PAYMENTS,
+        tossOrderId,
+        idempotencyKey,
+        totalAmount,
+        PaymentStatus.READY,
+        LocalDateTime.now()
+    );
   }
 
   public void markPending() {

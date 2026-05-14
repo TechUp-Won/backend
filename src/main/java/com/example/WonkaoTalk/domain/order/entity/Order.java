@@ -44,10 +44,10 @@ public class Order {
   @Column(name = "order_status", nullable = false)
   private OrderStatus orderStatus;
 
-  @Column(name = "original_amount")
+  @Column(name = "original_amount", nullable = false)
   private Long originalAmount;
 
-  @Column(name = "discount_amount")
+  @Column(name = "discount_amount", nullable = false)
   private Long discountAmount;
 
   @Column(name = "point_used_amount", nullable = false)
@@ -64,9 +64,22 @@ public class Order {
   @Column(name = "updated_at", nullable = false)
   private LocalDateTime updatedAt;
 
-  @Column(name = "title")
+  @Column(name = "title", nullable = false)
   // 주문 명 (xx외 2건)
   private String orderTitle;
+
+  private Order(String orderNumber, User user, OrderStatus orderStatus,
+      Long originalAmount, Long discountAmount, Long pointUsedAmount, Long finalAmount,
+      String orderTitle) {
+    this.orderNumber = orderNumber;
+    this.user = user;
+    this.orderStatus = orderStatus;
+    this.originalAmount = originalAmount;
+    this.discountAmount = discountAmount;
+    this.pointUsedAmount = pointUsedAmount;
+    this.finalAmount = finalAmount;
+    this.orderTitle = orderTitle;
+  }
 
   public static Order createOrder(
       String orderNumber,
@@ -77,16 +90,16 @@ public class Order {
       Long finalAmount,
       String orderTitle
   ) {
-    Order order = new Order();
-    order.orderNumber = orderNumber;
-    order.user = user;
-    order.orderStatus = OrderStatus.CREATED;
-    order.originalAmount = originalAmount;
-    order.discountAmount = discountAmount;
-    order.pointUsedAmount = pointUsedAmount;
-    order.finalAmount = finalAmount;
-    order.orderTitle = orderTitle;
-    return order;
+    return new Order(
+        orderNumber,
+        user,
+        OrderStatus.CREATED,
+        originalAmount,
+        discountAmount,
+        pointUsedAmount,
+        finalAmount,
+        orderTitle
+    );
   }
 
   public void markPaymentPending() {
