@@ -39,7 +39,7 @@ public class OrderService {
 
   private final UserRepo userRepo;
 
-  private final ProductVariantRepo productVariantRepository;
+  private final ProductVariantRepo productVariantRepo;
   private final OrderRepo orderRepo;
 
   private final PaymentService paymentService;
