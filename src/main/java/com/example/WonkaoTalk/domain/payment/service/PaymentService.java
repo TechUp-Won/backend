@@ -3,6 +3,7 @@ package com.example.WonkaoTalk.domain.payment.service;
 import com.example.WonkaoTalk.domain.order.entity.Order;
 import com.example.WonkaoTalk.domain.payment.entity.Payment;
 import com.example.WonkaoTalk.domain.payment.repo.PaymentRepo;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,11 +24,14 @@ public class PaymentService {
     // 멱등키 만들기
     String idempotencyKey = generateIdempotencyKey();
 
+    LocalDateTime requestAt = LocalDateTime.now();
+
     Payment payment = Payment.createReadyPayment(
         order,
         tossOrderId,
         idempotencyKey,
-        order.getFinalAmount()
+        order.getFinalAmount(),
+        requestAt
     );
 
     return paymentRepo.save(payment);

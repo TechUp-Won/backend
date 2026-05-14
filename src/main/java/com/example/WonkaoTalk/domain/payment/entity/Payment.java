@@ -95,7 +95,8 @@ public class Payment {
       Order order,
       String tossOrderId,
       String idempotencyKey,
-      Long totalAmount
+      Long totalAmount,
+      LocalDateTime requestAt
   ) {
     return new Payment(
         order,
@@ -104,7 +105,7 @@ public class Payment {
         idempotencyKey,
         totalAmount,
         PaymentStatus.READY,
-        LocalDateTime.now()
+        requestAt
     );
   }
 
