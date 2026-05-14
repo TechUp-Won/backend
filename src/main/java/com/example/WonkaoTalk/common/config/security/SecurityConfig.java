@@ -56,6 +56,7 @@ public class SecurityConfig {
             ).hasRole("USER")
             .requestMatchers(
                 "/api/v1/sellers/**",
+                "/api/v1/stores/**",
                 "/api/v1/images/**"
             ).hasRole("SELLER")
 

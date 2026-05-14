@@ -89,5 +89,9 @@ public class SellerService {
     return sellerRepo.existsByAuthId(authId);
   }
 
-
+  @Transactional(readOnly = true)
+  public Seller findSeller(Long sellerId) {
+    return sellerRepo.findById(sellerId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.SELLER_NOT_FOUND));
+  }
 }
