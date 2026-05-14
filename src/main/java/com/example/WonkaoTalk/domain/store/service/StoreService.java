@@ -26,6 +26,10 @@ public class StoreService {
       throw new BusinessException(ErrorCode.STORE_EXISTS_ALREADY);
     });
 
+    if (storeRepo.existsByName(request.name())) {
+      throw new BusinessException(ErrorCode.STORE_EXISTS_NAME);
+    }
+
     Store store = Store.builder()
         .name(request.name())
         .description(request.description())
@@ -38,8 +42,8 @@ public class StoreService {
   }
 
   @Transactional
-  public StoreResponse updateStore(Long sellerId, StoreUpdateRequest request) {
-    Store store = storeRepo.findBySellerId(sellerId)
+  public StoreResponse updateStore(Seller seller, StoreUpdateRequest request) {
+    Store store = storeRepo.findBySeller(seller)
         .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
 
     store.updateInfo(request.name(), request.description(), request.phone(), request.thumbnail());
@@ -47,8 +51,8 @@ public class StoreService {
   }
 
   @Transactional
-  public void deleteStore(Long sellerId) {
-    Store store = storeRepo.findBySellerId(sellerId)
+  public void deleteStore(Seller seller) {
+    Store store = storeRepo.findBySeller(seller)
         .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
 
     store.deleteStore();

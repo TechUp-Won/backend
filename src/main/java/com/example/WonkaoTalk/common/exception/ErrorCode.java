@@ -40,7 +40,7 @@ public enum ErrorCode {
   // 스토어 도메인
   STORE_EXISTS_ALREADY(409, "STORE-EXISTS-ALREADY", "이미 등록된 스토어가 존재합니다."),
   STORE_NOT_FOUND(404, "STORE-NOT-FOUND", "스토어를 찾을 수 없습니다."),
-
+  STORE_EXISTS_NAME(409, "STORE-EXISTS-NAME", "이미 존재하는 스토어 이름입니다"),
   // 상품 도메인
   PROD_INVALID_PRICE_RANGE(400, "PROD-INVALID-PRICE-RANGE", "최소 가격은 최대 가격보다 클 수 없습니다."),
   PROD_INVALID_SORT(400, "PROD-INVALID-SORT", "허용되지 않는 정렬 기준입니다."),

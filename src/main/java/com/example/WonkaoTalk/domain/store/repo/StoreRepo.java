@@ -10,8 +10,6 @@ public interface StoreRepo extends JpaRepository<Store, Long> {
 
   Optional<Store> findBySeller(Seller seller);
 
-  Optional<Store> findBySellerId(Long sellerId);
-
   boolean existsByName(String name);
 
   List<Store> findByNameContaining(String name);
