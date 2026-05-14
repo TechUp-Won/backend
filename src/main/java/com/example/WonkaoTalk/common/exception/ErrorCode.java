@@ -31,10 +31,16 @@ public enum ErrorCode {
   FRND_SELF_REF(400, "FRND-SELF-REF", "자기 자신을 참조 할 수 없습니다."),
   FRND_REGISTERED_ALREADY(400, "FRND-REGISTERED-ALREADY", "이미 친구로 등록된 사용자입니다."),
   FRND_NOT_FOUND(404, "FRND-NOT-FOUND", "친구 정보를 찾을 수 없습니다."),
+
   // 판매자 도메인
   SELLER_NOT_FOUND(404, "SELLER-NOT-FOUND", "해당 판매자 ID를 찾을 수 없습니다."),
   SELLER_REGISTERED_ACCOUNT(400, "SELLER-REGISTERED-ACCOUNT", "이미 사업자 등록된 계정입니다."),
   SELLER_DUPLICATE_BUZNO(409, "SELLER-DUPLICATE-BUZNO", "이미 등록된 사업자 번호입니다."),
+
+  // 스토어 도메인
+  STORE_EXISTS_ALREADY(409, "STORE-EXISTS-ALREADY", "이미 등록된 스토어가 존재합니다."),
+  STORE_NOT_FOUND(404, "STORE-NOT-FOUND", "스토어를 찾을 수 없습니다."),
+
   // 상품 도메인
   PROD_INVALID_PRICE_RANGE(400, "PROD-INVALID-PRICE-RANGE", "최소 가격은 최대 가격보다 클 수 없습니다."),
   PROD_INVALID_SORT(400, "PROD-INVALID-SORT", "허용되지 않는 정렬 기준입니다."),
@@ -50,7 +56,8 @@ public enum ErrorCode {
   PROD_INVALID_QUANTITY(400, "PROD-INVALID-QUANTITY", "수량은 최소 1개 이상이어야 합니다."),
   PROD_INVALID_PRICE(400, "PROD-INVALID-PRICE", "가격은 0 이상이어야 합니다."),
   PROD_INVALID_DISCOUNT_RATE(400, "PROD-INVALID-DISCOUNT-RATE", "할인율은 0에서 100 사이여야 합니다."),
-  PROD_MISMATCH_VARIANT_OPTION(400, "PROD-MISMATCH-VARIANT-OPTION", "variant의 옵션 이름이 등록된 옵션 목록과 일치하지 않습니다."),
+  PROD_MISMATCH_VARIANT_OPTION(400, "PROD-MISMATCH-VARIANT-OPTION",
+      "variant의 옵션 이름이 등록된 옵션 목록과 일치하지 않습니다."),
   PROD_INVALID_STOCK_OPTION(400, "PROD-INVALID-STOCK-OPTION", "옵션이 있는 상품은 stock을 직접 입력할 수 없습니다."),
   PROD_DUPLICATE_SORT_ORDER(400, "PROD-DUPLICATE-SORT-ORDER", "sortOrder 값이 중복되었습니다."),
 
