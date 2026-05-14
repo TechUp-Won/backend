@@ -54,7 +54,13 @@ public class StoreService {
     Store store = storeRepo.findBySeller(seller)
         .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
 
-    store.updateInfo(request.name(), request.description(), request.phone(), request.thumbnail());
+    String name = request.name() != null ? request.name() : store.getName();
+    String description =
+        request.description() != null ? request.description() : store.getDescription();
+    String phone = request.phone() != null ? request.phone() : store.getPhone();
+    String thumbnail = request.thumbnail() != null ? request.thumbnail() : store.getThumbnail();
+
+    store.updateInfo(name, description, phone, thumbnail);
     return StoreResponse.from(store);
   }
 
