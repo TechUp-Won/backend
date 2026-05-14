@@ -18,7 +18,6 @@ import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
 import com.example.WonkaoTalk.domain.product.repo.CartItemRepo;
 import com.example.WonkaoTalk.domain.product.repo.CartRepo;
-import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepo;
 import com.example.WonkaoTalk.domain.user.entity.User;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
@@ -36,7 +35,6 @@ public class CartService {
 
   private final CartRepo cartRepository;
   private final CartItemRepo cartItemRepository;
-  private final ProductRepo productRepository;
   private final ProductVariantRepo productVariantRepository;
   private final UserRepo userRepo;
 
@@ -82,9 +80,6 @@ public class CartService {
         || request.getQuantity() == null || request.getQuantity() <= 0) {
       throw new BusinessException(ErrorCode.BAD_REQUEST);
     }
-
-    productRepository.findById(request.getProductId())
-        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
     ProductVariant variant = productVariantRepository.findById(request.getVariantId())
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
