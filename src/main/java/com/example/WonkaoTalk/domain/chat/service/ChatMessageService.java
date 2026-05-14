@@ -12,6 +12,8 @@ import com.example.WonkaoTalk.domain.chat.entity.ChatRoom;
 import com.example.WonkaoTalk.domain.chat.repo.ChatMessageRepo;
 import com.example.WonkaoTalk.domain.chat.repo.ChatParticipantRepo;
 import com.example.WonkaoTalk.domain.chat.repo.ChatRoomRepo;
+import com.example.WonkaoTalk.domain.user.entity.User;
+import com.example.WonkaoTalk.domain.user.repo.UserRepo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +33,7 @@ public class ChatMessageService {
   private final ChatRoomRepo chatRoomRepo;
   private final ChatParticipantRepo chatParticipantRepo;
   private final SimpMessagingTemplate messagingTemplate;
+  private final UserRepo userRepo;
 
   @Transactional
   public ChatMessageResponse sendMessage(Long userId, Long chatRoomId, ChatMessageRequest request) {
@@ -89,9 +92,12 @@ public class ChatMessageService {
         .map(message -> {
           int unreadCount = calculateUnreadCount(message.getId(), allReadMessageIds);
 
-          // TODO 연동 후 실제 닉네임
-          String senderNickname =
-              (message.getSenderId() != null && message.getSenderId().equals(userId)) ? "나" : "상대방";
+          String senderNickname = "(알 수 없음)"; // 기본 값
+          if (message.getSenderId() != null) {
+            senderNickname = userRepo.findByAuthId(message.getSenderId())
+                .map(User::getNickname)
+                .orElse("(알 수 없음)");
+          }
 
           return ChatMessageDto.of(message, userId, senderNickname, unreadCount);
         }).toList();

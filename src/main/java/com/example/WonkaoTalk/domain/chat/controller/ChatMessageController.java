@@ -1,6 +1,7 @@
 package com.example.WonkaoTalk.domain.chat.controller;
 
 import com.example.WonkaoTalk.common.response.ApiResponse;
+import com.example.WonkaoTalk.domain.auth.dto.CustomUserDetails;
 import com.example.WonkaoTalk.domain.chat.dto.ChatMessageListResponse;
 import com.example.WonkaoTalk.domain.chat.dto.ChatMessageRequest;
 import com.example.WonkaoTalk.domain.chat.dto.ChatMessageResponse;
@@ -8,6 +9,7 @@ import com.example.WonkaoTalk.domain.chat.service.ChatMessageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,12 +27,11 @@ public class ChatMessageController {
 
   @PostMapping("/{chatRoomId}/messages")
   public ResponseEntity<ApiResponse<ChatMessageResponse>> sendMessage(
+      @AuthenticationPrincipal CustomUserDetails userDetails,
       @PathVariable Long chatRoomId,
       @Valid @RequestBody ChatMessageRequest request
-      // @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
-    // TODO 연동 전 임시로 ID넣어둠
-    Long myId = 1L;
+    Long myId = userDetails.getAuthId();
 
     ChatMessageResponse data = chatMessageService.sendMessage(myId, chatRoomId, request);
 
@@ -39,13 +40,12 @@ public class ChatMessageController {
 
   @GetMapping("/{chatRoomId}/messages")
   public ResponseEntity<ApiResponse<ChatMessageListResponse>> getMessageList(
+      @AuthenticationPrincipal CustomUserDetails userDetails,
       @PathVariable Long chatRoomId,
       @RequestParam(required = false) Long cursorId,
       @RequestParam(defaultValue = "20") int size
-      // @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
-    // TODO 연동 전 임시로 ID넣어둠
-    Long myId = 1L;
+    Long myId = userDetails.getAuthId();
 
     ChatMessageListResponse data = chatMessageService.getMessageList(myId, chatRoomId, cursorId,
         size);
