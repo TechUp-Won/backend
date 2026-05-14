@@ -188,7 +188,7 @@ public class OrderService {
   // variantId 목록으로 ProductVariant 조회 후 Map으로 변환
   public Map<Long, ProductVariant> findVariantMapByIds(List<Long> variantIds) {
 
-    List<ProductVariant> variants = productVariantRepository.findAllById(variantIds);
+    List<ProductVariant> variants = productVariantRepo.findAllById(variantIds);
 
     return variants.stream().collect(Collectors.toMap(
         ProductVariant::getId,

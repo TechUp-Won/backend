@@ -1,9 +1,12 @@
 package com.example.WonkaoTalk.domain.store.entity;
 
 import com.example.WonkaoTalk.domain.seller.entity.Seller;
+import com.example.WonkaoTalk.domain.store.enums.StoreStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -52,6 +55,11 @@ public class Store {
   @Column(nullable = false)
   private String thumbnail = "http://defaultThumbnail.png";
 
+  @Builder.Default
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private StoreStatus status = StoreStatus.ACTIVE;
+
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "seller_id", nullable = false, unique = true) // 현재 스토어와 판매자는 1대1 연관
   private Seller seller;
@@ -79,6 +87,7 @@ public class Store {
     this.description = "DELETED";
     this.phone = "000-0000-0000";
     this.thumbnail = "http://defaultThumbnail.png";
+    this.status = StoreStatus.DELETED;
     this.deletedAt = LocalDateTime.now();
   }
 }

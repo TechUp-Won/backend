@@ -3,6 +3,7 @@ package com.example.WonkaoTalk.common.config.security.jwt;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -42,14 +43,24 @@ public class JwtTokenProvider {
 
   }
 
-  public String createAccessToken(String email, Long authId, String role) {
+  public String createAccessToken(String email, Long authId, Long userId, Long sellerId,
+      String role) {
     long now = (new Date()).getTime();
     Date validity = new Date(now + this.accessTokenValidTime);
 
-    return Jwts.builder()
+    JwtBuilder builder = Jwts.builder()
         .setSubject(email)
         .claim("authId", authId)
-        .claim("role", role)
+        .claim("role", role);
+
+    if (userId != null) {
+      builder.claim("userId", userId);
+    }
+    if (sellerId != null) {
+      builder.claim("sellerId", sellerId);
+    }
+
+    return builder
         .signWith(key, SignatureAlgorithm.HS256)
         .setExpiration(validity)
         .compact();
@@ -117,5 +128,23 @@ public class JwtTokenProvider {
         .parseClaimsJws(token)
         .getBody()
         .get("authId", Long.class);
+  }
+
+  public Long getUserId(String token) {
+    return Jwts.parserBuilder()
+        .setSigningKey(key)
+        .build()
+        .parseClaimsJws(token)
+        .getBody()
+        .get("userId", Long.class);
+  }
+
+  public Long getSellerId(String token) {
+    return Jwts.parserBuilder()
+        .setSigningKey(key)
+        .build()
+        .parseClaimsJws(token)
+        .getBody()
+        .get("sellerId", Long.class);
   }
 }

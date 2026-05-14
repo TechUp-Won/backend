@@ -10,13 +10,16 @@ import org.springframework.security.core.userdetails.User;
 public class CustomUserDetails extends User {
 
   private final Long authId;
+  private final Long userId;
+  private final Long sellerId;
 
   @Builder(builderMethodName = "customBuilder")
   public CustomUserDetails(
-      String email, String password, Long authId,
+      String email, String password, Long authId, Long userId, Long sellerId,
       Collection<? extends GrantedAuthority> authorities) {
     super(email, password != null ? password : "", authorities);
     this.authId = authId;
+    this.userId = userId;
+    this.sellerId = sellerId;
   }
-
 }

@@ -79,4 +79,8 @@ public class Product {
 
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
+
+  public boolean isOnSale() {
+    return this.status == SaleStatus.ON_SALE;
+  }
 }
