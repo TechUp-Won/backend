@@ -41,6 +41,14 @@ public class StoreService {
     return StoreResponse.from(savedStore);
   }
 
+  @Transactional(readOnly = true)
+  public StoreResponse getStore(Seller seller) {
+    Store store = storeRepo.findBySeller(seller)
+        .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+
+    return StoreResponse.from(store);
+  }
+
   @Transactional
   public StoreResponse updateStore(Seller seller, StoreUpdateRequest request) {
     Store store = storeRepo.findBySeller(seller)

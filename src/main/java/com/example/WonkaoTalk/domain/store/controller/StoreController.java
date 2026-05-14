@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -41,6 +42,16 @@ public class StoreController {
         .body(ApiResponse.success("스토어 등록이 완료되었습니다.", response));
   }
 
+  @GetMapping
+  public ResponseEntity<ApiResponse<StoreResponse>> getStore(
+      @AuthenticationPrincipal CustomUserDetails userDetails
+  ) {
+    Seller seller = sellerService.findSeller(userDetails.getSellerId());
+    StoreResponse response = storeService.getStore(seller);
+
+    return ResponseEntity.ok(ApiResponse.success("스토어 정보 조회가 완료되었습니다.", response));
+  }
+
   @PatchMapping
   public ResponseEntity<ApiResponse<StoreResponse>> updateStore(
       @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -49,7 +60,7 @@ public class StoreController {
     Seller seller = sellerService.findSeller(userDetails.getSellerId());
     StoreResponse response = storeService.updateStore(seller, request);
 
-    return ResponseEntity.ok(ApiResponse.success("스토어 정보수정이 완료되었습니다.", response));
+    return ResponseEntity.ok(ApiResponse.success("스토어 정보 수정이 완료되었습니다.", response));
   }
 
   @DeleteMapping
