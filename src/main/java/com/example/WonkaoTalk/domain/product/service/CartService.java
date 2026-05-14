@@ -88,7 +88,7 @@ public class CartService {
       throw new BusinessException(ErrorCode.NOT_FOUND);
     }
 
-    if (variant.getDeletedAt() != null || !variant.isSellable()) {
+    if (!variant.isSellable()) {
       throw new BusinessException(ErrorCode.PROD_VARIANT_UNAVAILABLE);
     }
 
@@ -148,7 +148,7 @@ public class CartService {
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
     ProductVariant variant = cartItem.getProductVariant();
-    if (!variant.isSellable() || variant.getDeletedAt() != null) {
+    if (!variant.isSellable()) {
       throw new BusinessException(ErrorCode.PROD_VARIANT_UNAVAILABLE);
     }
 
@@ -200,7 +200,7 @@ public class CartService {
     ProductVariant targetVariant = productVariantRepository.findById(request.getVariantId())
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
-    if (!targetVariant.isSellable() || targetVariant.getDeletedAt() != null) {
+    if (!targetVariant.isSellable()) {
       throw new BusinessException(ErrorCode.PROD_VARIANT_UNAVAILABLE);
     }
 
