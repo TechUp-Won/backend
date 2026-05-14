@@ -30,16 +30,20 @@ public class StompHandler implements ChannelInterceptor {
     if (accessor == null) {
       return message;
     }
-    
+
     // 클라이언트가 STOMP 연결을 시도할 때
     if (StompCommand.CONNECT.equals(Objects.requireNonNull(accessor).getCommand())) {
       String authorizationHeader = accessor.getFirstNativeHeader("Authorization"); // 헤더에서 추출
       String token = extractToken(authorizationHeader);
+
       if (StringUtils.hasText(token)) {
         jwtTokenProvider.validateToken(token);
 
         Long authId = jwtTokenProvider.getAuthId(token);
-        Objects.requireNonNull(accessor.getSessionAttributes()).put("authId", authId);
+
+        if (accessor.getSessionAttributes() != null) {
+          accessor.getSessionAttributes().put("authId", authId);
+        }
 
         log.info("연결 성공: {}", authId);
       } else {
