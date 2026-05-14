@@ -33,7 +33,7 @@ public class Order {
   @Column(name = "order_id")
   private Long orderId;
 
-  @Column(name = "order_number", nullable = false)
+  @Column(name = "order_number", nullable = false, unique = true)
   private String orderNumber;
 
   @ManyToOne(fetch = FetchType.LAZY)

@@ -19,6 +19,8 @@ import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
 import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepo;
 import com.example.WonkaoTalk.domain.user.entity.User;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -85,7 +87,7 @@ public class OrderService {
     // TODO : 포인트 값 차감시키기.
 
     // 9. Order 생성
-    String orderNumber = generateOrderNumber();
+    String orderNumber = generateUniqueOrderNumber();
     String orderTitle = generateOrderTitle(orderItems);
 
     Order order = Order.createOrder(
@@ -292,7 +294,23 @@ public class OrderService {
 
   // 주문 번호 생성
   private String generateOrderNumber() {
-    return "ORD-" + UUID.randomUUID();
+    String timestamp = LocalDateTime.now()
+        .format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+
+    String uuid = UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
+    return "ORD-" + timestamp + "-" + uuid;
+  }
+
+  // 주문번호 unique 검증
+  private String generateUniqueOrderNumber() {
+    for (int i = 0; i < 5; i++) {
+      String orderNumber = generateOrderNumber();
+
+      if (!orderRepo.existsByOrderNumber(orderNumber)) {
+        return orderNumber;
+      }
+    }
+    throw new BusinessException(ErrorCode.SERVER_ERROR);
   }
 
   // 주문 제목 생성
