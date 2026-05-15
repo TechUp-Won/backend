@@ -81,6 +81,9 @@ public class SellerService {
 
   @Transactional(readOnly = true)
   public SellerResponse getSellerInfo(Long sellerId) {
+    if (sellerId == null) {
+      throw new BusinessException(ErrorCode.SELLER_NOT_FOUND);
+    }
     Seller seller = findSeller(sellerId);
 
     return SellerResponse.from(seller);
@@ -88,6 +91,9 @@ public class SellerService {
 
   @Transactional
   public SellerResponse updateSellerInfo(Long sellerId, SellerUpdateRequest request) {
+    if (sellerId == null) {
+      throw new BusinessException(ErrorCode.SELLER_NOT_FOUND);
+    }
     Seller seller = findSeller(sellerId);
 
     String name = StringUtils.hasText(request.name()) ? request.name() : seller.getName();
