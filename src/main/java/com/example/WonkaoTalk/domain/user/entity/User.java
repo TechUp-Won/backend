@@ -92,4 +92,13 @@ public class User {
     this.marketingAgree = false;
     this.deletedAt = LocalDateTime.now();
   }
+
+  public void update(String nickname, String image, Gender gender, LocalDate birthDate,
+      boolean marketingAgree) {
+    this.nickname = nickname;
+    this.image = image;
+    this.gender = gender;
+    this.birthDate = birthDate;
+    this.marketingAgree = marketingAgree;
+  }
 }
