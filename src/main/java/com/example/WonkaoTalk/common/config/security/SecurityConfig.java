@@ -40,6 +40,7 @@ public class SecurityConfig {
             .requestMatchers(
                 "/api/v1/auth/check-email",
                 "/api/v1/auth/login",
+                "/api/v1/auth/reissue",
                 "/api/v1/users/signup",
                 "/api/v1/sellers/signup",
                 "/api/v1/search",
