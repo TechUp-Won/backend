@@ -85,25 +85,11 @@ public class AuthService {
       throw new BusinessException(ErrorCode.AUTH_MISMATCH_PASSWORD);
     }
 
-    String profileName = extractProfileNameByRole(auth);
-    String email = authLocal.getEmail();
-    String role = auth.getRole().name();
-    Long userId = extractUserIdIfPresent(auth);
-    Long sellerId = extractSellerIdIfPresent(auth);
-    String accessToken =
-        jwtTokenProvider.createAccessToken(email, auth.getId(), userId, sellerId, role);
-    String refreshToken = jwtTokenProvider.createRefreshToken(email);
-
-    long refreshExpirationTime = jwtTokenProvider.getRefreshTokenValidTime();
-    redisService.setValues("RT:" + email, refreshToken,
-        Duration.ofMillis(refreshExpirationTime)
-    );
+    TokenDto dto = publishToken(authLocal.getEmail(), auth);
 
     saveLoginHistory(auth, LoginStatus.SUCCESS, httpRequest);
 
-    long accessExpirationTime = jwtTokenProvider.getAccessTokenValidTime();
-
-    return new TokenDto(accessToken, refreshToken, accessExpirationTime, auth, profileName);
+    return dto;
 
   }
 
@@ -120,6 +106,29 @@ public class AuthService {
     authLocalRepo.findByAuth(auth).ifPresent(AuthLocal::withdraw);
 
     auth.withdraw();
+  }
+
+  @Transactional
+  public TokenDto reissueToken(String refreshToken) {
+    if (jwtTokenProvider.validateToken(refreshToken)) {
+      throw new BusinessException(ErrorCode.AUTH_INVALID_TOKEN);
+    }
+
+    String email = jwtTokenProvider.getEmailFromToken(refreshToken);
+
+    String redisKey = "RT:" + email;
+    String storedRefreshToken = redisService.getValues(redisKey);
+
+    if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
+      redisService.deleteValues(redisKey);
+      throw new BusinessException(ErrorCode.AUTH_SUSPECT_THEFT_TOKEN);
+    }
+
+    AuthLocal authLocal = authLocalRepo.findByEmail(email)
+        .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_NOT_FOUND));
+    Auth auth = authLocal.getAuth();
+
+    return publishToken(authLocal.getEmail(), auth);
   }
 
   private void saveLoginHistory(Auth auth, LoginStatus status, HttpServletRequest request) {
@@ -140,6 +149,25 @@ public class AuthService {
         .build();
 
     loginHistoryRepo.save(history);
+  }
+
+  private TokenDto publishToken(String email, Auth auth) {
+    String profileName = extractProfileNameByRole(auth);
+    String role = auth.getRole().name();
+    Long userId = extractUserIdIfPresent(auth);
+    Long sellerId = extractSellerIdIfPresent(auth);
+    String accessToken =
+        jwtTokenProvider.createAccessToken(email, auth.getId(), userId, sellerId, role);
+    String refreshToken = jwtTokenProvider.createRefreshToken(email);
+
+    long refreshExpirationTime = jwtTokenProvider.getRefreshTokenValidTime();
+    long accessExpirationTime = jwtTokenProvider.getAccessTokenValidTime();
+
+    redisService.setValues("RT:" + email, refreshToken,
+        Duration.ofMillis(refreshExpirationTime)
+    );
+
+    return TokenDto.of(accessToken, refreshToken, accessExpirationTime, auth, profileName);
   }
 
   public void invalidateToken(String email, String accessToken) {

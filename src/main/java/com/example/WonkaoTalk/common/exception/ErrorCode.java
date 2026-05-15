@@ -24,6 +24,8 @@ public enum ErrorCode {
   AUTH_INVALID_TOKEN(401, "AUTH-INVALID-TOKEN", "유효하지 않은 토큰입니다."),
   AUTH_LOGGED_OUT_TOKEN(401, "AUTH-LOGGED-OUT-TOKEN", "이미 로그아웃 된 토큰입니다."),
   AUTH_NOT_FOUND(404, "AUTH-NOT-FOUND", "회원 정보를 찾을 수 없습니다."),
+  AUTH_SUSPECT_THEFT_TOKEN(401, "AUTH-SUSPECT-THEFT_TOKEN", "토큰 정보 이상이 감지되었습니다."),
+  AUTH_MISSING_TOKEN(401, "AUTH-MISSING-TOKEN", "토큰 정보를 찾을 수 없습니다."),
 
   // 유저 도메인
   USER_NOT_FOUND(404, "USER-NOT-FOUND-ID", "해당 사용자 ID를 찾을 수 없습니다."),
@@ -68,7 +70,8 @@ public enum ErrorCode {
 
   // 배송지 도메인
   SHIP_NOT_FOUND(404, "SHIP-NOT-FOUND", "존재하지 않는 배송지입니다."),
-  SHIP_CANNOT_DELETE_DEFAULT(409, "SHIP-CANNOT-DELETE-DEFAULT", "기본 배송지는 삭제할 수 없습니다. 먼저 다른 배송지를 기본으로 설정해 주세요."),
+  SHIP_CANNOT_DELETE_DEFAULT(409, "SHIP-CANNOT-DELETE-DEFAULT",
+      "기본 배송지는 삭제할 수 없습니다. 먼저 다른 배송지를 기본으로 설정해 주세요."),
 
   // 주문 도메인
 

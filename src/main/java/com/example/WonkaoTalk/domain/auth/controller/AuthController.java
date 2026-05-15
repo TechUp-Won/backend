@@ -16,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -56,12 +57,8 @@ public class AuthController {
         .sameSite("Strict")
         .build();
 
-    LoginResponse responseBody = LoginResponse.of(
-        dto.accessToken(),
-        dto.accessExpirationTime(),
-        dto.auth(),
-        dto.profileName()
-    );
+    LoginResponse responseBody = LoginResponse.of(dto.accessToken(), dto.accessExpirationTime(),
+        dto.auth(), dto.profileName());
 
     return ResponseEntity.ok()
         .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
@@ -81,9 +78,9 @@ public class AuthController {
 
     authService.logout(accessToken, email);
 
-    ResponseCookie deleteCookie = ResponseCookie.from("refresh-token", "")
+    ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
         .httpOnly(true)
-        .secure(false) // TODO: 배포 시 HTTPS 환경에서는 true로 변경
+        .secure(true)
         .path("/")
         .maxAge(0)
         .sameSite("Strict")
@@ -92,6 +89,32 @@ public class AuthController {
     return ResponseEntity.ok()
         .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
         .body(ApiResponse.success("로그아웃에 성공하였습니다.", null));
+  }
+
+  @PostMapping("/reissue")
+  public ResponseEntity<ApiResponse<LoginResponse>> reissueToken(
+      @CookieValue(value = "refreshToken", required = false) String refreshToken
+  ) {
+    if (refreshToken == null || refreshToken.isEmpty()) {
+      throw new BusinessException(ErrorCode.AUTH_MISSING_TOKEN);
+    }
+
+    TokenDto dto = authService.reissueToken(refreshToken);
+
+    ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", dto.refreshToken())
+        .httpOnly(true)
+        .secure(true)
+        .path("/")
+        .maxAge(14 * 24 * 60 * 60) //14일
+        .sameSite("Strict")
+        .build();
+
+    LoginResponse response = LoginResponse.of(dto.accessToken(), dto.accessExpirationTime(),
+        dto.auth(), dto.profileName());
+
+    return ResponseEntity.ok()
+        .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+        .body(ApiResponse.success("토큰 재발급에 성공하였습니다.", response));
   }
 
 }
