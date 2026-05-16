@@ -1,6 +1,7 @@
 package com.example.WonkaoTalk.domain.order.dto;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -13,7 +14,12 @@ public record OrderCreateRequest(
 
     @Valid
     @NotNull
-    DeliveryRequest delivery
+    DeliveryRequest delivery,
+
+    // TODO: 포인트 도메인 구현 후 보유 포인트/사용 정책 검증 추가
+    @Min(0)
+    @NotNull
+    Long pointUsedAmount
 ) {
 
   // 일단은 static으로 선언해서 사용. -> 아직은 해당 DTO에서만 사용하기때문..(요청의 일부)
@@ -36,5 +42,6 @@ public record OrderCreateRequest(
       // 메모는 필수사항이 아님
       String memo
   ) {
+
   }
 }

@@ -3,19 +3,29 @@ package com.example.WonkaoTalk.domain.order.service;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.order.dto.OrderCreateRequest;
+import com.example.WonkaoTalk.domain.order.dto.OrderCreateResponse;
 import com.example.WonkaoTalk.domain.order.dto.OrderItemDto;
 import com.example.WonkaoTalk.domain.order.dto.OrderPreviewRequest;
 import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponse;
 import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponse.OrderPreviewItemDto;
 import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponse.SummaryDto;
+import com.example.WonkaoTalk.domain.order.entity.Order;
+import com.example.WonkaoTalk.domain.order.repo.OrderRepo;
+import com.example.WonkaoTalk.domain.payment.entity.Payment;
+import com.example.WonkaoTalk.domain.payment.service.PaymentService;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
 import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepo;
+import com.example.WonkaoTalk.domain.user.entity.User;
+import com.example.WonkaoTalk.domain.user.repo.UserRepo;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,14 +37,103 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class OrderService {
 
+  private final UserRepo userRepo;
+
   private final ProductVariantRepo productVariantRepo;
+  private final OrderRepo orderRepo;
+
+  private final PaymentService paymentService;
 
   // 주문 생성 로직 작성
   // 응답값으로 Order로 생성 요청한 값들의 성공적으로 생성 되었는지만 전달해주면됨.
   // 주문 생성 시 재고 차감 진행. 만약 주문이 실패로 끝나면 재고 원상복귀.
-  public void createOrder(Long userId,
-      OrderCreateRequest dto) {
-    // 주문 번호 생
+  @Transactional(rollbackFor = BusinessException.class)
+  public OrderCreateResponse createOrder(Long userId,
+      OrderCreateRequest requestDto) {
+    // 유저 정보 검색
+    User user = userRepo.findById(userId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+    // 1. variantId 중복 검증
+    validateDuplicateVariant(requestDto.items());
+
+    // 2. ProductVariant 조회
+    List<Long> requestVariantIds = extractVariantIds(requestDto.items());
+    Map<Long, ProductVariant> productVariants = findVariantMapByIds(requestVariantIds);
+
+    // 3. 조회하지 않는 variantId 검증 에러처리
+    validateVariantExist(requestVariantIds, productVariants);
+
+    // 4. 판매자 상태 확인 -> 지금은 그냥 하드코딩 더미데이터로 해결하기
+    validateSellerStatus();
+
+    // 추가. 상품 상태 확인
+    validateVariantSaleStatus(productVariants);
+
+    // 5. 재고 상태 확인 (요청 수량에 맞게 주문할 수 있는지)
+    validateVariantStock(requestDto.items(), productVariants);
+    // TODO: 재고 감소로직 있어야함. (임시 컬럼만들어서 진행하던지 뭘 하던지 할듯..)
+
+    // 7. 주문 금액 계산 -> 금액 계산위해 item 생성
+    List<OrderPreviewItemDto> orderItems = createOrderPreviewItems(requestDto.items(),
+        productVariants);
+
+    SummaryDto summaryDto = createSummary(orderItems);
+
+    // 8. 포인트 사용 금액 검증
+    // TODO: 포인트 도메인 구현 전까지 pointUsedAmount는 0만 허용하거나 0으로 처리
+    Long pointUsedAmount = 0L;
+//    Long pointUsedAmount = requestDto.pointUsedAmount() == 0 ? 0L : requestDto.pointUsedAmount();
+    // TODO : 포인트 값 차감시키기.
+
+    // 9. Order 생성
+    String orderNumber = generateUniqueOrderNumber();
+    String orderTitle = generateOrderTitle(orderItems);
+
+    Order order = Order.createOrder(
+        orderNumber,
+        user,
+        summaryDto.originalAmount(),
+        summaryDto.discountAmount(),
+        pointUsedAmount,
+        summaryDto.finalAmount(),
+        orderTitle
+    );
+
+    // 주문 생성완료 + 결제 대기상태
+    order.markPaymentPending();
+
+    // 이렇게 객체 새로 생성해서 부여하는 방식이 옳은 방식일지 고민해볼 필요 있을듯
+    Order savedOrder = orderRepo.save(order);
+
+    // TODO: Delivery 생성
+
+    // 12. Payment 생성
+    // status = READY
+    // tossOrderId 생성
+    // idempotencyKey 생성
+    // totalAmount = order.finalAmount
+    Payment payment = paymentService.createReadyPayment(savedOrder);
+
+    // 13. 주문 생성 응답 반환
+    // orderId, orderNumber, paymentId, tossOrderId, amount, orderName
+    return new OrderCreateResponse(
+        new OrderCreateResponse.OrderCreateInfoDto(
+            savedOrder.getOrderId(),
+            savedOrder.getOrderNumber(),
+            savedOrder.getOrderTitle(),
+            savedOrder.getOriginalAmount(),
+            savedOrder.getDiscountAmount(),
+            savedOrder.getPointUsedAmount(),
+            savedOrder.getFinalAmount()
+        ),
+        new OrderCreateResponse.PaymentCreateInfoDto(
+            payment.getPaymentId(),
+            payment.getTossOrderId(),
+            payment.getTotalAmount(),
+            savedOrder.getOrderTitle()
+        )
+    );
   }
 
   // 이때는 결제가 이루어지지 않기때문에 재고 조회에 대한 lock을 크게 고려하지 않아도 될듯.
@@ -191,6 +290,36 @@ public class OrderService {
     long finalAmount = originalAmount - discountAmount;
 
     return new SummaryDto(originalAmount, discountAmount, finalAmount);
+  }
+
+  // 주문 번호 생성
+  private String generateOrderNumber() {
+    String timestamp = LocalDateTime.now()
+        .format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+
+    String uuid = UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
+    return "ORD-" + timestamp + "-" + uuid;
+  }
+
+  // 주문번호 unique 검증
+  private String generateUniqueOrderNumber() {
+    for (int i = 0; i < 5; i++) {
+      String orderNumber = generateOrderNumber();
+
+      if (!orderRepo.existsByOrderNumber(orderNumber)) {
+        return orderNumber;
+      }
+    }
+    throw new BusinessException(ErrorCode.SERVER_ERROR);
+  }
+
+  // 주문 제목 생성
+  private String generateOrderTitle(List<OrderPreviewItemDto> items) {
+    if (items.size() == 1) {
+      return items.getFirst().productName();
+    }
+
+    return items.getFirst().productName() + " 외 " + (items.size() - 1) + "건";
   }
 
 }

@@ -4,6 +4,8 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+### AI 문서 ###
+docs/
 
 ### STS ###
 .apt_generated
