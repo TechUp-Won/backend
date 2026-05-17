@@ -108,7 +108,7 @@ public class AuthService {
     auth.withdraw();
   }
 
-  @Transactional
+  @Transactional(readOnly = true)
   public TokenDto reissueToken(String refreshToken) {
     if (!jwtTokenProvider.validateToken(refreshToken)) {
       throw new BusinessException(ErrorCode.AUTH_INVALID_TOKEN);
