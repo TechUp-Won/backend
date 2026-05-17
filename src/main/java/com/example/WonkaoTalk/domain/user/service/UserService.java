@@ -34,6 +34,10 @@ public class UserService {
       throw new BusinessException(ErrorCode.AUTH_MISMATCH_PASSWORD);
     }
 
+    if (userRepo.existByPhone(request.phone())) {
+      throw new BusinessException(ErrorCode.USER_REGISTERED_PHONE);
+    }
+
     Auth auth = authService.createAuthLocal(request.email(), request.password(), Role.USER);
 
     User user = User.builder()
