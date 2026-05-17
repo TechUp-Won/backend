@@ -8,16 +8,18 @@ public record TokenDto(
     String accessToken,
     String refreshToken,
     Long accessExpirationTime,
+    Long refreshExpirationTime,
     Auth auth,
     String profileName
 ) {
 
   public static TokenDto of(String accessToken, String refreshToken, Long accessExpirationTime,
-      Auth auth, String profileName) {
+      Long refreshExpirationTime, Auth auth, String profileName) {
     return TokenDto.builder()
         .accessToken(accessToken)
         .refreshToken(refreshToken)
         .accessExpirationTime(accessExpirationTime)
+        .refreshExpirationTime(refreshExpirationTime)
         .auth(auth)
         .profileName(profileName)
         .build();

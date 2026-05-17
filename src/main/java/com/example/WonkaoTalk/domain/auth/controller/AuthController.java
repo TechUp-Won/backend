@@ -53,7 +53,7 @@ public class AuthController {
         .httpOnly(true)
         .secure(true)
         .path("/")
-        .maxAge(14 * 24 * 60 * 60) //14일
+        .maxAge(dto.refreshExpirationTime())
         .sameSite("Strict")
         .build();
 
@@ -105,7 +105,7 @@ public class AuthController {
         .httpOnly(true)
         .secure(true)
         .path("/")
-        .maxAge(14 * 24 * 60 * 60) //14일
+        .maxAge(dto.refreshExpirationTime())
         .sameSite("Strict")
         .build();
 

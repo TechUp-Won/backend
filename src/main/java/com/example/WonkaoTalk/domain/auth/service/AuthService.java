@@ -167,7 +167,8 @@ public class AuthService {
         Duration.ofMillis(refreshExpirationTime)
     );
 
-    return TokenDto.of(accessToken, refreshToken, accessExpirationTime, auth, profileName);
+    return TokenDto.of(accessToken, refreshToken, accessExpirationTime, refreshExpirationTime, auth,
+        profileName);
   }
 
   public void invalidateToken(String email, String accessToken) {

@@ -212,7 +212,8 @@ class AuthServiceTest {
     Auth auth = Auth.builder().role(Role.USER).build();
     AuthLocal authLocal = AuthLocal.builder().email(email).passwordHash("Qwer1234").auth(auth)
         .build();
-    TokenDto newToken = TokenDto.of("newAccessToken", "newRefreshToken", 1000L, auth, "프로필명");
+    TokenDto newToken = TokenDto.of("newAccessToken", "newRefreshToken", 1000L, 9999L, auth,
+        "프로필명");
     User user = User.builder().nickname("프로필명").build();
 
     given(jwtTokenProvider.validateToken(oldRefreshToken)).willReturn(true);
