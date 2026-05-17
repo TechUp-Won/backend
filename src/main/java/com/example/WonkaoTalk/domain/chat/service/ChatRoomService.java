@@ -28,25 +28,27 @@ public class ChatRoomService {
 
   private final ChatRoomRepo chatRoomRepo;
   private final ChatParticipantRepo chatParticipantRepo;
-
   private final UserRepo userRepo;
 
   @Transactional
-  public ChatRoomResponse createChatRoom(Long myId, ChatRoomCreateRequest request) {
-    Long receiverId = request.receiverId();
+  public ChatRoomResponse createChatRoom(Long authId, ChatRoomCreateRequest request) {
+    Long receiverAuthId = request.receiverId();
 
-    if (myId.equals(receiverId)) {
+    if (authId.equals(receiverAuthId)) {
       throw new BusinessException(ErrorCode.CANNOT_CHAT_SELF);
     }
 
-    User me = userRepo.findByAuthId(myId)
+    User me = userRepo.findByAuthId(authId)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-    User receiver = userRepo.findByAuthId(receiverId)
+    User receiver = userRepo.findByAuthId(receiverAuthId)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+    Long userId = me.getId();
+    Long receiverId = receiver.getId();
 
     List<ChatRoomResponse.ParticipantDto> participants = List.of(
         ChatRoomResponse.ParticipantDto.builder()
-            .userId(myId)
+            .userId(userId)
             .nickname(me.getNickname())
             .build(),
         ChatRoomResponse.ParticipantDto.builder()
@@ -55,9 +57,8 @@ public class ChatRoomService {
             .build()
     );
 
-    return chatParticipantRepo.findChatRoomByUsers(myId, receiverId)
+    return chatParticipantRepo.findChatRoomByUsers(userId, receiverId)
         .map(room -> ChatRoomResponse.from(room, participants))
-
         .orElseGet(() -> {
           ChatRoom newRoom = chatRoomRepo.save(
               ChatRoom.builder()
@@ -69,7 +70,7 @@ public class ChatRoomService {
           chatParticipantRepo.save(
               ChatParticipant.builder()
                   .chatRoom(newRoom)
-                  .userId(myId)
+                  .userId(userId)
                   .roomTitle(receiver.getNickname())
                   .roomImage(receiver.getImage())
                   .build());
@@ -86,11 +87,16 @@ public class ChatRoomService {
         });
   }
 
-  public ChatRoomListResponse getChatRoomList(Long myId, LocalDateTime lastMessageAt, Long cursorId,
+  public ChatRoomListResponse getChatRoomList(Long authId, LocalDateTime lastMessageAt,
+      Long cursorId,
       int size) {
+    User me = userRepo.findByAuthId(authId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    Long userId = me.getId();
+
     PageRequest pageRequest = PageRequest.of(0, size);
 
-    Slice<ChatParticipant> slice = chatParticipantRepo.findMyChatRooms(myId, lastMessageAt,
+    Slice<ChatParticipant> slice = chatParticipantRepo.findMyChatRooms(userId, lastMessageAt,
         cursorId, pageRequest);
 
     List<ChatRoomInfo> rooms = slice.getContent().stream()
