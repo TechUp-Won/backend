@@ -15,6 +15,8 @@ public interface UserRepo extends JpaRepository<User, Long> {
 
   Optional<User> findByAuthId(Long authId);
 
+  Optional<User> findByPhone(String phone);
+
   boolean existsByAuthId(Long authId);
 
   @Lock(LockModeType.PESSIMISTIC_WRITE)

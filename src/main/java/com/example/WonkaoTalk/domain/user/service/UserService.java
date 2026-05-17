@@ -6,6 +6,7 @@ import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.enums.Role;
 import com.example.WonkaoTalk.domain.auth.service.AuthService;
 import com.example.WonkaoTalk.domain.user.dto.UserResponse;
+import com.example.WonkaoTalk.domain.user.dto.UserSearchResponse;
 import com.example.WonkaoTalk.domain.user.dto.UserSignUpRequest;
 import com.example.WonkaoTalk.domain.user.dto.UserSignUpResponse;
 import com.example.WonkaoTalk.domain.user.dto.UserUpdateRequest;
@@ -88,5 +89,18 @@ public class UserService {
     return userRepo.existsByAuthId(authId);
   }
 
+  @Transactional(readOnly = true)
+  public UserSearchResponse findUserByPhone(Long userId, String phone) {
+    User targetUser = userRepo.findByPhone(phone)
+        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+    if (targetUser.getId().equals(userId)) {
+      throw new BusinessException(ErrorCode.USER_SELF_REF);
+    }
+
+    return UserSearchResponse.of(targetUser.getId(), targetUser.getPhone(),
+        targetUser.getNickname(),
+        targetUser.getImage());
+  }
 
 }
