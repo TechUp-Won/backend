@@ -1,7 +1,6 @@
 package com.example.WonkaoTalk.common.config.websocket;
 
 import com.example.WonkaoTalk.common.config.security.jwt.JwtTokenProvider;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
@@ -32,9 +31,9 @@ public class StompHandler implements ChannelInterceptor {
     }
 
     // 클라이언트가 STOMP 연결을 시도할 때
-    if (StompCommand.CONNECT.equals(Objects.requireNonNull(accessor).getCommand())) {
+    if (StompCommand.CONNECT.equals(accessor.getCommand())) {
       String authorizationHeader = accessor.getFirstNativeHeader("Authorization"); // 헤더에서 추출
-      String token = extractToken(authorizationHeader);
+      String token = resolveToken(authorizationHeader);
 
       if (StringUtils.hasText(token)) {
         jwtTokenProvider.validateToken(token);
@@ -55,7 +54,7 @@ public class StompHandler implements ChannelInterceptor {
   }
 
 
-  private String extractToken(String authorizationHeader) {
+  private String resolveToken(String authorizationHeader) {
     if (StringUtils.hasText(authorizationHeader) && authorizationHeader.startsWith("Bearer ")) {
       return authorizationHeader.substring(7);
     }
