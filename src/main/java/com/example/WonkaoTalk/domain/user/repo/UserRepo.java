@@ -19,7 +19,7 @@ public interface UserRepo extends JpaRepository<User, Long> {
 
   boolean existsByAuthId(Long authId);
 
-  boolean existByPhone(String phone);
+  boolean existsByPhone(String phone);
 
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("SELECT u FROM User u WHERE u.id = :userId")

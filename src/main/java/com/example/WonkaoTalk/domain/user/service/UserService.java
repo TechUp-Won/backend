@@ -34,7 +34,7 @@ public class UserService {
       throw new BusinessException(ErrorCode.AUTH_MISMATCH_PASSWORD);
     }
 
-    if (userRepo.existByPhone(request.phone())) {
+    if (userRepo.existsByPhone(request.phone())) {
       throw new BusinessException(ErrorCode.USER_REGISTERED_PHONE);
     }
 
