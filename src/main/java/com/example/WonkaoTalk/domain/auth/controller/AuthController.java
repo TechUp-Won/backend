@@ -51,7 +51,7 @@ public class AuthController {
 
     ResponseCookie refreshCookie = ResponseCookie.from("refresh-token", dto.refreshToken())
         .httpOnly(true)
-        .secure(false) // TODO: 배포 시 HTTPS 환경에서는 true로 변경
+        .secure(true)
         .path("/")
         .maxAge(14 * 24 * 60 * 60) //14일
         .sameSite("Strict")

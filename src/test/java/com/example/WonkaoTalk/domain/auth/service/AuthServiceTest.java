@@ -200,4 +200,39 @@ class AuthServiceTest {
     verify(redisService).setValues(eq("BlackList:" + accessToken), eq("logout"),
         any(Duration.class));
   }
+
+  @Test
+  @DisplayName("토큰 재발급 성공")
+  public void reissueTokenSuccess() {
+    //given
+    String oldRefreshToken = "oldRefreshToken";
+    String email = "test@test.com";
+    String redisKey = "RT:" + email;
+
+    Auth auth = Auth.builder().role(Role.USER).build();
+    AuthLocal authLocal = AuthLocal.builder().email(email).passwordHash("Qwer1234").auth(auth)
+        .build();
+    TokenDto newToken = TokenDto.of("newAccessToken", "newRefreshToken", 1000L, auth, "프로필명");
+    User user = User.builder().nickname("프로필명").build();
+
+    given(jwtTokenProvider.validateToken(oldRefreshToken)).willReturn(true);
+    given(jwtTokenProvider.getEmailFromToken(oldRefreshToken)).willReturn(email);
+    given(redisService.getValues(redisKey)).willReturn(oldRefreshToken);
+    given(authLocalRepo.findByEmail(email)).willReturn(Optional.of(authLocal));
+    given(userRepo.findByAuth(auth)).willReturn(Optional.of(user));
+    given(jwtTokenProvider.createRefreshToken(email)).willReturn(newToken.refreshToken());
+    given(jwtTokenProvider.createAccessToken(email, null, null, null, auth.getRole().name()))
+        .willReturn(newToken.accessToken());
+    given(jwtTokenProvider.getRefreshTokenValidTime()).willReturn(9999L);
+    given(jwtTokenProvider.getAccessTokenValidTime()).willReturn(1000L); // 만료 시간 모킹
+
+    //when
+    TokenDto result = authService.reissueToken(oldRefreshToken);
+
+    //then
+    assertThat(result.accessToken()).isEqualTo("newAccessToken");
+    assertThat(result.refreshToken()).isEqualTo("newRefreshToken");
+    verify(redisService).setValues(eq(redisKey), eq("newRefreshToken"),
+        eq(Duration.ofMillis(9999L)));
+  }
 }
