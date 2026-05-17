@@ -7,14 +7,17 @@ import com.example.WonkaoTalk.domain.auth.enums.Role;
 import com.example.WonkaoTalk.domain.auth.repo.AuthRepo;
 import com.example.WonkaoTalk.domain.auth.service.AuthService;
 import com.example.WonkaoTalk.domain.seller.dto.SellerRegisterRequest;
+import com.example.WonkaoTalk.domain.seller.dto.SellerResponse;
 import com.example.WonkaoTalk.domain.seller.dto.SellerSignUpRequest;
 import com.example.WonkaoTalk.domain.seller.dto.SellerSignUpResponse;
+import com.example.WonkaoTalk.domain.seller.dto.SellerUpdateRequest;
 import com.example.WonkaoTalk.domain.seller.entity.Seller;
 import com.example.WonkaoTalk.domain.seller.repo.SellerRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SellerService {
 
   private final AuthService authService;
-  private final AuthRepo authRepo;
+  private final AuthRepo authRepo; //TODO: authRepo 의존성 제거
   private final SellerRepo sellerRepo;
 
   @Transactional
@@ -74,6 +77,31 @@ public class SellerService {
     sellerRepo.save(seller);
 
     return SellerSignUpResponse.of(seller, auth.getRole());
+  }
+
+  @Transactional(readOnly = true)
+  public SellerResponse getSellerInfo(Long sellerId) {
+    if (sellerId == null) {
+      throw new BusinessException(ErrorCode.SELLER_NOT_FOUND);
+    }
+    Seller seller = findSeller(sellerId);
+
+    return SellerResponse.from(seller);
+  }
+
+  @Transactional
+  public SellerResponse updateSellerInfo(Long sellerId, SellerUpdateRequest request) {
+    if (sellerId == null) {
+      throw new BusinessException(ErrorCode.SELLER_NOT_FOUND);
+    }
+    Seller seller = findSeller(sellerId);
+
+    String name = StringUtils.hasText(request.name()) ? request.name() : seller.getName();
+    String phone = StringUtils.hasText(request.phone()) ? request.phone() : seller.getPhone();
+
+    seller.update(name, phone);
+
+    return SellerResponse.from(seller);
   }
 
   @Transactional

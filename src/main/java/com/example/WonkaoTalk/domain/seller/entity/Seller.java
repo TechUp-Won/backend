@@ -69,4 +69,9 @@ public class Seller {
     this.phone = "000-0000-0000";
     this.deletedAt = LocalDateTime.now();
   }
+
+  public void update(String name, String phone) {
+    this.name = name;
+    this.phone = phone;
+  }
 }
