@@ -78,7 +78,7 @@ public class AuthController {
 
     authService.logout(accessToken, email);
 
-    ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
+    ResponseCookie deleteCookie = ResponseCookie.from("refresh-token", "")
         .httpOnly(true)
         .secure(true)
         .path("/")
@@ -101,7 +101,7 @@ public class AuthController {
 
     TokenDto dto = authService.reissueToken(refreshToken);
 
-    ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", dto.refreshToken())
+    ResponseCookie refreshCookie = ResponseCookie.from("refresh-token", dto.refreshToken())
         .httpOnly(true)
         .secure(true)
         .path("/")
