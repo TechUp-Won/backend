@@ -76,6 +76,19 @@ public enum ErrorCode {
       "기본 배송지는 삭제할 수 없습니다. 먼저 다른 배송지를 기본으로 설정해 주세요."),
 
   // 주문 도메인
+  ORDER_NOT_FOUND(404, "ORDER-NOT-FOUND", "주문을 찾을 수 없습니다."),
+
+  // 결제 도메인
+  PAYMENT_NOT_FOUND(404, "PAYMENT-NOT-FOUND", "결제 정보를 찾을 수 없습니다."),
+  PAYMENT_FORBIDDEN(403, "PAYMENT-FORBIDDEN", "해당 결제에 접근할 권한이 없습니다."),
+  PAYMENT_INVALID_STATUS(409, "PAYMENT-INVALID-STATUS", "현재 결제 상태에서는 처리할 수 없습니다."),
+  PAYMENT_AMOUNT_MISMATCH(400, "PAYMENT-AMOUNT-MISMATCH", "결제 금액이 일치하지 않습니다."),
+  PAYMENT_ORDER_MISMATCH(400, "PAYMENT-ORDER-MISMATCH", "결제 주문번호가 일치하지 않습니다."),
+  PAYMENT_APPROVAL_FAILED(502, "PAYMENT-APPROVAL-FAILED", "결제 승인에 실패했습니다."),
+  PAYMENT_CLIENT_KEY_NOT_CONFIGURED(500, "PAYMENT-CLIENT-KEY-NOT-CONFIGURED",
+      "토스페이먼츠 클라이언트 키가 설정되지 않았습니다."),
+  PAYMENT_SECRET_KEY_NOT_CONFIGURED(500, "PAYMENT-SECRET-KEY-NOT-CONFIGURED",
+      "토스페이먼츠 시크릿 키가 설정되지 않았습니다."),
 
   // 채팅 도메인
   ROOM_NOT_FOUND(404, "CHAT-NOT-FOUND-ROOM", "존재하지 않는 채팅방입니다."),

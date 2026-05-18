@@ -1,6 +1,7 @@
 package com.example.WonkaoTalk.domain.order.controller;
 
 import com.example.WonkaoTalk.common.response.ApiResponse;
+import com.example.WonkaoTalk.domain.auth.dto.CustomUserDetails;
 import com.example.WonkaoTalk.domain.order.dto.OrderCreateRequest;
 import com.example.WonkaoTalk.domain.order.dto.OrderCreateResponse;
 import com.example.WonkaoTalk.domain.order.dto.OrderPreviewRequest;
@@ -10,9 +11,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,10 +26,10 @@ public class OrderController {
 
   @PostMapping
   public ResponseEntity<ApiResponse<OrderCreateResponse>> createOrder(
-      @RequestHeader("X-User-Id") Long userId,
+      @AuthenticationPrincipal CustomUserDetails userDetails,
       @Valid @RequestBody OrderCreateRequest requestDto
   ) {
-    OrderCreateResponse responseDto = orderService.createOrder(userId, requestDto);
+    OrderCreateResponse responseDto = orderService.createOrder(userDetails.getUserId(), requestDto);
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success("주문이 생성되었습니다.", responseDto));
   }
