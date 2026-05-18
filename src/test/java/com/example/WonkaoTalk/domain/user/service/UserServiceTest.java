@@ -10,6 +10,8 @@ import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.enums.Role;
 import com.example.WonkaoTalk.domain.auth.service.AuthService;
 import com.example.WonkaoTalk.domain.user.dto.UserResponse;
+import com.example.WonkaoTalk.domain.user.dto.UserSearchRequest;
+import com.example.WonkaoTalk.domain.user.dto.UserSearchResponse;
 import com.example.WonkaoTalk.domain.user.dto.UserSignUpRequest;
 import com.example.WonkaoTalk.domain.user.dto.UserSignUpResponse;
 import com.example.WonkaoTalk.domain.user.dto.UserUpdateRequest;
@@ -111,5 +113,32 @@ class UserServiceTest {
     assertThat(response.marketingAgree()).isTrue();
     assertThat(user.getNickname()).isEqualTo("침병건");
     assertThat(user.isMarketingAgree()).isTrue();
+  }
+
+  @Test
+  @DisplayName("사용자 정보 검색 성공")
+  public void searchUserByPhoneSuccess() {
+    //given
+    User targetUser = User.builder()
+        .nickname("통닭천사")
+        .name("이병건")
+        .phone("010-2222-2222")
+        .image("default.png")
+        .gender(Gender.FEMALE)
+        .birthDate(LocalDate.of(2001, 4, 13))
+        .marketingAgree(false)
+        .build();
+    ReflectionTestUtils.setField(targetUser, "id", 2L);
+
+    UserSearchRequest request = new UserSearchRequest("010-2222-2222");
+    given(userRepo.findByPhone(request.phone())).willReturn(Optional.of(targetUser));
+
+    //when
+    UserSearchResponse response = userService.findUserByPhone(user.getId(), request.phone());
+
+    //then
+    assertThat(response.userId()).isEqualTo(2L);
+    assertThat(response.nickname()).isEqualTo("통닭천사");
+    assertThat(response.phone()).isEqualTo("010-2222-2222");
   }
 }

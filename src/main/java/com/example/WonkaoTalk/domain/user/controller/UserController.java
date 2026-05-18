@@ -6,6 +6,8 @@ import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.common.response.ApiResponse;
 import com.example.WonkaoTalk.domain.auth.dto.CustomUserDetails;
 import com.example.WonkaoTalk.domain.user.dto.UserResponse;
+import com.example.WonkaoTalk.domain.user.dto.UserSearchRequest;
+import com.example.WonkaoTalk.domain.user.dto.UserSearchResponse;
 import com.example.WonkaoTalk.domain.user.dto.UserSignUpRequest;
 import com.example.WonkaoTalk.domain.user.dto.UserSignUpResponse;
 import com.example.WonkaoTalk.domain.user.dto.UserUpdateRequest;
@@ -74,6 +76,17 @@ public class UserController {
     accountWithdraw.withdrawUser(userDetails.getAuthId(), userDetails.getUsername(), accessToken);
 
     return ResponseEntity.ok(ApiResponse.success("회원 탈퇴가 완료되었습니다.", null));
+  }
+
+  @PostMapping("/search")
+  public ResponseEntity<ApiResponse<UserSearchResponse>> searchUserByPhone(
+      @AuthenticationPrincipal CustomUserDetails userDetails,
+      @Valid @RequestBody UserSearchRequest request
+  ) {
+    UserSearchResponse response = userService.findUserByPhone(userDetails.getUserId(),
+        request.phone());
+
+    return ResponseEntity.ok(ApiResponse.success("사용자 검색이 완료되었습니다.", response));
   }
 
 }
