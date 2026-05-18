@@ -76,8 +76,6 @@ public class SecurityConfig {
 
   @Bean
   public PasswordEncoder passwordEncoder() {
-    // BCrypt의 경우 보안 성능이 강력하나 해시 연산 속도가 느림. 현재 서비스 로직 상 Transaction 내에서 암호화를 진행 해 병목 발생 가능성 높음.
-    // TODO: service 클래스 분리 작업 필수
     return new BCryptPasswordEncoder();
   }
 

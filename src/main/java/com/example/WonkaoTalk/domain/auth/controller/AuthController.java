@@ -93,7 +93,7 @@ public class AuthController {
 
   @PostMapping("/reissue")
   public ResponseEntity<ApiResponse<LoginResponse>> reissueToken(
-      @CookieValue(value = "refreshToken", required = false) String refreshToken
+      @CookieValue(value = "refresh-token", required = false) String refreshToken
   ) {
     if (refreshToken == null || refreshToken.isEmpty()) {
       throw new BusinessException(ErrorCode.AUTH_MISSING_TOKEN);
