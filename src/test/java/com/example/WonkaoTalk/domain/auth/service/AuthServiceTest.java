@@ -14,6 +14,7 @@ import com.example.WonkaoTalk.common.config.security.jwt.JwtTokenProvider;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.common.redis.RedisService;
+import com.example.WonkaoTalk.domain.auth.dto.AuthUserInfoDto;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckRequest;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckResponse;
 import com.example.WonkaoTalk.domain.auth.dto.LoginRequest;
@@ -22,7 +23,6 @@ import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.entity.AuthLocal;
 import com.example.WonkaoTalk.domain.auth.enums.LoginStatus;
 import com.example.WonkaoTalk.domain.auth.enums.Role;
-import com.example.WonkaoTalk.domain.user.entity.User;
 import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -126,15 +126,11 @@ class AuthServiceTest {
         .auth(auth)
         .build();
 
-    User user = User.builder().nickname("침착맨").build();
+    AuthUserInfoDto userInfo = AuthUserInfoDto.of("침착맨", 1L, null);
 
     given(authCommandService.getAuthLocalByEmail(anyString())).willReturn(authLocal);
     given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
-
-    given(authCommandService.extractProfileNameByRole(any(Auth.class))).willReturn("침착맨");
-    given(authCommandService.extractUserIdIfPresent(any(Auth.class))).willReturn(1L);
-    given(authCommandService.extractSellerIdIfPresent(any(Auth.class))).willReturn(null);
-
+    given(authCommandService.getAuthUserInfo(any(Auth.class))).willReturn(userInfo);
     given(jwtTokenProvider.createAccessToken(anyString(), any(Long.class), nullable(Long.class),
         nullable(Long.class), anyString())).willReturn("mockAccessToken");
     given(jwtTokenProvider.createRefreshToken(anyString())).willReturn("mockRefreshToken");
@@ -209,14 +205,13 @@ class AuthServiceTest {
         .build();
     TokenDto newToken = TokenDto.of("newAccessToken", "newRefreshToken", 1000L, 9999L, auth,
         "프로필명");
+    AuthUserInfoDto userInfo = AuthUserInfoDto.of("침착맨", 1L, null);
 
     given(jwtTokenProvider.validateToken(oldRefreshToken)).willReturn(true);
     given(jwtTokenProvider.getEmailFromToken(oldRefreshToken)).willReturn(email);
     given(redisService.getValues(redisKey)).willReturn(oldRefreshToken);
     given(authCommandService.getAuthLocalByEmail(email)).willReturn(authLocal);
-    given(authCommandService.extractProfileNameByRole(auth)).willReturn("프로필명");
-    given(authCommandService.extractUserIdIfPresent(auth)).willReturn(1L);
-    given(authCommandService.extractSellerIdIfPresent(auth)).willReturn(null);
+    given(authCommandService.getAuthUserInfo(auth)).willReturn(userInfo);
     given(jwtTokenProvider.createRefreshToken(email)).willReturn(newToken.refreshToken());
     given(jwtTokenProvider.createAccessToken(anyString(), any(Long.class), nullable(Long.class),
         nullable(Long.class), eq(auth.getRole().name()))).willReturn(newToken.accessToken());
