@@ -63,6 +63,6 @@ public class ProductVariant {
   private LocalDateTime deletedAt;
 
   public boolean isSellable() {
-    return this.product.isOnSale() && this.status == SaleStatus.ON_SALE;
+    return this.deletedAt == null && this.product.isOnSale() && this.status == SaleStatus.ON_SALE;
   }
 }

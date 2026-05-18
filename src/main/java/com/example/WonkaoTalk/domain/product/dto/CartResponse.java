@@ -29,6 +29,7 @@ public class CartResponse {
     private Integer quantity;
     private Integer stock;
     private String status;
+    private Boolean sellable;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
     private LocalDateTime updatedAt;
   }

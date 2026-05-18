@@ -26,7 +26,6 @@ import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
 import com.example.WonkaoTalk.domain.product.repo.CartItemRepo;
 import com.example.WonkaoTalk.domain.product.repo.CartRepo;
-import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepo;
 import com.example.WonkaoTalk.domain.user.entity.User;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
@@ -52,8 +51,6 @@ class CartServiceTest {
   private CartRepo cartRepository;
   @Mock
   private CartItemRepo cartItemRepository;
-  @Mock
-  private ProductRepo productRepository;
   @Mock
   private ProductVariantRepo productVariantRepository;
   @Mock
@@ -117,6 +114,44 @@ class CartServiceTest {
   }
 
   @Test
+  @DisplayName("판매 불가 상품은 totalAmount 계산에서 제외된다")
+  void getCart_excludesUnsellableItems_fromTotalAmount() {
+    Cart cart = mockCart(1L, 1L);
+    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+
+    CartItem sellableItem = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 2);
+    ProductVariant unsellableVariant = mockVariantWithProduct(2L, 5000, 4000);
+    when(unsellableVariant.isSellable()).thenReturn(false);
+    CartItem unsellableItem = mockCartItem(2L, cart, unsellableVariant, 3);
+    when(cartItemRepository.findAllWithVariantAndProductByCartId(1L))
+        .thenReturn(List.of(sellableItem, unsellableItem));
+
+    CartResponse response = cartService.getCart(1L);
+
+    assertThat(response.getSummary().getOriginalTotalAmount()).isEqualTo(20000); // 10000*2만 포함
+    assertThat(response.getSummary().getDiscountTotalAmount()).isEqualTo(16000); // 8000*2만 포함
+  }
+
+  @Test
+  @DisplayName("cartItem의 sellable 필드는 variant의 isSellable() 결과를 반영한다")
+  void getCart_cartItemInfo_sellable_reflectsIsSellable() {
+    Cart cart = mockCart(1L, 1L);
+    when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(cart));
+
+    CartItem sellableItem = mockCartItem(1L, cart, mockVariantWithProduct(1L, 10000, 8000), 1);
+    ProductVariant unsellableVariant = mockVariantWithProduct(2L, 5000, 4000);
+    when(unsellableVariant.isSellable()).thenReturn(false);
+    CartItem unsellableItem = mockCartItem(2L, cart, unsellableVariant, 1);
+    when(cartItemRepository.findAllWithVariantAndProductByCartId(1L))
+        .thenReturn(List.of(sellableItem, unsellableItem));
+
+    CartResponse response = cartService.getCart(1L);
+
+    assertThat(response.getCartItems().get(0).getSellable()).isTrue();
+    assertThat(response.getCartItems().get(1).getSellable()).isFalse();
+  }
+
+  @Test
   @DisplayName("authId에 해당하는 User가 없으면 NOT_FOUND를 던진다")
   void getCart_throwsNotFound_whenUserNotFound() {
     when(userRepo.findByAuthId(anyLong())).thenReturn(Optional.empty());
@@ -168,20 +203,8 @@ class CartServiceTest {
   // ── addToCart - 상품/옵션 검증 ───────────────────────────────────────────────
 
   @Test
-  @DisplayName("productId에 해당하는 상품이 없으면 NOT_FOUND를 던진다")
-  void addToCart_throwsNotFound_whenProductNotFound() {
-    when(productRepository.findById(99L)).thenReturn(Optional.empty());
-
-    BusinessException ex = assertThrows(BusinessException.class,
-        () -> cartService.addToCart(1L, mockAddRequest(99L, 1L, 2)));
-
-    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
-  }
-
-  @Test
   @DisplayName("variantId에 해당하는 variant가 없으면 NOT_FOUND를 던진다")
   void addToCart_throwsNotFound_whenVariantNotFound() {
-    when(productRepository.findById(1L)).thenReturn(Optional.of(mock(Product.class)));
     when(productVariantRepository.findById(99L)).thenReturn(Optional.empty());
 
     BusinessException ex = assertThrows(BusinessException.class,
@@ -193,9 +216,6 @@ class CartServiceTest {
   @Test
   @DisplayName("variant가 해당 product 소속이 아니면 NOT_FOUND를 던진다")
   void addToCart_throwsNotFound_whenVariantNotBelongsToProduct() {
-    Product product = mockProductWithId(1L);
-    when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-
     Product otherProduct = mockProductWithId(99L);
     ProductVariant variant = mockVariant(1L, otherProduct, 10, SaleStatus.ON_SALE, null);
     when(productVariantRepository.findById(1L)).thenReturn(Optional.of(variant));
@@ -210,8 +230,6 @@ class CartServiceTest {
   @DisplayName("variant가 삭제된 상태이면 PROD_VARIANT_UNAVAILABLE을 던진다")
   void addToCart_throwsUnavailable_whenVariantIsDeleted() {
     Product product = mockProductWithId(1L);
-    when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-
     ProductVariant variant = mockVariant(1L, product, 10, SaleStatus.ON_SALE, LocalDateTime.now());
     when(productVariantRepository.findById(1L)).thenReturn(Optional.of(variant));
 
@@ -225,8 +243,6 @@ class CartServiceTest {
   @DisplayName("variant의 status가 ON_SALE이 아니면 PROD_VARIANT_UNAVAILABLE을 던진다")
   void addToCart_throwsUnavailable_whenVariantNotOnSale() {
     Product product = mockProductWithId(1L);
-    when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-
     ProductVariant variant = mockVariant(1L, product, 10, SaleStatus.STOP_SALE, null);
     when(productVariantRepository.findById(1L)).thenReturn(Optional.of(variant));
 
@@ -240,8 +256,6 @@ class CartServiceTest {
   @DisplayName("신규 담기 시 요청 수량이 재고를 초과하면 PROD_STOCK_INSUFFICIENT를 던진다")
   void addToCart_throwsStockInsufficient_whenQuantityExceedsStock() {
     Product product = mockProductWithId(1L);
-    when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-
     ProductVariant variant = mockVariant(1L, product, 3, SaleStatus.ON_SALE, null);
     when(productVariantRepository.findById(1L)).thenReturn(Optional.of(variant));
 
@@ -259,7 +273,6 @@ class CartServiceTest {
   @DisplayName("authId에 해당하는 User가 없으면 NOT_FOUND를 던진다")
   void addToCart_throwsNotFound_whenUserNotFound() {
     Product product = mockProductWithId(1L);
-    when(productRepository.findById(1L)).thenReturn(Optional.of(product));
     ProductVariant variant = mockVariant(1L, product, 10, SaleStatus.ON_SALE, null);
     when(productVariantRepository.findById(1L)).thenReturn(Optional.of(variant));
     when(userRepo.findByAuthId(anyLong())).thenReturn(Optional.empty());
@@ -276,8 +289,6 @@ class CartServiceTest {
   @DisplayName("장바구니가 없으면 자동으로 새로 생성된다")
   void addToCart_createsNewCart_whenCartNotFound() {
     Product product = mockProductWithId(1L);
-    when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-
     ProductVariant variant = mockVariant(1L, product, 10, SaleStatus.ON_SALE, null);
     when(productVariantRepository.findById(1L)).thenReturn(Optional.of(variant));
 
@@ -299,8 +310,6 @@ class CartServiceTest {
   @DisplayName("동일한 variant가 이미 장바구니에 있으면 addQuantity가 호출된다")
   void addToCart_callsAddQuantity_whenSameVariantExists() {
     Product product = mockProductWithId(1L);
-    when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-
     ProductVariant variant = mockVariant(1L, product, 10, SaleStatus.ON_SALE, null);
     when(productVariantRepository.findById(1L)).thenReturn(Optional.of(variant));
 
@@ -322,8 +331,6 @@ class CartServiceTest {
   @DisplayName("Upsert 시 합산 수량이 재고를 초과하면 PROD_STOCK_INSUFFICIENT를 던진다")
   void addToCart_throwsStockInsufficient_whenMergedQuantityExceedsStock() {
     Product product = mockProductWithId(1L);
-    when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-
     ProductVariant variant = mockVariant(1L, product, 5, SaleStatus.ON_SALE, null);
     when(productVariantRepository.findById(1L)).thenReturn(Optional.of(variant));
 
@@ -344,8 +351,6 @@ class CartServiceTest {
   @DisplayName("Cart 저장 시 동시 요청으로 DataIntegrityViolationException이 발생하면 기존 Cart를 재조회하여 사용한다")
   void addToCart_usesExistingCart_whenDataIntegrityViolationOccurs() {
     Product product = mockProductWithId(1L);
-    when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-
     ProductVariant variant = mockVariant(1L, product, 10, SaleStatus.ON_SALE, null);
     when(productVariantRepository.findById(1L)).thenReturn(Optional.of(variant));
 
@@ -414,7 +419,7 @@ class CartServiceTest {
   void updateQuantity_throwsUnavailable_whenVariantNotOnSale() {
     Cart cart = mockCart(1L, 1L);
     ProductVariant variant = mockVariantWithProduct(1L, 10000, 8000);
-    when(variant.getStatus()).thenReturn(SaleStatus.STOP_SALE);
+    when(variant.isSellable()).thenReturn(false);
     CartItem cartItem = mockCartItem(1L, cart, variant, 2);
     when(cartItemRepository.findWithVariantAndProductByIdAndUserId(1L, 1L)).thenReturn(Optional.of(cartItem));
 
@@ -784,6 +789,7 @@ class CartServiceTest {
     when(variant.getProduct()).thenReturn(product);
     when(variant.getStock()).thenReturn(stock);
     when(variant.getStatus()).thenReturn(status);
+    when(variant.isSellable()).thenReturn(deletedAt == null && status == SaleStatus.ON_SALE);
     when(variant.getDeletedAt()).thenReturn(deletedAt);
     when(variant.getName()).thenReturn("옵션" + id);
     return variant;
@@ -801,6 +807,7 @@ class CartServiceTest {
     when(variant.getProduct()).thenReturn(product);
     when(variant.getStock()).thenReturn(50);
     when(variant.getStatus()).thenReturn(SaleStatus.ON_SALE);
+    when(variant.isSellable()).thenReturn(true);
     when(variant.getDeletedAt()).thenReturn(null);
     when(variant.getName()).thenReturn("옵션" + id);
     return variant;
