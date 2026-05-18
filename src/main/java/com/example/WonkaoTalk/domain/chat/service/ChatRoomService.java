@@ -101,6 +101,7 @@ public class ChatRoomService {
             lastReadMessageId = participant.getLastReadMessage().getId();
           }
 
+          // TODO: 목록 크기만큼 쿼리가 발생 추후 성능 최적화 방향 고려
           int unreadCount = chatMessageRepo.countUnreadMessages(
               participant.getChatRoom().getId(),
               lastReadMessageId

@@ -12,8 +12,8 @@ import com.example.WonkaoTalk.domain.chat.entity.ChatRoom;
 import com.example.WonkaoTalk.domain.chat.repo.ChatMessageRepo;
 import com.example.WonkaoTalk.domain.chat.repo.ChatParticipantRepo;
 import com.example.WonkaoTalk.domain.chat.repo.ChatRoomRepo;
+import com.example.WonkaoTalk.domain.user.entity.User;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -97,11 +97,8 @@ public class ChatMessageService {
         .filter(Objects::nonNull)
         .collect(Collectors.toSet());
 
-    Map<Long, String> senderNicknameMap = new HashMap<>();
-    for (Long senderId : senderIds) {
-      userRepo.findById(senderId)
-          .ifPresent(user -> senderNicknameMap.put(senderId, user.getNickname()));
-    }
+    Map<Long, String> senderNicknameMap = userRepo.findAllById(senderIds).stream()
+        .collect(Collectors.toMap(User::getId, User::getNickname));
 
     List<ChatMessageDto> messageDtoList = messageSlice.getContent().stream()
         .map(message -> {
