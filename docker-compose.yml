@@ -71,6 +71,7 @@ services:
   minio-init:
     image: minio/mc
     container_name: wonkao-talk-minio-init
+    restart: "no"
     depends_on:
       minio:
         condition: service_healthy
