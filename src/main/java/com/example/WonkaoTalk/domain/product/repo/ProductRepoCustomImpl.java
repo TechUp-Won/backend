@@ -42,7 +42,7 @@ public class ProductRepoCustomImpl implements ProductRepoCustom {
 
     List<Predicate> predicates = new ArrayList<>();
     predicates.add(cb.isNull(p.get("deletedAt")));
-    predicates.add(cb.notEqual(p.get("status"), SaleStatus.STOP_SALE));
+    predicates.add(p.get("status").in(SaleStatus.ON_SALE, SaleStatus.OUT_OF_STOCK));
 
     p.fetch("store", JoinType.LEFT);
 
@@ -87,7 +87,7 @@ public class ProductRepoCustomImpl implements ProductRepoCustom {
 
     List<Predicate> predicates = new ArrayList<>();
     predicates.add(cb.isNull(p.get("deletedAt")));
-    predicates.add(cb.notEqual(p.get("status"), SaleStatus.STOP_SALE));
+    predicates.add(p.get("status").in(SaleStatus.ON_SALE, SaleStatus.OUT_OF_STOCK));
 
     p.fetch("store", JoinType.LEFT);
     // TODO: ElasticSearch 등 검색 엔진 도입 시 동의어(예: 레드-빨강) 처리 및 스코어 기반 정렬로 교체 필요
