@@ -81,6 +81,6 @@ public class Product {
   private LocalDateTime deletedAt;
 
   public boolean isOnSale() {
-    return this.status == SaleStatus.ON_SALE;
+    return this.deletedAt == null && this.status == SaleStatus.ON_SALE;
   }
 }
