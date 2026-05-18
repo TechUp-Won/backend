@@ -10,6 +10,8 @@ import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponse;
 import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponse.OrderPreviewItemDto;
 import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponse.SummaryDto;
 import com.example.WonkaoTalk.domain.order.entity.Order;
+import com.example.WonkaoTalk.domain.order.entity.OrderItem;
+import com.example.WonkaoTalk.domain.order.repo.OrderItemRepo;
 import com.example.WonkaoTalk.domain.order.repo.OrderRepo;
 import com.example.WonkaoTalk.domain.payment.entity.Payment;
 import com.example.WonkaoTalk.domain.payment.service.PaymentService;
@@ -41,6 +43,7 @@ public class OrderService {
 
   private final ProductVariantRepo productVariantRepo;
   private final OrderRepo orderRepo;
+  private final OrderItemRepo orderItemRepo;
 
   private final PaymentService paymentService;
 
@@ -105,6 +108,7 @@ public class OrderService {
 
     // 이렇게 객체 새로 생성해서 부여하는 방식이 옳은 방식일지 고민해볼 필요 있을듯
     Order savedOrder = orderRepo.save(order);
+    orderItemRepo.saveAll(createOrderItems(savedOrder, orderItems, productVariants));
 
     // TODO: Delivery 생성
 
@@ -290,6 +294,23 @@ public class OrderService {
     long finalAmount = originalAmount - discountAmount;
 
     return new SummaryDto(originalAmount, discountAmount, finalAmount);
+  }
+
+  private List<OrderItem> createOrderItems(
+      Order order,
+      List<OrderPreviewItemDto> items,
+      Map<Long, ProductVariant> variantMap
+  ) {
+    return items.stream()
+        .map(item -> OrderItem.createOrderItem(
+            order,
+            variantMap.get(item.variantId()),
+            item.productName(),
+            item.variantName(),
+            Math.toIntExact(item.discountedPrice()),
+            item.quantity()
+        ))
+        .toList();
   }
 
   // 주문 번호 생성
