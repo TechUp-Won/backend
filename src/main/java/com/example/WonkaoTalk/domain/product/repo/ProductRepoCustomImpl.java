@@ -42,6 +42,7 @@ public class ProductRepoCustomImpl implements ProductRepoCustom {
 
     List<Predicate> predicates = new ArrayList<>();
     predicates.add(cb.isNull(p.get("deletedAt")));
+    predicates.add(cb.notEqual(p.get("status"), SaleStatus.STOP_SALE));
 
     p.fetch("store", JoinType.LEFT);
 

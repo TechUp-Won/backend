@@ -410,13 +410,15 @@ class CartServiceIntegrationTest {
 
   // ── 헬퍼 ─────────────────────────────────────────────────────────────────────
 
+  private int userSeq = 0;
+
   private User saveUser(String nickname) {
     Auth auth = Auth.builder().build();
     em.persist(auth);
     User user = User.builder()
         .nickname(nickname)
         .name("테스트")
-        .phone("010-0000-0000")
+        .phone(String.format("010-%04d-%04d", ++userSeq, userSeq))
         .gender(Gender.NONE)
         .auth(auth)
         .build();
