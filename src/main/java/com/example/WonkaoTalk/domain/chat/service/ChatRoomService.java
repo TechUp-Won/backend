@@ -9,6 +9,7 @@ import com.example.WonkaoTalk.domain.chat.dto.ChatRoomResponse;
 import com.example.WonkaoTalk.domain.chat.entity.ChatParticipant;
 import com.example.WonkaoTalk.domain.chat.entity.ChatRoom;
 import com.example.WonkaoTalk.domain.chat.enums.RoomType;
+import com.example.WonkaoTalk.domain.chat.repo.ChatMessageRepo;
 import com.example.WonkaoTalk.domain.chat.repo.ChatParticipantRepo;
 import com.example.WonkaoTalk.domain.chat.repo.ChatRoomRepo;
 import com.example.WonkaoTalk.domain.user.entity.User;
@@ -29,6 +30,7 @@ public class ChatRoomService {
   private final ChatRoomRepo chatRoomRepo;
   private final ChatParticipantRepo chatParticipantRepo;
   private final UserRepo userRepo;
+  private final ChatMessageRepo chatMessageRepo;
 
   @Transactional
   public ChatRoomResponse createChatRoom(Long userId, ChatRoomCreateRequest request) {
@@ -93,8 +95,19 @@ public class ChatRoomService {
         cursorId, pageRequest);
 
     List<ChatRoomInfo> rooms = slice.getContent().stream()
-        // TODO unreadCount 임시로 0 넣어 놓음
-        .map(participant -> ChatRoomInfo.from(participant, 0))
+        .map(participant -> {
+          Long lastReadMessageId = null;
+          if (participant.getLastReadMessage() != null) {
+            lastReadMessageId = participant.getLastReadMessage().getId();
+          }
+
+          int unreadCount = chatMessageRepo.countUnreadMessages(
+              participant.getChatRoom().getId(),
+              lastReadMessageId
+          );
+
+          return ChatRoomInfo.from(participant, unreadCount);
+        })
         .toList();
 
     Long nextCursorId = null;
