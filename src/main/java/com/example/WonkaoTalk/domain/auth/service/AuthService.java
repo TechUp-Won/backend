@@ -4,6 +4,7 @@ import com.example.WonkaoTalk.common.config.security.jwt.JwtTokenProvider;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.common.redis.RedisService;
+import com.example.WonkaoTalk.domain.auth.dto.AuthUserInfoDto;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckRequest;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckResponse;
 import com.example.WonkaoTalk.domain.auth.dto.LoginRequest;
@@ -91,13 +92,11 @@ public class AuthService {
   }
 
   private TokenDto publishToken(String email, Auth auth) {
-    String profileName = authCommandService.extractProfileNameByRole(auth);
+    AuthUserInfoDto dto = authCommandService.getAuthUserInfo(auth);
     String role = auth.getRole().name();
-    Long userId = authCommandService.extractUserIdIfPresent(auth);
-    Long sellerId = authCommandService.extractSellerIdIfPresent(auth);
 
-    String accessToken = jwtTokenProvider.createAccessToken(email, auth.getId(), userId, sellerId,
-        role);
+    String accessToken = jwtTokenProvider.createAccessToken(email, auth.getId(), dto.userId(),
+        dto.sellerId(), role);
     String refreshToken = jwtTokenProvider.createRefreshToken(email);
 
     long refreshExpirationTime = jwtTokenProvider.getRefreshTokenValidTime();
@@ -106,7 +105,7 @@ public class AuthService {
     redisService.setValues("RT:" + email, refreshToken, Duration.ofMillis(refreshExpirationTime));
 
     return TokenDto.of(accessToken, refreshToken, accessExpirationTime, refreshExpirationTime, auth,
-        profileName);
+        dto.profileName());
   }
 
   public void invalidateToken(String email, String accessToken) {

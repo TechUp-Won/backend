@@ -2,6 +2,7 @@ package com.example.WonkaoTalk.domain.auth.service;
 
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
+import com.example.WonkaoTalk.domain.auth.dto.AuthUserInfoDto;
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.entity.AuthLocal;
 import com.example.WonkaoTalk.domain.auth.entity.LoginHistory;
@@ -79,30 +80,25 @@ public class AuthCommandService {
   }
 
   @Transactional(readOnly = true)
-  public String extractProfileNameByRole(Auth auth) {
+  public AuthUserInfoDto getAuthUserInfo(Auth auth) {
     Role role = auth.getRole();
-
+    String profileName = "Unknown";
+    Long userId = null;
+    Long sellerId = null;
     if (role == Role.USER || role == Role.USER_SELLER) {
-      return userRepo.findByAuth(auth).map(User::getNickname)
+      User user = userRepo.findByAuth(auth)
           .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-    } else if (role == Role.SELLER) {
-      return sellerRepo.findByAuth(auth).map(Seller::getName)
-          .orElseThrow(() -> new BusinessException(ErrorCode.SELLER_NOT_FOUND));
-    } else if (role == Role.ADMIN) {
-      return "관리자";
+      profileName = user.getNickname();
+      userId = user.getId();
     }
-    return "알 수 없는 사용자";
-  }
-
-  @Transactional(readOnly = true)
-  public Long extractUserIdIfPresent(Auth auth) {
-    return (auth.getRole() == Role.USER || auth.getRole() == Role.USER_SELLER)
-        ? userRepo.findByAuth(auth).map(User::getId).orElse(null) : null;
-  }
-
-  @Transactional(readOnly = true)
-  public Long extractSellerIdIfPresent(Auth auth) {
-    return (auth.getRole() == Role.SELLER || auth.getRole() == Role.USER_SELLER)
-        ? sellerRepo.findByAuth(auth).map(Seller::getId).orElse(null) : null;
+    if (auth.getRole() == Role.SELLER || auth.getRole() == Role.USER_SELLER) {
+      Seller seller = sellerRepo.findByAuth(auth)
+          .orElseThrow(() -> new BusinessException(ErrorCode.SELLER_NOT_FOUND));
+      if (role == Role.SELLER) {
+        profileName = seller.getName();
+      }
+      sellerId = seller.getId();
+    }
+    return AuthUserInfoDto.of(profileName, userId, sellerId);
   }
 }
