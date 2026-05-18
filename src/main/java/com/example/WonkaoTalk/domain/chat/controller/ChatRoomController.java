@@ -1,6 +1,7 @@
 package com.example.WonkaoTalk.domain.chat.controller;
 
 import com.example.WonkaoTalk.common.response.ApiResponse;
+import com.example.WonkaoTalk.domain.auth.dto.CustomUserDetails;
 import com.example.WonkaoTalk.domain.chat.dto.ChatRoomCreateRequest;
 import com.example.WonkaoTalk.domain.chat.dto.ChatRoomListResponse;
 import com.example.WonkaoTalk.domain.chat.dto.ChatRoomResponse;
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,10 +28,10 @@ public class ChatRoomController {
 
   @PostMapping
   public ResponseEntity<ApiResponse<ChatRoomResponse>> createChatRoom(
+      @AuthenticationPrincipal CustomUserDetails userDetails,
       @Valid @RequestBody ChatRoomCreateRequest request
-      // @AuthenticationPrincipal CustomUserDetails userDetails
-  ) { // TODO 연동 전 임시로 ID넣어둠
-    Long myId = 1L;
+  ) {
+    Long myId = userDetails.getAuthId();
 
     ChatRoomResponse data = chatRoomService.createChatRoom(myId, request);
 
@@ -38,12 +40,12 @@ public class ChatRoomController {
 
   @GetMapping
   public ResponseEntity<ApiResponse<ChatRoomListResponse>> getChatRoomList(
+      @AuthenticationPrincipal CustomUserDetails userDetails,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastMessageAt,
       @RequestParam(required = false) Long cursorId,
       @RequestParam(defaultValue = "20") int size
   ) {
-    // TODO 연동 전 임시로 ID 넣어둠
-    Long myId = 1L;
+    Long myId = userDetails.getAuthId();
 
     ChatRoomListResponse data = chatRoomService.getChatRoomList(myId, lastMessageAt, cursorId,
         size);

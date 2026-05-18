@@ -12,7 +12,14 @@ import com.example.WonkaoTalk.domain.chat.entity.ChatRoom;
 import com.example.WonkaoTalk.domain.chat.repo.ChatMessageRepo;
 import com.example.WonkaoTalk.domain.chat.repo.ChatParticipantRepo;
 import com.example.WonkaoTalk.domain.chat.repo.ChatRoomRepo;
+import com.example.WonkaoTalk.domain.user.entity.User;
+import com.example.WonkaoTalk.domain.user.repo.UserRepo;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -31,9 +38,14 @@ public class ChatMessageService {
   private final ChatRoomRepo chatRoomRepo;
   private final ChatParticipantRepo chatParticipantRepo;
   private final SimpMessagingTemplate messagingTemplate;
+  private final UserRepo userRepo;
 
   @Transactional
-  public ChatMessageResponse sendMessage(Long userId, Long chatRoomId, ChatMessageRequest request) {
+  public ChatMessageResponse sendMessage(Long authId, Long chatRoomId, ChatMessageRequest request) {
+    User me = userRepo.findByAuthId(authId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    Long userId = me.getId();
+
     ChatRoom chatRoom = chatRoomRepo.findById(chatRoomId)
         .orElseThrow(() -> new BusinessException(ErrorCode.ROOM_NOT_FOUND));
 
@@ -72,8 +84,12 @@ public class ChatMessageService {
   }
 
   @Transactional
-  public ChatMessageListResponse getMessageList(Long userId, Long chatRoomId, Long cursorId,
+  public ChatMessageListResponse getMessageList(Long authId, Long chatRoomId, Long cursorId,
       int size) {
+    User me = userRepo.findByAuthId(authId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    Long userId = me.getId();
+
     ChatParticipant myParticipant = chatParticipantRepo.findByChatRoomIdAndUserId(chatRoomId,
             userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_CHAT_PARTICIPANT));
@@ -85,13 +101,22 @@ public class ChatMessageService {
     List<Long> allReadMessageIds = chatParticipantRepo.findAllParticipantsLastReadMessageIds(
         chatRoomId);
 
+    Set<Long> senderIds = messageSlice.getContent().stream()
+        .map(ChatMessage::getSenderId)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+
+    Map<Long, String> senderNicknameMap = new HashMap<>();
+    for (Long senderId : senderIds) {
+      userRepo.findById(senderId)
+          .ifPresent(user -> senderNicknameMap.put(senderId, user.getNickname()));
+    }
+
     List<ChatMessageDto> messageDtoList = messageSlice.getContent().stream()
         .map(message -> {
           int unreadCount = calculateUnreadCount(message.getId(), allReadMessageIds);
 
-          // TODO 연동 후 실제 닉네임
-          String senderNickname =
-              (message.getSenderId() != null && message.getSenderId().equals(userId)) ? "나" : "상대방";
+          String senderNickname = senderNicknameMap.getOrDefault(message.getSenderId(), "(알 수 없음)");
 
           return ChatMessageDto.of(message, userId, senderNickname, unreadCount);
         }).toList();
