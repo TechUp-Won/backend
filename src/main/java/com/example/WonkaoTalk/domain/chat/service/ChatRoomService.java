@@ -40,6 +40,7 @@ public class ChatRoomService {
       throw new BusinessException(ErrorCode.CANNOT_CHAT_SELF);
     }
 
+    // TODO: 그룹 채팅 때는 findAllById를 사용해 한 번에 조회하도록 리팩토링 필요
     User me = userRepo.findById(userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     User receiver = userRepo.findById(receiverId)
