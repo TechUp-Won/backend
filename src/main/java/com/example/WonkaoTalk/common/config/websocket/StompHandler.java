@@ -32,19 +32,19 @@ public class StompHandler implements ChannelInterceptor {
 
     // 클라이언트가 STOMP 연결을 시도할 때
     if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-      String authorizationHeader = accessor.getFirstNativeHeader("Authorization"); // 헤더에서 추출
+      String authorizationHeader = accessor.getFirstNativeHeader("Authorization");
       String token = resolveToken(authorizationHeader);
 
       if (StringUtils.hasText(token)) {
         jwtTokenProvider.validateToken(token);
 
-        Long authId = jwtTokenProvider.getAuthId(token);
+        Long userId = jwtTokenProvider.getUserId(token);
 
         if (accessor.getSessionAttributes() != null) {
-          accessor.getSessionAttributes().put("authId", authId);
+          accessor.getSessionAttributes().put("userId", userId);
         }
 
-        log.info("연결 성공: {}", authId);
+        log.info("연결 성공: {}", userId);
       } else {
         log.error("연결 실패");
         throw new IllegalArgumentException("웹소켓 연결을 위한 토큰이 필요합니다.");

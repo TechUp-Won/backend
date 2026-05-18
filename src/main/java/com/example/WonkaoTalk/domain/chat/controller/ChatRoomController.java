@@ -31,9 +31,9 @@ public class ChatRoomController {
       @AuthenticationPrincipal CustomUserDetails userDetails,
       @Valid @RequestBody ChatRoomCreateRequest request
   ) {
-    Long myId = userDetails.getAuthId();
+    Long userId = userDetails.getUserId();
 
-    ChatRoomResponse data = chatRoomService.createChatRoom(myId, request);
+    ChatRoomResponse data = chatRoomService.createChatRoom(userId, request);
 
     return ResponseEntity.ok(ApiResponse.success("채팅방이 생성되었습니다.", data));
   }
@@ -45,9 +45,9 @@ public class ChatRoomController {
       @RequestParam(required = false) Long cursorId,
       @RequestParam(defaultValue = "20") int size
   ) {
-    Long myId = userDetails.getAuthId();
-
-    ChatRoomListResponse data = chatRoomService.getChatRoomList(myId, lastMessageAt, cursorId,
+    Long userId = userDetails.getUserId();
+    
+    ChatRoomListResponse data = chatRoomService.getChatRoomList(userId, lastMessageAt, cursorId,
         size);
 
     return ResponseEntity.ok(ApiResponse.success("채팅방 목록을 불러왔습니다.", data));

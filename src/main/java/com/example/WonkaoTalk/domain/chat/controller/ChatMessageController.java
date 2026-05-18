@@ -31,9 +31,9 @@ public class ChatMessageController {
       @PathVariable Long chatRoomId,
       @Valid @RequestBody ChatMessageRequest request
   ) {
-    Long myId = userDetails.getAuthId();
+    Long userId = userDetails.getUserId();
 
-    ChatMessageResponse data = chatMessageService.sendMessage(myId, chatRoomId, request);
+    ChatMessageResponse data = chatMessageService.sendMessage(userId, chatRoomId, request);
 
     return ResponseEntity.ok(ApiResponse.success("메시지를 전송했습니다.", data));
   }
@@ -45,9 +45,9 @@ public class ChatMessageController {
       @RequestParam(required = false) Long cursorId,
       @RequestParam(defaultValue = "20") int size
   ) {
-    Long myId = userDetails.getAuthId();
+    Long userId = userDetails.getUserId();
 
-    ChatMessageListResponse data = chatMessageService.getMessageList(myId, chatRoomId, cursorId,
+    ChatMessageListResponse data = chatMessageService.getMessageList(userId, chatRoomId, cursorId,
         size);
 
     return ResponseEntity.ok(ApiResponse.success("메시지 내역을 불러왔습니다.", data));

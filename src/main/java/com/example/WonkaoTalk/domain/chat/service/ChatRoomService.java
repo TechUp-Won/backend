@@ -9,6 +9,7 @@ import com.example.WonkaoTalk.domain.chat.dto.ChatRoomResponse;
 import com.example.WonkaoTalk.domain.chat.entity.ChatParticipant;
 import com.example.WonkaoTalk.domain.chat.entity.ChatRoom;
 import com.example.WonkaoTalk.domain.chat.enums.RoomType;
+import com.example.WonkaoTalk.domain.chat.repo.ChatMessageRepo;
 import com.example.WonkaoTalk.domain.chat.repo.ChatParticipantRepo;
 import com.example.WonkaoTalk.domain.chat.repo.ChatRoomRepo;
 import com.example.WonkaoTalk.domain.user.entity.User;
@@ -29,22 +30,21 @@ public class ChatRoomService {
   private final ChatRoomRepo chatRoomRepo;
   private final ChatParticipantRepo chatParticipantRepo;
   private final UserRepo userRepo;
+  private final ChatMessageRepo chatMessageRepo;
 
   @Transactional
-  public ChatRoomResponse createChatRoom(Long authId, ChatRoomCreateRequest request) {
-    Long receiverAuthId = request.receiverId();
+  public ChatRoomResponse createChatRoom(Long userId, ChatRoomCreateRequest request) {
+    Long receiverId = request.receiverId();
 
-    if (authId.equals(receiverAuthId)) {
+    if (userId.equals(receiverId)) {
       throw new BusinessException(ErrorCode.CANNOT_CHAT_SELF);
     }
 
-    User me = userRepo.findByAuthId(authId)
+    // TODO: 그룹 채팅 때는 findAllById를 사용해 한 번에 조회하도록 리팩토링 필요
+    User me = userRepo.findById(userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-    User receiver = userRepo.findByAuthId(receiverAuthId)
+    User receiver = userRepo.findById(receiverId)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-    Long userId = me.getId();
-    Long receiverId = receiver.getId();
 
     List<ChatRoomResponse.ParticipantDto> participants = List.of(
         ChatRoomResponse.ParticipantDto.builder()
@@ -87,21 +87,29 @@ public class ChatRoomService {
         });
   }
 
-  public ChatRoomListResponse getChatRoomList(Long authId, LocalDateTime lastMessageAt,
+  public ChatRoomListResponse getChatRoomList(Long userId, LocalDateTime lastMessageAt,
       Long cursorId,
       int size) {
-    User me = userRepo.findByAuthId(authId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-    Long userId = me.getId();
-
     PageRequest pageRequest = PageRequest.of(0, size);
 
     Slice<ChatParticipant> slice = chatParticipantRepo.findMyChatRooms(userId, lastMessageAt,
         cursorId, pageRequest);
 
     List<ChatRoomInfo> rooms = slice.getContent().stream()
-        // TODO unreadCount 임시로 0 넣어 놓음
-        .map(participant -> ChatRoomInfo.from(participant, 0))
+        .map(participant -> {
+          Long lastReadMessageId = null;
+          if (participant.getLastReadMessage() != null) {
+            lastReadMessageId = participant.getLastReadMessage().getId();
+          }
+
+          // TODO: 목록 크기만큼 쿼리가 발생 추후 성능 최적화 방향 고려
+          int unreadCount = chatMessageRepo.countUnreadMessages(
+              participant.getChatRoom().getId(),
+              lastReadMessageId
+          );
+
+          return ChatRoomInfo.from(participant, unreadCount);
+        })
         .toList();
 
     Long nextCursorId = null;

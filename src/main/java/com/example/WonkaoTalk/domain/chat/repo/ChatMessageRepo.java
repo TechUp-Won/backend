@@ -21,4 +21,13 @@ public interface ChatMessageRepo extends JpaRepository<ChatMessage, Long> {
       Pageable pageable
   );
 
+  @Query("""
+      SELECT COUNT(m) FROM ChatMessage m
+      WHERE m.chatRoom.id = :chatRoomId
+      AND (:lastReadMessageId IS NULL OR m.id > :lastReadMessageId)
+      """)
+  int countUnreadMessages(
+      @Param("chatRoomId") Long chatRoomId,
+      @Param("lastReadMessageId") Long lastReadMessageId
+  );
 }
