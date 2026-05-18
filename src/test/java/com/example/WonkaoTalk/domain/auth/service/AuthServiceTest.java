@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -19,14 +20,10 @@ import com.example.WonkaoTalk.domain.auth.dto.LoginRequest;
 import com.example.WonkaoTalk.domain.auth.dto.TokenDto;
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.entity.AuthLocal;
+import com.example.WonkaoTalk.domain.auth.enums.LoginStatus;
 import com.example.WonkaoTalk.domain.auth.enums.Role;
-import com.example.WonkaoTalk.domain.auth.repo.AuthLocalRepo;
-import com.example.WonkaoTalk.domain.auth.repo.AuthRepo;
-import com.example.WonkaoTalk.domain.auth.repo.LoginHistoryRepo;
 import com.example.WonkaoTalk.domain.user.entity.User;
-import com.example.WonkaoTalk.domain.user.repo.UserRepo;
 import java.time.Duration;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -45,13 +42,7 @@ class AuthServiceTest {
   private AuthService authService;
 
   @Mock
-  private AuthRepo authRepo;
-  @Mock
-  private AuthLocalRepo authLocalRepo;
-  @Mock
-  private LoginHistoryRepo loginHistoryRepo;
-  @Mock
-  private UserRepo userRepo;
+  private AuthCommandService authCommandService;
   @Mock
   private PasswordEncoder passwordEncoder;
   @Mock
@@ -73,7 +64,7 @@ class AuthServiceTest {
   public void checkEmailAvailable() {
     //given
     EmailCheckRequest request = new EmailCheckRequest("test@test.com");
-    given(authLocalRepo.existsByEmail(request.email())).willReturn(false);
+    given(authCommandService.existsByEmail(request.email())).willReturn(false);
 
     //when
     EmailCheckResponse response = authService.validateEmail(request);
@@ -90,11 +81,11 @@ class AuthServiceTest {
     String password = "Qwer1234";
     Role role = Role.USER;
 
-    given(authLocalRepo.existsByEmail(email)).willReturn(false);
+    given(authCommandService.existsByEmail(email)).willReturn(false);
     given(passwordEncoder.encode(password)).willReturn("EncodedPassword");
 
     Auth auth = Auth.builder().role(role).build();
-    given(authRepo.save(any(Auth.class))).willReturn(auth);
+    given(authCommandService.saveAuthLocal(email, "EncodedPassword", role)).willReturn(auth);
 
     //when
     Auth savedAuth = authService.createAuthLocal(email, password, role);
@@ -102,8 +93,7 @@ class AuthServiceTest {
     //then
     assertThat(savedAuth).isNotNull();
     assertThat(savedAuth.getRole()).isEqualTo(Role.USER);
-    verify(authRepo).save(any(Auth.class));
-    verify(authLocalRepo).save(any(AuthLocal.class));
+    verify(authCommandService).saveAuthLocal(email, "EncodedPassword", role);
   }
 
   @Test
@@ -111,7 +101,7 @@ class AuthServiceTest {
   public void createAuthFailedByDuplicateEmail() {
     //given
     String email = "test@test.com";
-    given(authLocalRepo.existsByEmail(email)).willReturn(true);
+    given(authCommandService.existsByEmail(email)).willReturn(true);
 
     //when & then
     BusinessException e = assertThrows(BusinessException.class, () -> {
@@ -138,13 +128,15 @@ class AuthServiceTest {
 
     User user = User.builder().nickname("침착맨").build();
 
-    given(authLocalRepo.findByEmail(anyString())).willReturn(Optional.of(authLocal));
+    given(authCommandService.getAuthLocalByEmail(anyString())).willReturn(authLocal);
     given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
-    given(userRepo.findByAuth(any(Auth.class))).willReturn(Optional.of(user));
 
-    given(jwtTokenProvider.createAccessToken(anyString(), any(Long.class), any(Long.class),
-        any(Long.class), anyString()))
-        .willReturn("mockAccessToken");
+    given(authCommandService.extractProfileNameByRole(any(Auth.class))).willReturn("침착맨");
+    given(authCommandService.extractUserIdIfPresent(any(Auth.class))).willReturn(1L);
+    given(authCommandService.extractSellerIdIfPresent(any(Auth.class))).willReturn(null);
+
+    given(jwtTokenProvider.createAccessToken(anyString(), any(Long.class), nullable(Long.class),
+        nullable(Long.class), anyString())).willReturn("mockAccessToken");
     given(jwtTokenProvider.createRefreshToken(anyString())).willReturn("mockRefreshToken");
     given(jwtTokenProvider.getRefreshTokenValidTime()).willReturn(1209600000L);
     given(jwtTokenProvider.getAccessTokenValidTime()).willReturn(1800000L);
@@ -158,9 +150,10 @@ class AuthServiceTest {
     assertThat(response.profileName()).isEqualTo("침착맨");
 
     // Redis 검증
-    verify(redisService).setValues(
-        eq("RT:test@test.com"), eq("mockRefreshToken"), any(Duration.class));
-    verify(loginHistoryRepo).save(any());
+    verify(redisService).setValues(eq("RT:test@test.com"), eq("mockRefreshToken"),
+        any(Duration.class));
+    verify(authCommandService).saveLoginHistory(eq(auth), eq(LoginStatus.SUCCESS), anyString(),
+        anyString());
 
   }
 
@@ -173,7 +166,7 @@ class AuthServiceTest {
     AuthLocal authLocal = AuthLocal.builder()
         .email("test@test.com").passwordHash("encodedPassword").auth(auth).build();
 
-    given(authLocalRepo.findByEmail(anyString())).willReturn(Optional.of(authLocal));
+    given(authCommandService.getAuthLocalByEmail(anyString())).willReturn(authLocal);
     given(passwordEncoder.matches(anyString(), anyString())).willReturn(false);
 
     //when & then
@@ -181,7 +174,8 @@ class AuthServiceTest {
         .isInstanceOf(BusinessException.class)
         .hasMessageContaining(ErrorCode.AUTH_MISMATCH_PASSWORD.getMessage());
 
-    verify(loginHistoryRepo).save(any());
+    verify(authCommandService).saveLoginHistory(eq(auth), eq(LoginStatus.FAILURE), anyString(),
+        anyString());
   }
 
   @Test
@@ -210,20 +204,22 @@ class AuthServiceTest {
     String redisKey = "RT:" + email;
 
     Auth auth = Auth.builder().role(Role.USER).build();
+    ReflectionTestUtils.setField(auth, "id", 1L);
     AuthLocal authLocal = AuthLocal.builder().email(email).passwordHash("Qwer1234").auth(auth)
         .build();
     TokenDto newToken = TokenDto.of("newAccessToken", "newRefreshToken", 1000L, 9999L, auth,
         "프로필명");
-    User user = User.builder().nickname("프로필명").build();
 
     given(jwtTokenProvider.validateToken(oldRefreshToken)).willReturn(true);
     given(jwtTokenProvider.getEmailFromToken(oldRefreshToken)).willReturn(email);
     given(redisService.getValues(redisKey)).willReturn(oldRefreshToken);
-    given(authLocalRepo.findByEmail(email)).willReturn(Optional.of(authLocal));
-    given(userRepo.findByAuth(auth)).willReturn(Optional.of(user));
+    given(authCommandService.getAuthLocalByEmail(email)).willReturn(authLocal);
+    given(authCommandService.extractProfileNameByRole(auth)).willReturn("프로필명");
+    given(authCommandService.extractUserIdIfPresent(auth)).willReturn(1L);
+    given(authCommandService.extractSellerIdIfPresent(auth)).willReturn(null);
     given(jwtTokenProvider.createRefreshToken(email)).willReturn(newToken.refreshToken());
-    given(jwtTokenProvider.createAccessToken(email, null, null, null, auth.getRole().name()))
-        .willReturn(newToken.accessToken());
+    given(jwtTokenProvider.createAccessToken(anyString(), any(Long.class), nullable(Long.class),
+        nullable(Long.class), eq(auth.getRole().name()))).willReturn(newToken.accessToken());
     given(jwtTokenProvider.getRefreshTokenValidTime()).willReturn(9999L);
     given(jwtTokenProvider.getAccessTokenValidTime()).willReturn(1000L); // 만료 시간 모킹
 
