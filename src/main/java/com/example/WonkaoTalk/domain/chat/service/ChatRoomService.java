@@ -31,20 +31,17 @@ public class ChatRoomService {
   private final UserRepo userRepo;
 
   @Transactional
-  public ChatRoomResponse createChatRoom(Long authId, ChatRoomCreateRequest request) {
-    Long receiverAuthId = request.receiverId();
+  public ChatRoomResponse createChatRoom(Long userId, ChatRoomCreateRequest request) {
+    Long receiverId = request.receiverId();
 
-    if (authId.equals(receiverAuthId)) {
+    if (userId.equals(receiverId)) {
       throw new BusinessException(ErrorCode.CANNOT_CHAT_SELF);
     }
 
-    User me = userRepo.findByAuthId(authId)
+    User me = userRepo.findById(userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-    User receiver = userRepo.findByAuthId(receiverAuthId)
+    User receiver = userRepo.findById(receiverId)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-    Long userId = me.getId();
-    Long receiverId = receiver.getId();
 
     List<ChatRoomResponse.ParticipantDto> participants = List.of(
         ChatRoomResponse.ParticipantDto.builder()
@@ -87,13 +84,9 @@ public class ChatRoomService {
         });
   }
 
-  public ChatRoomListResponse getChatRoomList(Long authId, LocalDateTime lastMessageAt,
+  public ChatRoomListResponse getChatRoomList(Long userId, LocalDateTime lastMessageAt,
       Long cursorId,
       int size) {
-    User me = userRepo.findByAuthId(authId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-    Long userId = me.getId();
-
     PageRequest pageRequest = PageRequest.of(0, size);
 
     Slice<ChatParticipant> slice = chatParticipantRepo.findMyChatRooms(userId, lastMessageAt,
