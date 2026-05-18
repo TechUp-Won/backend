@@ -307,7 +307,7 @@ public class OrderService {
             variantMap.get(item.variantId()),
             item.productName(),
             item.variantName(),
-            Math.toIntExact(item.discountedPrice()),
+            item.discountedPrice(),
             item.quantity()
         ))
         .toList();

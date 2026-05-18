@@ -39,7 +39,7 @@ public class OrderItem {
   private String optionSummary;
 
   @Column(name = "product_amount", nullable = false)
-  private Integer productAmount;
+  private Long productAmount;
 
   @Column
   private Integer quantity;
@@ -49,7 +49,7 @@ public class OrderItem {
       ProductVariant productVariant,
       String productName,
       String optionSummary,
-      Integer productAmount,
+      Long productAmount,
       Integer quantity
   ) {
     this.order = order;
@@ -65,7 +65,7 @@ public class OrderItem {
       ProductVariant productVariant,
       String productName,
       String optionSummary,
-      Integer productAmount,
+      Long productAmount,
       Integer quantity
   ) {
     return new OrderItem(
