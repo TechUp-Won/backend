@@ -249,7 +249,6 @@ public class PaymentService {
   }
 
   private String generateTossOrderId(String orderNumber) {
-//    return orderNumber + "-PAY-" + UUID.randomUUID();
     String uuid = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
     return orderNumber + "PAY" + uuid;
   }
