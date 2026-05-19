@@ -121,14 +121,7 @@ public class OrderService {
     // totalAmount = order.finalAmount
     Payment payment = paymentService.createReadyPayment(savedOrder);
 
-    // TODO: 함수로 뺄지 고민
-    DeliveryRequestDto deliveryRequestDto = requestDto.delivery();
-
-    Delivery delivery = Delivery.createDelivery(savedOrder, deliveryRequestDto.recipientName(),
-        deliveryRequestDto.recipientPhone(), deliveryRequestDto.zipcode(),
-        deliveryRequestDto.address(), deliveryRequestDto.addressDetail(),
-        deliveryRequestDto.memo());
-    deliveryRepo.save(delivery);
+    saveDelivery(savedOrder, requestDto.delivery());
 
     // 13. 주문 생성 응답 반환
     // orderId, orderNumber, paymentId, tossOrderId, amount, orderName
@@ -322,6 +315,20 @@ public class OrderService {
             item.quantity()
         ))
         .toList();
+  }
+
+  private void saveDelivery(Order order, DeliveryRequestDto deliveryRequestDto) {
+    Delivery delivery = Delivery.createDelivery(
+        order,
+        deliveryRequestDto.recipientName(),
+        deliveryRequestDto.recipientPhone(),
+        deliveryRequestDto.zipcode(),
+        deliveryRequestDto.address(),
+        deliveryRequestDto.addressDetail(),
+        deliveryRequestDto.memo()
+    );
+
+    deliveryRepo.save(delivery);
   }
 
   // 주문 번호 생성
