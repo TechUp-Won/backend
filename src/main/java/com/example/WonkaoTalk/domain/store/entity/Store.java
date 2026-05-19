@@ -61,7 +61,7 @@ public class Store {
   private StoreStatus status = StoreStatus.ACTIVE;
 
   @OneToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "seller_id", nullable = false, unique = true) // 현재 스토어와 판매자는 1대1 연관
+  @JoinColumn(name = "seller_id", nullable = false) // 현재 스토어와 판매자는 1대1 연관
   private Seller seller;
 
   @CreatedDate()
