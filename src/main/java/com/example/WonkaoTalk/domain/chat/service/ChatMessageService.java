@@ -48,6 +48,9 @@ public class ChatMessageService {
             userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_CHAT_PARTICIPANT));
 
+    User me = userRepo.findById(userId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
     ChatMessage answerMessage = null;
     if (request.answerMessageId() != null) {
       answerMessage = chatMessageRepo.findById(request.answerMessageId())
@@ -66,7 +69,12 @@ public class ChatMessageService {
     chatRoom.updateLastMessage(chatMessage.getContent(), chatMessage.getCreatedAt());
     participant.updateLastReadMessage(chatMessage);
 
-    ChatMessageResponse response = ChatMessageResponse.from(chatMessage);
+    List<Long> allReadMessageIds = chatParticipantRepo.findAllParticipantsLastReadMessageIds(
+        chatRoomId);
+    int unreadCount = calculateUnreadCount(chatMessage.getId(), allReadMessageIds);
+
+    ChatMessageResponse response = ChatMessageResponse.of(chatMessage, me.getNickname(),
+        unreadCount);
 
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
