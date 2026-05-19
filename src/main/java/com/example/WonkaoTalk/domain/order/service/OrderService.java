@@ -3,14 +3,17 @@ package com.example.WonkaoTalk.domain.order.service;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.order.dto.OrderCreateRequest;
+import com.example.WonkaoTalk.domain.order.dto.OrderCreateRequest.DeliveryRequestDto;
 import com.example.WonkaoTalk.domain.order.dto.OrderCreateResponse;
 import com.example.WonkaoTalk.domain.order.dto.OrderItemDto;
 import com.example.WonkaoTalk.domain.order.dto.OrderPreviewRequest;
 import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponse;
 import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponse.OrderPreviewItemDto;
 import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponse.SummaryDto;
+import com.example.WonkaoTalk.domain.order.entity.Delivery;
 import com.example.WonkaoTalk.domain.order.entity.Order;
 import com.example.WonkaoTalk.domain.order.entity.OrderItem;
+import com.example.WonkaoTalk.domain.order.repo.DeliveryRepo;
 import com.example.WonkaoTalk.domain.order.repo.OrderItemRepo;
 import com.example.WonkaoTalk.domain.order.repo.OrderRepo;
 import com.example.WonkaoTalk.domain.payment.entity.Payment;
@@ -44,6 +47,7 @@ public class OrderService {
   private final ProductVariantRepo productVariantRepo;
   private final OrderRepo orderRepo;
   private final OrderItemRepo orderItemRepo;
+  private final DeliveryRepo deliveryRepo;
 
   private final PaymentService paymentService;
 
@@ -110,14 +114,14 @@ public class OrderService {
     Order savedOrder = orderRepo.save(order);
     orderItemRepo.saveAll(createOrderItems(savedOrder, orderItems, productVariants));
 
-    // TODO: Delivery 생성
-
     // 12. Payment 생성
     // status = READY
     // tossOrderId 생성
     // idempotencyKey 생성
     // totalAmount = order.finalAmount
     Payment payment = paymentService.createReadyPayment(savedOrder);
+
+    saveDelivery(savedOrder, requestDto.delivery());
 
     // 13. 주문 생성 응답 반환
     // orderId, orderNumber, paymentId, tossOrderId, amount, orderName
@@ -311,6 +315,20 @@ public class OrderService {
             item.quantity()
         ))
         .toList();
+  }
+
+  private void saveDelivery(Order order, DeliveryRequestDto deliveryRequestDto) {
+    Delivery delivery = Delivery.createDelivery(
+        order,
+        deliveryRequestDto.recipientName(),
+        deliveryRequestDto.recipientPhone(),
+        deliveryRequestDto.zipcode(),
+        deliveryRequestDto.address(),
+        deliveryRequestDto.addressDetail(),
+        deliveryRequestDto.memo()
+    );
+
+    deliveryRepo.save(delivery);
   }
 
   // 주문 번호 생성
