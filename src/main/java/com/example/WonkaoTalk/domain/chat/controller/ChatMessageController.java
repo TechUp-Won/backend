@@ -9,6 +9,7 @@ import com.example.WonkaoTalk.domain.chat.service.ChatMessageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ChatMessageController {
 
   private final ChatMessageService chatMessageService;
+  private final SimpMessagingTemplate messagingTemplate;
 
   @PostMapping("/{chatRoomId}/messages")
   public ResponseEntity<ApiResponse<ChatMessageResponse>> sendMessage(
@@ -34,7 +36,7 @@ public class ChatMessageController {
     Long userId = userDetails.getUserId();
 
     ChatMessageResponse data = chatMessageService.sendMessage(userId, chatRoomId, request);
-
+    messagingTemplate.convertAndSend("/sub/chat/room/" + chatRoomId, data);
     return ResponseEntity.ok(ApiResponse.success("메시지를 전송했습니다.", data));
   }
 

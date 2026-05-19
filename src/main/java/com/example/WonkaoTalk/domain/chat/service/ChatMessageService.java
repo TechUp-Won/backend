@@ -22,11 +22,8 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -36,7 +33,6 @@ public class ChatMessageService {
   private final ChatMessageRepo chatMessageRepo;
   private final ChatRoomRepo chatRoomRepo;
   private final ChatParticipantRepo chatParticipantRepo;
-  private final SimpMessagingTemplate messagingTemplate;
   private final UserRepo userRepo;
 
   @Transactional
@@ -47,6 +43,9 @@ public class ChatMessageService {
     ChatParticipant participant = chatParticipantRepo.findByChatRoomIdAndUserId(chatRoomId,
             userId)
         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_CHAT_PARTICIPANT));
+
+    User me = userRepo.findById(userId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
     ChatMessage answerMessage = null;
     if (request.answerMessageId() != null) {
@@ -66,16 +65,11 @@ public class ChatMessageService {
     chatRoom.updateLastMessage(chatMessage.getContent(), chatMessage.getCreatedAt());
     participant.updateLastReadMessage(chatMessage);
 
-    ChatMessageResponse response = ChatMessageResponse.from(chatMessage);
+    List<Long> allReadMessageIds = chatParticipantRepo.findAllParticipantsLastReadMessageIds(
+        chatRoomId);
+    int unreadCount = calculateUnreadCount(chatMessage.getId(), allReadMessageIds);
 
-    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-      @Override
-      public void afterCommit() {
-        messagingTemplate.convertAndSend("/sub/chat/room/" + chatRoomId, response);
-      }
-    });
-
-    return response;
+    return ChatMessageResponse.of(chatMessage, me.getNickname(), unreadCount);
   }
 
   @Transactional
