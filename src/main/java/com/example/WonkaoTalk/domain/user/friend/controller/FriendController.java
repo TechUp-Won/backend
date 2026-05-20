@@ -1,5 +1,6 @@
 package com.example.WonkaoTalk.domain.user.friend.controller;
 
+import com.example.WonkaoTalk.common.config.OpenApiConfig;
 import com.example.WonkaoTalk.common.response.ApiResponse;
 import com.example.WonkaoTalk.domain.auth.dto.CustomUserDetails;
 import com.example.WonkaoTalk.domain.user.friend.dto.FriendAddRequest;
@@ -11,6 +12,7 @@ import com.example.WonkaoTalk.domain.user.friend.dto.FriendUpdateRequest;
 import com.example.WonkaoTalk.domain.user.friend.dto.FriendUpdateResponse;
 import com.example.WonkaoTalk.domain.user.friend.service.FriendService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -31,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/friends")
 @Tag(name = "친구", description = "친구 추가, 조회, 수정, 상태 변경, 삭제 API")
+@SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
 public class FriendController {
 
   private final FriendService friendService;

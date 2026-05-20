@@ -1,5 +1,6 @@
 package com.example.WonkaoTalk.domain.shipping.controller;
 
+import com.example.WonkaoTalk.common.config.OpenApiConfig;
 import com.example.WonkaoTalk.common.response.ApiResponse;
 import com.example.WonkaoTalk.domain.auth.dto.CustomUserDetails;
 import com.example.WonkaoTalk.domain.shipping.dto.ShippingAddressCreateRequest;
@@ -8,6 +9,7 @@ import com.example.WonkaoTalk.domain.shipping.dto.ShippingAddressResponse;
 import com.example.WonkaoTalk.domain.shipping.dto.ShippingAddressUpdateRequest;
 import com.example.WonkaoTalk.domain.shipping.service.ShippingAddressService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/shipping/addresses")
 @Tag(name = "배송지", description = "사용자 배송지 목록 조회, 등록, 수정, 삭제, 기본 배송지 설정 API")
+@SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
 public class ShippingAddressController {
 
   private final ShippingAddressService shippingAddressService;

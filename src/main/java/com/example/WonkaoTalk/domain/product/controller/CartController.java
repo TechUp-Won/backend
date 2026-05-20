@@ -1,5 +1,6 @@
 package com.example.WonkaoTalk.domain.product.controller;
 
+import com.example.WonkaoTalk.common.config.OpenApiConfig;
 import com.example.WonkaoTalk.common.response.ApiResponse;
 import com.example.WonkaoTalk.domain.auth.dto.CustomUserDetails;
 import com.example.WonkaoTalk.domain.product.dto.CartAddRequest;
@@ -12,6 +13,7 @@ import com.example.WonkaoTalk.domain.product.dto.CartQuantityUpdateResponse;
 import com.example.WonkaoTalk.domain.product.dto.CartResponse;
 import com.example.WonkaoTalk.domain.product.service.CartService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -33,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/carts")
 @RequiredArgsConstructor
 @Tag(name = "장바구니", description = "장바구니 조회, 상품 추가, 수량/옵션 변경, 상품 삭제 API")
+@SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
 public class CartController {
 
   private final CartService cartService;

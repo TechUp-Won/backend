@@ -1,6 +1,7 @@
 package com.example.WonkaoTalk.domain.seller.controller;
 
 import com.example.WonkaoTalk.application.facade.AccountWithdraw;
+import com.example.WonkaoTalk.common.config.OpenApiConfig;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.common.response.ApiResponse;
@@ -12,6 +13,7 @@ import com.example.WonkaoTalk.domain.seller.dto.SellerSignUpResponse;
 import com.example.WonkaoTalk.domain.seller.dto.SellerUpdateRequest;
 import com.example.WonkaoTalk.domain.seller.service.SellerService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +49,7 @@ public class SellerController {
         .body(ApiResponse.success("판매자 회원가입이 완료되었습니다.", response));
   }
 
+  @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
   @Operation(summary = "판매자 등록", description = "기존 계정에 판매자 정보를 추가 등록합니다.")
   @PostMapping("/register")
   public ResponseEntity<ApiResponse<SellerSignUpResponse>> register(
@@ -60,6 +63,7 @@ public class SellerController {
     return ResponseEntity.ok(ApiResponse.success("판매자 등록이 완료되었습니다.", response));
   }
 
+  @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
   @Operation(summary = "판매자 정보 조회", description = "로그인한 판매자의 정보를 조회합니다.")
   @GetMapping
   public ResponseEntity<ApiResponse<SellerResponse>> getMySellerInfo(
@@ -70,6 +74,7 @@ public class SellerController {
     return ResponseEntity.ok(ApiResponse.success("판매자 정보를 조회했습니다.", response));
   }
 
+  @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
   @Operation(summary = "판매자 정보 수정", description = "로그인한 판매자의 사업자 정보를 수정합니다.")
   @PatchMapping
   public ResponseEntity<ApiResponse<SellerResponse>> updateMyInfo(
@@ -81,6 +86,7 @@ public class SellerController {
     return ResponseEntity.ok(ApiResponse.success("판매자 정보 수정이 완료되었습니다.", response));
   }
 
+  @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
   @Operation(summary = "판매자 탈퇴", description = "로그인한 판매자 계정을 탈퇴 처리하고 access token을 만료 처리합니다.")
   @DeleteMapping("/withdraw")
   public ResponseEntity<ApiResponse<Void>> withdraw(

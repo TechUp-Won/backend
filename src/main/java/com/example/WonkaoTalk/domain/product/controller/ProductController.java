@@ -1,5 +1,6 @@
 package com.example.WonkaoTalk.domain.product.controller;
 
+import com.example.WonkaoTalk.common.config.OpenApiConfig;
 import com.example.WonkaoTalk.common.response.ApiResponse;
 import com.example.WonkaoTalk.domain.auth.dto.CustomUserDetails;
 import com.example.WonkaoTalk.domain.product.dto.CategoryResponse;
@@ -12,6 +13,7 @@ import com.example.WonkaoTalk.domain.product.service.CategoryService;
 import com.example.WonkaoTalk.domain.product.service.ProductCreateService;
 import com.example.WonkaoTalk.domain.product.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -37,6 +39,7 @@ public class ProductController {
   private final ProductCreateService productCreateService;
   private final CategoryService categoryService;
 
+  @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
   @Operation(summary = "상품 등록", description = "판매자가 상품 기본 정보, 상세 정보, 옵션, 이미지를 등록합니다.")
   @PostMapping
   public ResponseEntity<ApiResponse<ProductCreateResponse>> createProduct(

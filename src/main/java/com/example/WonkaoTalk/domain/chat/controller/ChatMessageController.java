@@ -1,5 +1,6 @@
 package com.example.WonkaoTalk.domain.chat.controller;
 
+import com.example.WonkaoTalk.common.config.OpenApiConfig;
 import com.example.WonkaoTalk.common.response.ApiResponse;
 import com.example.WonkaoTalk.domain.auth.dto.CustomUserDetails;
 import com.example.WonkaoTalk.domain.chat.dto.ChatMessageListResponse;
@@ -7,6 +8,7 @@ import com.example.WonkaoTalk.domain.chat.dto.ChatMessageRequest;
 import com.example.WonkaoTalk.domain.chat.dto.ChatMessageResponse;
 import com.example.WonkaoTalk.domain.chat.service.ChatMessageService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/chats")
 @Tag(name = "채팅 메시지", description = "채팅 메시지 전송과 메시지 내역 조회 API")
+@SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
 public class ChatMessageController {
 
   private final ChatMessageService chatMessageService;

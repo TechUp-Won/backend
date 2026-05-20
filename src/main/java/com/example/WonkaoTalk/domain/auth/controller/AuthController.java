@@ -2,6 +2,7 @@ package com.example.WonkaoTalk.domain.auth.controller;
 
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
+import com.example.WonkaoTalk.common.config.OpenApiConfig;
 import com.example.WonkaoTalk.common.response.ApiResponse;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckRequest;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckResponse;
@@ -10,6 +11,7 @@ import com.example.WonkaoTalk.domain.auth.dto.LoginResponse;
 import com.example.WonkaoTalk.domain.auth.dto.TokenDto;
 import com.example.WonkaoTalk.domain.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -70,6 +72,7 @@ public class AuthController {
         .body(ApiResponse.success("로그인에 성공하였습니다.", responseBody));
   }
 
+  @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
   @Operation(summary = "로그아웃", description = "access token을 블랙리스트에 등록하고 refresh token 쿠키를 제거합니다.")
   @PostMapping("/logout")
   public ResponseEntity<ApiResponse<Void>> logout(

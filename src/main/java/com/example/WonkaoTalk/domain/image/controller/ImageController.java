@@ -1,10 +1,12 @@
 package com.example.WonkaoTalk.domain.image.controller;
 
+import com.example.WonkaoTalk.common.config.OpenApiConfig;
 import com.example.WonkaoTalk.common.response.ApiResponse;
 import com.example.WonkaoTalk.domain.image.dto.PresignedUrlRequest;
 import com.example.WonkaoTalk.domain.image.dto.PresignedUrlResponse;
 import com.example.WonkaoTalk.domain.image.service.ImageService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("api/v1/images")
 @RequiredArgsConstructor
 @Tag(name = "이미지", description = "이미지 업로드용 Presigned URL 발급 API")
+@SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
 public class ImageController {
 
   private final ImageService imageService;

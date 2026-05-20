@@ -1,5 +1,6 @@
 package com.example.WonkaoTalk.domain.order.controller;
 
+import com.example.WonkaoTalk.common.config.OpenApiConfig;
 import com.example.WonkaoTalk.common.response.ApiResponse;
 import com.example.WonkaoTalk.domain.auth.dto.CustomUserDetails;
 import com.example.WonkaoTalk.domain.order.dto.OrderCreateRequest;
@@ -8,6 +9,7 @@ import com.example.WonkaoTalk.domain.order.dto.OrderPreviewRequest;
 import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponse;
 import com.example.WonkaoTalk.domain.order.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
 @Tag(name = "주문", description = "주문 생성과 주문 미리보기 API")
+@SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
 public class OrderController {
 
   private final OrderService orderService;

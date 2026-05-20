@@ -1,5 +1,6 @@
 package com.example.WonkaoTalk.domain.store.controller;
 
+import com.example.WonkaoTalk.common.config.OpenApiConfig;
 import com.example.WonkaoTalk.common.response.ApiResponse;
 import com.example.WonkaoTalk.domain.auth.dto.CustomUserDetails;
 import com.example.WonkaoTalk.domain.seller.entity.Seller;
@@ -9,6 +10,7 @@ import com.example.WonkaoTalk.domain.store.dto.StoreResponse;
 import com.example.WonkaoTalk.domain.store.dto.StoreUpdateRequest;
 import com.example.WonkaoTalk.domain.store.service.StoreService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/stores")
 @Tag(name = "스토어", description = "판매자 스토어 등록, 조회, 수정, 삭제 API")
+@SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
 public class StoreController {
 
   private final StoreService storeService;
