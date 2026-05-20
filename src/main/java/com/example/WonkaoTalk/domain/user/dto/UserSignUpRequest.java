@@ -1,12 +1,14 @@
 package com.example.WonkaoTalk.domain.user.dto;
 
 import com.example.WonkaoTalk.domain.user.enums.Gender;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import java.time.LocalDate;
 
 public record UserSignUpRequest(
+    @Schema(example = "user@example.com")
     @NotBlank(message = "이메일을 입력해주세요.")
     @Pattern(
         regexp = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$",

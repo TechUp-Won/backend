@@ -44,7 +44,10 @@ public class SecurityConfig {
                 "/api/v1/users/signup",
                 "/api/v1/sellers/signup",
                 "/api/v1/search",
-                "/ws/**"
+                "/ws/**",
+                "/v3/api-docs/**",
+                "/swagger-ui/**",
+                "/swagger-ui.html"
             ).permitAll() // 인증 없이 접근 허용
             .requestMatchers(
                 "/api/v1/auth/logout",

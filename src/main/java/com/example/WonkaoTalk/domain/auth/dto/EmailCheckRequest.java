@@ -1,9 +1,11 @@
 package com.example.WonkaoTalk.domain.auth.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
 public record EmailCheckRequest(
+    @Schema(example = "user@example.com")
     @NotBlank(message = "이메일을 입력해주세요.")
     @Pattern(
         // OWASP 이메일 정규식
