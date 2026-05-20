@@ -11,6 +11,8 @@ import com.example.WonkaoTalk.domain.product.dto.CartQuantityUpdateRequest;
 import com.example.WonkaoTalk.domain.product.dto.CartQuantityUpdateResponse;
 import com.example.WonkaoTalk.domain.product.dto.CartResponse;
 import com.example.WonkaoTalk.domain.product.service.CartService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -30,10 +32,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/carts")
 @RequiredArgsConstructor
+@Tag(name = "장바구니", description = "장바구니 조회, 상품 추가, 수량/옵션 변경, 상품 삭제 API")
 public class CartController {
 
   private final CartService cartService;
 
+  @Operation(summary = "장바구니 조회", description = "로그인한 사용자의 장바구니 상품 목록과 금액 요약을 조회합니다.")
   @GetMapping
   public ResponseEntity<ApiResponse<CartResponse>> getCart(
       @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -41,6 +45,7 @@ public class CartController {
     return ResponseEntity.ok(ApiResponse.success("조회가 완료되었습니다", response));
   }
 
+  @Operation(summary = "장바구니 상품 추가", description = "선택한 상품 옵션과 수량을 장바구니에 추가합니다.")
   @PostMapping("/items")
   public ResponseEntity<ApiResponse<CartAddResponse>> addToCart(
       @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -50,6 +55,7 @@ public class CartController {
         .body(ApiResponse.success("장바구니에 상품이 추가되었습니다.", response));
   }
 
+  @Operation(summary = "장바구니 상품 수량 변경", description = "장바구니 상품의 구매 수량을 변경합니다.")
   @PatchMapping("/items/{cartItemId}/quantity")
   public ResponseEntity<ApiResponse<CartQuantityUpdateResponse>> updateCartItemQuantity(
       @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -60,6 +66,7 @@ public class CartController {
     return ResponseEntity.ok(ApiResponse.success("수정이 완료되었습니다", response));
   }
 
+  @Operation(summary = "장바구니 상품 옵션 변경", description = "장바구니 상품의 선택 옵션을 다른 옵션으로 변경합니다.")
   @PatchMapping("/items/{cartItemId}/option")
   public ResponseEntity<ApiResponse<CartOptionUpdateResponse>> updateCartItemOption(
       @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -70,6 +77,7 @@ public class CartController {
     return ResponseEntity.ok(ApiResponse.success("수정이 완료되었습니다", response));
   }
 
+  @Operation(summary = "장바구니 상품 삭제", description = "선택한 장바구니 상품을 삭제하거나 장바구니 전체를 비웁니다.")
   @DeleteMapping("/items")
   public ResponseEntity<ApiResponse<CartDeleteResponse>> deleteFromCart(
       @AuthenticationPrincipal CustomUserDetails userDetails,

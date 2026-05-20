@@ -9,6 +9,8 @@ import com.example.WonkaoTalk.domain.auth.dto.LoginRequest;
 import com.example.WonkaoTalk.domain.auth.dto.LoginResponse;
 import com.example.WonkaoTalk.domain.auth.dto.TokenDto;
 import com.example.WonkaoTalk.domain.auth.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,10 +28,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("api/v1/auth")
 @RequiredArgsConstructor
+@Tag(name = "인증", description = "이메일 중복 확인, 로그인, 로그아웃, 토큰 재발급 API")
 public class AuthController {
 
   private final AuthService authService;
 
+  @Operation(summary = "이메일 중복 확인", description = "회원가입 전 이메일 사용 가능 여부를 확인합니다.")
   @PostMapping("/check-email")
   public ResponseEntity<ApiResponse<EmailCheckResponse>> checkEmail(
       @Valid @RequestBody EmailCheckRequest request
@@ -42,6 +46,7 @@ public class AuthController {
     return ResponseEntity.ok(ApiResponse.success(message, data));
   }
 
+  @Operation(summary = "로그인", description = "이메일과 비밀번호로 로그인하고 access token과 refresh token을 발급합니다.")
   @PostMapping("/login")
   public ResponseEntity<ApiResponse<LoginResponse>> login(
       @Valid @RequestBody LoginRequest request,
@@ -65,6 +70,7 @@ public class AuthController {
         .body(ApiResponse.success("로그인에 성공하였습니다.", responseBody));
   }
 
+  @Operation(summary = "로그아웃", description = "access token을 블랙리스트에 등록하고 refresh token 쿠키를 제거합니다.")
   @PostMapping("/logout")
   public ResponseEntity<ApiResponse<Void>> logout(
       @RequestHeader("Authorization") String authHeader,
@@ -91,6 +97,7 @@ public class AuthController {
         .body(ApiResponse.success("로그아웃에 성공하였습니다.", null));
   }
 
+  @Operation(summary = "토큰 재발급", description = "refresh token 쿠키를 검증해 새로운 access token과 refresh token을 발급합니다.")
   @PostMapping("/reissue")
   public ResponseEntity<ApiResponse<LoginResponse>> reissueToken(
       @CookieValue(value = "refresh-token", required = false) String refreshToken
