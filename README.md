@@ -15,7 +15,6 @@ WonkaoTalk 백엔드 API 서버입니다. 사용자/판매자 계정, 친구, �
 - JWT
 - Gradle
 - Testcontainers
-- Flyway
 
 ## 주요 기능
 
