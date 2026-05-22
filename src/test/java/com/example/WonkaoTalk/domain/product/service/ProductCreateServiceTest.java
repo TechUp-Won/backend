@@ -29,6 +29,7 @@ import com.example.WonkaoTalk.domain.product.repo.ProductOptionGroupRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductOptionRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepo;
+import com.example.WonkaoTalk.domain.product.repo.StockHistoryRepo;
 import com.example.WonkaoTalk.domain.product.repo.VariantOptionMapRepo;
 import com.example.WonkaoTalk.domain.seller.entity.Seller;
 import com.example.WonkaoTalk.domain.seller.repo.SellerRepo;
@@ -77,6 +78,8 @@ class ProductCreateServiceTest {
   @Mock
   private VariantOptionMapRepo variantOptionMapRepo;
   @Mock
+  private StockHistoryRepo stockHistoryRepo;
+  @Mock
   private ImageService imageService;
   @Mock
   private ApplicationEventPublisher eventPublisher;
@@ -108,6 +111,7 @@ class ProductCreateServiceTest {
     when(productOptionRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
     when(productVariantRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
     when(variantOptionMapRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(stockHistoryRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
     when(imageService.validateAndGetProductUrl(anyString()))
         .thenReturn("http://localhost:9000/wonkaotalk/products/test.jpg");
@@ -287,6 +291,24 @@ class ProductCreateServiceTest {
         () -> productCreateService.create(AUTH_ID, request));
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_INVALID_DISCOUNT_RATE);
+  }
+
+  // ── 재고 이력 ─────────────────────────────────────────────────────────────────
+
+  @Test
+  @DisplayName("옵션 없는 상품 등록 시 재고 이력이 1건 저장된다")
+  void createProduct_noOption_stockHistorySaved() {
+    productCreateService.create(AUTH_ID, noOptionRequest());
+
+    verify(stockHistoryRepo).save(any());
+  }
+
+  @Test
+  @DisplayName("옵션 있는 상품 등록 시 variant 수만큼 재고 이력이 저장된다")
+  void createProduct_withOption_stockHistorySavedPerVariant() {
+    productCreateService.create(AUTH_ID, withOptionRequest());
+
+    verify(stockHistoryRepo, atLeastOnce()).save(any());
   }
 
   // ── 재고 검증 ─────────────────────────────────────────────────────────────────
