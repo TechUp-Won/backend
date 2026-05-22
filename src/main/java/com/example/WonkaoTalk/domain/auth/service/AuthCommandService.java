@@ -98,7 +98,7 @@ public class AuthCommandService {
   public void handleUserWithdraw(Long authId, boolean hasActiveSeller) {
     Auth auth = authRepo.findById(authId)
         .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_NOT_FOUND));
-    if ((hasActiveSeller)) {
+    if (hasActiveSeller) {
       auth.updateRole(Role.SELLER);
     } else {
       authLocalRepo.findByAuth(auth).ifPresent(AuthLocal::withdraw);
@@ -110,7 +110,7 @@ public class AuthCommandService {
   public void handleSellerWithdraw(Long authId, boolean hasActiveUser) {
     Auth auth = authRepo.findById(authId)
         .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_NOT_FOUND));
-    if ((hasActiveUser)) {
+    if (hasActiveUser) {
       auth.updateRole(Role.USER);
     } else {
       authLocalRepo.findByAuth(auth).ifPresent(AuthLocal::withdraw);
