@@ -6,5 +6,5 @@ CREATE TABLE stock_histories (
     stock_before        INT             NOT NULL,
     stock_after         INT             NOT NULL,
     reason              VARCHAR(20)     NOT NULL,
-    created_at          TIMESTAMP       NOT NULL
+    created_at          TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
