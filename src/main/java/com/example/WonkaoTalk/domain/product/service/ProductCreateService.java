@@ -15,8 +15,10 @@ import com.example.WonkaoTalk.domain.product.entity.ProductImage;
 import com.example.WonkaoTalk.domain.product.entity.ProductOption;
 import com.example.WonkaoTalk.domain.product.entity.ProductOptionGroup;
 import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
+import com.example.WonkaoTalk.domain.product.entity.StockHistory;
 import com.example.WonkaoTalk.domain.product.entity.VariantOptionMap;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
+import com.example.WonkaoTalk.domain.product.enums.StockChangeReason;
 import com.example.WonkaoTalk.domain.product.event.ProductCreatedEvent;
 import com.example.WonkaoTalk.domain.product.repo.CategoryRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductDetailRepo;
@@ -25,6 +27,7 @@ import com.example.WonkaoTalk.domain.product.repo.ProductOptionGroupRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductOptionRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepo;
+import com.example.WonkaoTalk.domain.product.repo.StockHistoryRepo;
 import com.example.WonkaoTalk.domain.product.repo.VariantOptionMapRepo;
 import com.example.WonkaoTalk.domain.seller.entity.Seller;
 import com.example.WonkaoTalk.domain.seller.repo.SellerRepo;
@@ -58,6 +61,7 @@ public class ProductCreateService {
   private final ProductOptionRepo productOptionRepo;
   private final ProductVariantRepo productVariantRepo;
   private final VariantOptionMapRepo variantOptionMapRepo;
+  private final StockHistoryRepo stockHistoryRepo;
   private final ImageService imageService;
   private final ApplicationEventPublisher eventPublisher;
 
@@ -127,12 +131,13 @@ public class ProductCreateService {
     }
 
     if (!hasOptions) {
-      productVariantRepo.save(ProductVariant.builder()
+      ProductVariant variant = productVariantRepo.save(ProductVariant.builder()
           .product(product)
           .name("기본")
           .stock(request.stock())
           .status(SaleStatus.ON_SALE)
           .build());
+      stockHistoryRepo.save(StockHistory.of(variant, null, request.stock(), 0, StockChangeReason.RESTOCK));
     } else {
       saveOptionsAndVariants(product, request);
     }
@@ -197,6 +202,7 @@ public class ProductCreateService {
           .stock(variantReq.stock())
           .status(SaleStatus.ON_SALE)
           .build());
+      stockHistoryRepo.save(StockHistory.of(variant, null, variantReq.stock(), 0, StockChangeReason.RESTOCK));
 
       for (int i = 0; i < combo.size(); i++) {
         ProductOption option = groupOptionMaps.get(i).get(combo.get(i));
