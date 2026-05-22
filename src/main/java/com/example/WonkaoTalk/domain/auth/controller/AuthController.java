@@ -1,8 +1,8 @@
 package com.example.WonkaoTalk.domain.auth.controller;
 
+import com.example.WonkaoTalk.common.config.OpenApiConfig;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
-import com.example.WonkaoTalk.common.config.OpenApiConfig;
 import com.example.WonkaoTalk.common.response.ApiResponse;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckRequest;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckResponse;
@@ -85,7 +85,7 @@ public class AuthController {
     String accessToken = authHeader.substring(7);
     String email = authentication.getName();
 
-    authService.logout(accessToken, email);
+    authService.invalidateToken(email, accessToken);
 
     ResponseCookie deleteCookie = ResponseCookie.from("refresh-token", "")
         .httpOnly(true)
