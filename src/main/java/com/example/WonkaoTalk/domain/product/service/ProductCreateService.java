@@ -137,7 +137,8 @@ public class ProductCreateService {
           .stock(request.stock())
           .status(SaleStatus.ON_SALE)
           .build());
-      stockHistoryRepo.save(StockHistory.of(variant, null, request.stock(), 0, StockChangeReason.RESTOCK));
+      stockHistoryRepo.save(
+          StockHistory.of(variant, null, request.stock(), 0, StockChangeReason.INITIAL_STOCK));
     } else {
       saveOptionsAndVariants(product, request);
     }
@@ -202,7 +203,8 @@ public class ProductCreateService {
           .stock(variantReq.stock())
           .status(SaleStatus.ON_SALE)
           .build());
-      stockHistoryRepo.save(StockHistory.of(variant, null, variantReq.stock(), 0, StockChangeReason.RESTOCK));
+      stockHistoryRepo.save(
+          StockHistory.of(variant, null, variantReq.stock(), 0, StockChangeReason.INITIAL_STOCK));
 
       for (int i = 0; i < combo.size(); i++) {
         ProductOption option = groupOptionMaps.get(i).get(combo.get(i));
@@ -218,7 +220,8 @@ public class ProductCreateService {
     if (request.price() < 0) {
       throw new BusinessException(ErrorCode.PROD_INVALID_PRICE);
     }
-    if (request.discountRate() != null && (request.discountRate() < 0 || request.discountRate() > 100)) {
+    if (request.discountRate() != null && (request.discountRate() < 0
+        || request.discountRate() > 100)) {
       throw new BusinessException(ErrorCode.PROD_INVALID_DISCOUNT_RATE);
     }
   }

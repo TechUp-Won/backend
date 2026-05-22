@@ -27,11 +27,11 @@ class StockHistoryTest {
   void of_increase_stockAfterCalculatedCorrectly() {
     ProductVariant variant = mock(ProductVariant.class);
 
-    StockHistory history = StockHistory.of(variant, null, 10, 0, StockChangeReason.RESTOCK);
+    StockHistory history = StockHistory.of(variant, null, 10, 0, StockChangeReason.INITIAL_STOCK);
 
     assertThat(history.getChangeAmount()).isEqualTo(10);
     assertThat(history.getStockBefore()).isEqualTo(0);
     assertThat(history.getStockAfter()).isEqualTo(10);
-    assertThat(history.getReason()).isEqualTo(StockChangeReason.RESTOCK);
+    assertThat(history.getReason()).isEqualTo(StockChangeReason.INITIAL_STOCK);
   }
 }
