@@ -239,6 +239,13 @@ public class ProductCreateService {
     if (!hasOptionGroups && (request.stock() == null || request.stock() < 1)) {
       throw new BusinessException(ErrorCode.PROD_INVALID_QUANTITY);
     }
+    if (hasVariants) {
+      for (VariantRequest variant : request.variants()) {
+        if (variant.stock() == null || variant.stock() < 1) {
+          throw new BusinessException(ErrorCode.PROD_INVALID_QUANTITY);
+        }
+      }
+    }
   }
 
   private void validateSortOrders(ProductCreateRequest request) {

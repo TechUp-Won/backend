@@ -339,6 +339,36 @@ class ProductCreateServiceTest {
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_INVALID_QUANTITY);
   }
 
+  @Test
+  @DisplayName("옵션 있는 상품에서 variant의 stock이 null이면 PROD_INVALID_QUANTITY를 던진다")
+  void throwsException_whenVariantStockIsNull() {
+    ProductCreateRequest request = new ProductCreateRequest(
+        "상품", 5L, null, 15000, null, null, null, null,
+        colorGroups(),
+        List.of(new VariantRequest(List.of("화이트"), null))
+    );
+
+    BusinessException ex = assertThrows(BusinessException.class,
+        () -> productCreateService.create(AUTH_ID, request));
+
+    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_INVALID_QUANTITY);
+  }
+
+  @Test
+  @DisplayName("옵션 있는 상품에서 variant의 stock이 0이면 PROD_INVALID_QUANTITY를 던진다")
+  void throwsException_whenVariantStockIsZero() {
+    ProductCreateRequest request = new ProductCreateRequest(
+        "상품", 5L, null, 15000, null, null, null, null,
+        colorGroups(),
+        List.of(new VariantRequest(List.of("화이트"), 0))
+    );
+
+    BusinessException ex = assertThrows(BusinessException.class,
+        () -> productCreateService.create(AUTH_ID, request));
+
+    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_INVALID_QUANTITY);
+  }
+
   // ── 옵션/variant 일관성 검증 ───────────────────────────────────────────────────
 
   @Test
