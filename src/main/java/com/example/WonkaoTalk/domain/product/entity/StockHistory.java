@@ -46,13 +46,13 @@ public class StockHistory {
   private Order order;
 
   @Column(name = "change_amount", nullable = false)
-  private Integer changeAmount;
+  private int changeAmount;
 
   @Column(name = "stock_before", nullable = false)
-  private Integer stockBefore;
+  private int stockBefore;
 
   @Column(name = "stock_after", nullable = false)
-  private Integer stockAfter;
+  private int stockAfter;
 
   @Enumerated(EnumType.STRING)
   @Column(name = "reason", nullable = false, length = 20)
