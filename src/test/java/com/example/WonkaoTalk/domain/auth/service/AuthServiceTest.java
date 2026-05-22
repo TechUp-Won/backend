@@ -183,7 +183,7 @@ class AuthServiceTest {
     given(redisService.hasKey("RT:" + email)).willReturn(true);
     given(jwtTokenProvider.getExpiration(accessToken)).willReturn(1800000L);
     //when
-    authService.logout(accessToken, email);
+    authService.invalidateToken(email, accessToken);
 
     //then
     verify(redisService).deleteValues("RT:" + email);

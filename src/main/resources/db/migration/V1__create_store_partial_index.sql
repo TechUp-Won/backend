@@ -7,7 +7,7 @@ CREATE TABLE stores (
                         thumbnail VARCHAR(255) NOT NULL,
                         status VARCHAR(255) NOT NULL,
                         deleted_at TIMESTAMP,
-                        created_at TIMESTAMP NOT NULL,
+                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                         updated_at TIMESTAMP
 );
 

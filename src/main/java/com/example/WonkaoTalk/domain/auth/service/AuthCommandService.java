@@ -71,14 +71,6 @@ public class AuthCommandService {
     loginHistoryRepo.save(history);
   }
 
-  @Transactional
-  public void withdrawAuth(Long authId) {
-    Auth auth = authRepo.findById(authId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_NOT_FOUND));
-    authLocalRepo.findByAuth(auth).ifPresent(AuthLocal::withdraw);
-    auth.withdraw();
-  }
-
   @Transactional(readOnly = true)
   public AuthUserInfoDto getAuthUserInfo(Auth auth) {
     Role role = auth.getRole();
@@ -100,5 +92,29 @@ public class AuthCommandService {
       sellerId = seller.getId();
     }
     return AuthUserInfoDto.of(profileName, userId, sellerId);
+  }
+
+  @Transactional
+  public void handleUserWithdraw(Long authId, boolean hasActiveSeller) {
+    Auth auth = authRepo.findById(authId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_NOT_FOUND));
+    if (hasActiveSeller) {
+      auth.updateRole(Role.SELLER);
+    } else {
+      authLocalRepo.findByAuth(auth).ifPresent(AuthLocal::withdraw);
+      auth.withdraw();
+    }
+  }
+
+  @Transactional
+  public void handleSellerWithdraw(Long authId, boolean hasActiveUser) {
+    Auth auth = authRepo.findById(authId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_NOT_FOUND));
+    if (hasActiveUser) {
+      auth.updateRole(Role.USER);
+    } else {
+      authLocalRepo.findByAuth(auth).ifPresent(AuthLocal::withdraw);
+      auth.withdraw();
+    }
   }
 }

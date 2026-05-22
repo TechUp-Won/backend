@@ -1,11 +1,10 @@
 package com.example.WonkaoTalk.application.facade;
 
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
+import com.example.WonkaoTalk.domain.auth.service.AuthCommandService;
 import com.example.WonkaoTalk.domain.auth.service.AuthService;
 import com.example.WonkaoTalk.domain.seller.service.SellerService;
 import com.example.WonkaoTalk.domain.user.service.UserService;
@@ -30,6 +29,8 @@ class AccountWithdrawTest {
   private SellerService sellerService;
   @Mock
   private AuthService authService;
+  @Mock
+  private AuthCommandService authCommandService;
 
   @Test
   @DisplayName("일반 회원 탈퇴 시, 판매자 프로필이 없으면 auth까지 삭제된다.")
@@ -42,8 +43,8 @@ class AccountWithdrawTest {
 
     //then
     then(userService).should(times(1)).withdrawUser(authId);
-    then(authService).should(times(1)).withdraw(anyLong());
     then(authService).should(times(1)).invalidateToken(email, accessToken);
+    then(authCommandService).should(times(1)).handleUserWithdraw(authId, false);
   }
 
   @Test
@@ -57,7 +58,7 @@ class AccountWithdrawTest {
 
     //then
     then(userService).should(times(1)).withdrawUser(authId);
-    then(authService).should(never()).withdraw(anyLong());
     then(authService).should(times(1)).invalidateToken(email, accessToken);
+    then(authCommandService).should(times(1)).handleUserWithdraw(authId, true);
   }
 }
