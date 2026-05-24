@@ -198,17 +198,17 @@ public class ProductUpdateService {
         .map(ImageRequest::imageId)
         .toList();
 
-    Map<Long, String> existingUrlMap;
+    Map<Long, ProductImage> existingImageMap;
     if (!requestedImageIds.isEmpty()) {
       List<ProductImage> foundImages = productImageRepo.findByProductIdAndIdIn(
           product.getId(), requestedImageIds);
       if (foundImages.size() != requestedImageIds.size()) {
         throw new BusinessException(ErrorCode.PROD_INVALID_IMAGE_ID);
       }
-      existingUrlMap = foundImages.stream()
-          .collect(Collectors.toMap(ProductImage::getId, ProductImage::getUrl));
+      existingImageMap = foundImages.stream()
+          .collect(Collectors.toMap(ProductImage::getId, img -> img));
     } else {
-      existingUrlMap = Map.of();
+      existingImageMap = Map.of();
     }
 
     Set<Integer> sortOrders = new HashSet<>();
@@ -218,26 +218,27 @@ public class ProductUpdateService {
       }
     }
 
+    // 요청에 없는 기존 이미지만 삭제
     Set<Long> keptImageIds = new HashSet<>(requestedImageIds);
-    List<ProductImage> deletedImages = currentImages.stream()
+    List<ProductImage> toDelete = currentImages.stream()
         .filter(img -> !keptImageIds.contains(img.getId()))
         .toList();
-    recordDeletedUrls(deletedImages);
-    productImageRepo.deleteAll(currentImages);
+    recordDeletedUrls(toDelete);
+    productImageRepo.deleteAll(toDelete);
 
+    // 기존 이미지는 sortOrder만 업데이트, 새 이미지만 insert
     for (ImageRequest img : images) {
-      String url;
       if (img.imageId() != null) {
-        url = existingUrlMap.get(img.imageId());
+        existingImageMap.get(img.imageId()).updateSortOrder(img.sortOrder());
       } else {
-        url = imageService.validateAndGetProductUrl(img.objectKey());
+        String url = imageService.validateAndGetProductUrl(img.objectKey());
         objectKeysToMove.add(img.objectKey());
+        productImageRepo.save(ProductImage.builder()
+            .product(product)
+            .url(url)
+            .sortOrder(img.sortOrder())
+            .build());
       }
-      productImageRepo.save(ProductImage.builder()
-          .product(product)
-          .url(url)
-          .sortOrder(img.sortOrder())
-          .build());
     }
   }
 
