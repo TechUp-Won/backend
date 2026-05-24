@@ -64,6 +64,7 @@ public enum ErrorCode {
       "variant의 옵션 이름이 등록된 옵션 목록과 일치하지 않습니다."),
   PROD_INVALID_STOCK_OPTION(400, "PROD-INVALID-STOCK-OPTION", "옵션이 있는 상품은 stock을 직접 입력할 수 없습니다."),
   PROD_DUPLICATE_SORT_ORDER(400, "PROD-DUPLICATE-SORT-ORDER", "sortOrder 값이 중복되었습니다."),
+  PROD_INVALID_IMAGE_ID(400, "PROD-INVALID-IMAGE-ID", "해당 상품에 속하지 않는 이미지입니다."),
 
   // 이미지 도메인
   IMAGE_INVALID_TYPE(400, "IMAGE-INVALID-TYPE", "허용되지 않는 파일 형식입니다. (jpg, jpeg, png, webp)"),

@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ProductImageRepo extends JpaRepository<ProductImage, Long> {
 
   List<ProductImage> findByProductIdOrderBySortOrderAsc(Long productId);
+
+  List<ProductImage> findByProductIdAndIdIn(Long productId, List<Long> ids);
 }

@@ -80,6 +80,23 @@ public class Product {
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
 
+  public void update(String name, Category category, String thumbnail,
+      Integer price, Integer discountRate, SaleStatus status) {
+    if (name != null) this.name = name;
+    if (category != null) this.category = category;
+    if (thumbnail != null) this.thumbnail = thumbnail;
+
+    boolean recalcPrice = price != null || discountRate != null;
+    if (price != null) this.price = price;
+    if (discountRate != null) this.discountRate = discountRate;
+    if (recalcPrice) {
+      int dr = this.discountRate != null ? this.discountRate : 0;
+      this.discountedPrice = (int) Math.round(this.price * (1 - dr / 100.0));
+    }
+
+    if (status != null) this.status = status;
+  }
+
   public boolean isOnSale() {
     return this.deletedAt == null && this.status == SaleStatus.ON_SALE;
   }
