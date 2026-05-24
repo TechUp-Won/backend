@@ -148,6 +148,10 @@ public class ProductUpdateService {
 
     String thumbnailUrl = null;
     if (request.thumbnailKey() != null) {
+      if (product.getThumbnail() != null) {
+        deletedProductImageRepo.save(
+            DeletedProductImage.builder().url(product.getThumbnail()).build());
+      }
       thumbnailUrl = imageService.validateAndGetProductUrl(request.thumbnailKey());
       objectKeysToMove.add(request.thumbnailKey());
     }
