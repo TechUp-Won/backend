@@ -251,8 +251,10 @@ public class ProductUpdateService {
   }
 
   private void recordDeletedUrls(List<ProductImage> images) {
-    images.forEach(img -> deletedProductImageRepo.save(
-        DeletedProductImage.builder().url(img.getUrl()).build()));
+    List<DeletedProductImage> deleted = images.stream()
+        .map(img -> DeletedProductImage.builder().url(img.getUrl()).build())
+        .toList();
+    deletedProductImageRepo.saveAll(deleted);
   }
 
   private void processDetail(Product product, String detail) {

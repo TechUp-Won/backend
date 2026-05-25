@@ -119,7 +119,7 @@ class ProductUpdateServiceTest {
     when(product.getUpdatedAt()).thenReturn(LocalDateTime.of(2026, 5, 24, 10, 0));
 
     when(productRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-    when(deletedProductImageRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(deletedProductImageRepo.saveAll(any())).thenAnswer(inv -> inv.getArgument(0));
     when(productImageRepo.saveAll(any())).thenAnswer(inv -> inv.getArgument(0));
     when(productDetailRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -459,7 +459,7 @@ class ProductUpdateServiceTest {
     productUpdateService.update(AUTH_ID, PRODUCT_ID, request);
 
     verify(productImageRepo).deleteAllInBatch(List.of(existingImg));
-    verify(deletedProductImageRepo).save(any(DeletedProductImage.class));
+    verify(deletedProductImageRepo).saveAll(any());
   }
 
   @Test
