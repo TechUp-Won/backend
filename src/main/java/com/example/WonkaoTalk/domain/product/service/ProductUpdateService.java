@@ -193,7 +193,7 @@ public class ProductUpdateService {
 
     if (images.isEmpty()) {
       recordDeletedUrls(currentImages);
-      productImageRepo.deleteAll(currentImages);
+      productImageRepo.deleteAllInBatch(currentImages);
       return;
     }
 
@@ -228,7 +228,7 @@ public class ProductUpdateService {
         .filter(img -> !keptImageIds.contains(img.getId()))
         .toList();
     recordDeletedUrls(toDelete);
-    productImageRepo.deleteAll(toDelete);
+    productImageRepo.deleteAllInBatch(toDelete);
 
     // 기존 이미지는 sortOrder만 업데이트, 새 이미지만 insert
     for (ImageRequest img : images) {

@@ -458,7 +458,7 @@ class ProductUpdateServiceTest {
 
     productUpdateService.update(AUTH_ID, PRODUCT_ID, request);
 
-    verify(productImageRepo).deleteAll(List.of(existingImg));
+    verify(productImageRepo).deleteAllInBatch(List.of(existingImg));
     verify(deletedProductImageRepo).save(any(DeletedProductImage.class));
   }
 
@@ -477,7 +477,7 @@ class ProductUpdateServiceTest {
 
     productUpdateService.update(AUTH_ID, PRODUCT_ID, request);
 
-    verify(productImageRepo).deleteAll(List.of());
+    verify(productImageRepo).deleteAllInBatch(List.of());
     verify(productImageRepo, never()).save(any());
   }
 
@@ -497,7 +497,7 @@ class ProductUpdateServiceTest {
 
     productUpdateService.update(AUTH_ID, PRODUCT_ID, request);
 
-    verify(productImageRepo).deleteAll(List.of(img2));
+    verify(productImageRepo).deleteAllInBatch(List.of(img2));
   }
 
   @Test
@@ -555,7 +555,7 @@ class ProductUpdateServiceTest {
 
     productUpdateService.update(AUTH_ID, PRODUCT_ID, request);
 
-    verify(productImageRepo, never()).deleteAll(any());
+    verify(productImageRepo, never()).deleteAllInBatch(any());
     verify(productImageRepo, never()).save(any());
   }
 
