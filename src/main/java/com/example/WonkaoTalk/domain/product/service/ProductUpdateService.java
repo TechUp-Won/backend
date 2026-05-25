@@ -33,6 +33,7 @@ import com.example.WonkaoTalk.domain.seller.repo.SellerRepo;
 import com.example.WonkaoTalk.domain.store.entity.Store;
 import com.example.WonkaoTalk.domain.store.repo.StoreRepo;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -165,7 +166,8 @@ public class ProductUpdateService {
     }
 
     SaleStatus newStatus = request.status() != null ? SaleStatus.valueOf(request.status()) : null;
-    product.update(request.name(), category, thumbnailUrl, request.price(), request.discountRate(), newStatus);
+    product.update(request.name(), category, thumbnailUrl, request.price(), request.discountRate(),
+        newStatus);
 
     productRepo.save(product);
 
@@ -282,10 +284,12 @@ public class ProductUpdateService {
         && (request.discountRate() < 0 || request.discountRate() > 100)) {
       throw new BusinessException(ErrorCode.PROD_INVALID_DISCOUNT_RATE);
     }
-    if (request.status() != null
-        && !request.status().equals(SaleStatus.ON_SALE.name())
-        && !request.status().equals(SaleStatus.STOP_SALE.name())) {
-      throw new BusinessException(ErrorCode.BAD_REQUEST);
+    if (request.status() != null) {
+      boolean valid = Arrays.stream(SaleStatus.values())
+          .anyMatch(s -> s.name().equals(request.status()));
+      if (!valid) {
+        throw new BusinessException(ErrorCode.BAD_REQUEST);
+      }
     }
     if (request.images() != null) {
       for (ImageRequest img : request.images()) {
