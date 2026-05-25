@@ -231,18 +231,22 @@ public class ProductUpdateService {
     productImageRepo.deleteAllInBatch(toDelete);
 
     // 기존 이미지는 sortOrder만 업데이트, 새 이미지만 insert
+    List<ProductImage> newImages = new ArrayList<>();
     for (ImageRequest img : images) {
       if (img.imageId() != null) {
         existingImageMap.get(img.imageId()).updateSortOrder(img.sortOrder());
       } else {
         String url = imageService.validateAndGetProductUrl(img.objectKey());
         objectKeysToMove.add(img.objectKey());
-        productImageRepo.save(ProductImage.builder()
+        newImages.add(ProductImage.builder()
             .product(product)
             .url(url)
             .sortOrder(img.sortOrder())
             .build());
       }
+    }
+    if (!newImages.isEmpty()) {
+      productImageRepo.saveAll(newImages);
     }
   }
 

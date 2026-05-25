@@ -120,7 +120,7 @@ class ProductUpdateServiceTest {
 
     when(productRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
     when(deletedProductImageRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-    when(productImageRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    when(productImageRepo.saveAll(any())).thenAnswer(inv -> inv.getArgument(0));
     when(productDetailRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
     when(productImageRepo.findByProductIdOrderBySortOrderAsc(PRODUCT_ID)).thenReturn(List.of());
@@ -478,7 +478,7 @@ class ProductUpdateServiceTest {
     productUpdateService.update(AUTH_ID, PRODUCT_ID, request);
 
     verify(productImageRepo).deleteAllInBatch(List.of());
-    verify(productImageRepo, never()).save(any());
+    verify(productImageRepo, never()).saveAll(any());
   }
 
   @Test
@@ -510,7 +510,7 @@ class ProductUpdateServiceTest {
     productUpdateService.update(AUTH_ID, PRODUCT_ID, request);
 
     verify(imageService).validateAndGetProductUrl("temp/new.jpg");
-    verify(productImageRepo).save(any(ProductImage.class));
+    verify(productImageRepo).saveAll(any());
   }
 
   @Test
@@ -556,7 +556,7 @@ class ProductUpdateServiceTest {
     productUpdateService.update(AUTH_ID, PRODUCT_ID, request);
 
     verify(productImageRepo, never()).deleteAllInBatch(any());
-    verify(productImageRepo, never()).save(any());
+    verify(productImageRepo, never()).saveAll(any());
   }
 
   // ── update 상세 설명 처리 ────────────────────────────────────────────────────
