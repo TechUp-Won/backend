@@ -63,6 +63,9 @@ public class ProductVariant {
   private LocalDateTime deletedAt;
 
   public void adjustStock(int changeAmount) {
+    if (this.stock + changeAmount < 0) {
+      throw new IllegalArgumentException("재고는 0 미만이 될 수 없습니다.");
+    }
     this.stock += changeAmount;
     if (this.stock == 0 && this.status == SaleStatus.ON_SALE) {
       this.status = SaleStatus.OUT_OF_STOCK;
