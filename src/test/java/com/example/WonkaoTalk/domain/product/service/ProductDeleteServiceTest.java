@@ -61,7 +61,7 @@ class ProductDeleteServiceTest {
     when(productRepo.findByIdWithLock(PRODUCT_ID)).thenReturn(Optional.of(product));
     when(product.getStore()).thenReturn(store);
     when(product.getDeletedAt()).thenReturn(null);
-    when(orderItemRepo.existsActiveOrderByProductId(eq(PRODUCT_ID), any())).thenReturn(false);
+    when(orderItemRepo.existsByProductVariant_Product_IdAndOrder_OrderStatusIn(eq(PRODUCT_ID), any())).thenReturn(false);
   }
 
   // ── 인증/권한 실패 ────────────────────────────────────────────────────────────
@@ -130,7 +130,7 @@ class ProductDeleteServiceTest {
   @Test
   @DisplayName("진행 중인 주문이 있으면 PROD_HAS_ACTIVE_ORDER를 던진다")
   void delete_throwsException_whenActiveOrderExists() {
-    when(orderItemRepo.existsActiveOrderByProductId(eq(PRODUCT_ID), any())).thenReturn(true);
+    when(orderItemRepo.existsByProductVariant_Product_IdAndOrder_OrderStatusIn(eq(PRODUCT_ID), any())).thenReturn(true);
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> productDeleteService.delete(AUTH_ID, PRODUCT_ID));
@@ -153,13 +153,13 @@ class ProductDeleteServiceTest {
   void delete_checksThreeActiveOrderStatuses() {
     productDeleteService.delete(AUTH_ID, PRODUCT_ID);
 
-    verify(orderItemRepo).existsActiveOrderByProductId(eq(PRODUCT_ID), any());
+    verify(orderItemRepo).existsByProductVariant_Product_IdAndOrder_OrderStatusIn(eq(PRODUCT_ID), any());
   }
 
   @Test
   @DisplayName("진행 중인 주문이 없으면 softDelete를 호출한다")
   void delete_proceedsToSoftDelete_whenNoActiveOrders() {
-    when(orderItemRepo.existsActiveOrderByProductId(eq(PRODUCT_ID), any())).thenReturn(false);
+    when(orderItemRepo.existsByProductVariant_Product_IdAndOrder_OrderStatusIn(eq(PRODUCT_ID), any())).thenReturn(false);
 
     productDeleteService.delete(AUTH_ID, PRODUCT_ID);
 
@@ -169,7 +169,7 @@ class ProductDeleteServiceTest {
   @Test
   @DisplayName("진행 중인 주문이 있으면 softDelete를 호출하지 않는다")
   void delete_doesNotCallSoftDelete_whenActiveOrderExists() {
-    when(orderItemRepo.existsActiveOrderByProductId(eq(PRODUCT_ID), any())).thenReturn(true);
+    when(orderItemRepo.existsByProductVariant_Product_IdAndOrder_OrderStatusIn(eq(PRODUCT_ID), any())).thenReturn(true);
 
     assertThrows(BusinessException.class, () -> productDeleteService.delete(AUTH_ID, PRODUCT_ID));
 

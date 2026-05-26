@@ -32,7 +32,7 @@ public class ProductDeleteService {
     Store store = resolveStore(authId);
     Product product = findOwnProduct(productId, store);
 
-    if (orderItemRepo.existsActiveOrderByProductId(productId, ACTIVE_STATUSES)) {
+    if (orderItemRepo.existsByProductVariant_Product_IdAndOrder_OrderStatusIn(productId, ACTIVE_STATUSES)) {
       throw new BusinessException(ErrorCode.PROD_HAS_ACTIVE_ORDER);
     }
 
