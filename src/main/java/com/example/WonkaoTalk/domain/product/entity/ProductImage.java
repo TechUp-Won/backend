@@ -51,4 +51,8 @@ public class ProductImage {
   @LastModifiedDate
   @Column(name = "updated_at", nullable = false)
   private LocalDateTime updatedAt;
+
+  public void updateSortOrder(Integer sortOrder) {
+    this.sortOrder = sortOrder;
+  }
 }
