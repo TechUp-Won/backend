@@ -65,6 +65,8 @@ public enum ErrorCode {
   PROD_INVALID_STOCK_OPTION(400, "PROD-INVALID-STOCK-OPTION", "옵션이 있는 상품은 stock을 직접 입력할 수 없습니다."),
   PROD_DUPLICATE_SORT_ORDER(400, "PROD-DUPLICATE-SORT-ORDER", "sortOrder 값이 중복되었습니다."),
   PROD_INVALID_IMAGE_ID(400, "PROD-INVALID-IMAGE-ID", "해당 상품에 속하지 않는 이미지입니다."),
+  PROD_HAS_ACTIVE_ORDER(409, "PROD-HAS-ACTIVE-ORDER", "진행 중인 주문이 있어 상품을 삭제할 수 없습니다."),
+  PROD_VARIANT_NOT_FOUND(404, "PROD-NOT-FOUND-VARIANT", "해당 상품 옵션을 찾을 수 없습니다."),
 
   // 이미지 도메인
   IMAGE_INVALID_TYPE(400, "IMAGE-INVALID-TYPE", "허용되지 않는 파일 형식입니다. (jpg, jpeg, png, webp)"),

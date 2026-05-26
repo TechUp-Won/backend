@@ -62,6 +62,19 @@ public class ProductVariant {
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
 
+  public void adjustStock(int changeAmount) {
+    if (this.stock + changeAmount < 0) {
+      throw new IllegalArgumentException("재고는 0 미만이 될 수 없습니다.");
+    }
+    this.stock += changeAmount;
+    if (this.stock == 0 && this.status == SaleStatus.ON_SALE) {
+      this.status = SaleStatus.OUT_OF_STOCK;
+    } else if (this.stock > 0 && this.status == SaleStatus.OUT_OF_STOCK
+        && this.product.getStatus() != SaleStatus.STOP_SALE) {
+      this.status = SaleStatus.ON_SALE;
+    }
+  }
+
   public boolean isSellable() {
     return this.deletedAt == null && this.product.isOnSale() && this.status == SaleStatus.ON_SALE;
   }

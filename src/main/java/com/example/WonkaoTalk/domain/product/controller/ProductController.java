@@ -12,10 +12,14 @@ import com.example.WonkaoTalk.domain.product.dto.ProductListRequest;
 import com.example.WonkaoTalk.domain.product.dto.ProductListResponse;
 import com.example.WonkaoTalk.domain.product.dto.ProductUpdateRequest;
 import com.example.WonkaoTalk.domain.product.dto.ProductUpdateResponse;
+import com.example.WonkaoTalk.domain.product.dto.StockAdjustRequest;
+import com.example.WonkaoTalk.domain.product.dto.StockAdjustResponse;
 import com.example.WonkaoTalk.domain.product.service.CategoryService;
 import com.example.WonkaoTalk.domain.product.service.ProductCreateService;
+import com.example.WonkaoTalk.domain.product.service.ProductDeleteService;
 import com.example.WonkaoTalk.domain.product.service.ProductService;
 import com.example.WonkaoTalk.domain.product.service.ProductUpdateService;
+import com.example.WonkaoTalk.domain.product.service.StockAdjustService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -43,6 +48,8 @@ public class ProductController {
   private final ProductService productService;
   private final ProductCreateService productCreateService;
   private final ProductUpdateService productUpdateService;
+  private final ProductDeleteService productDeleteService;
+  private final StockAdjustService stockAdjustService;
   private final CategoryService categoryService;
 
   @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
@@ -93,6 +100,29 @@ public class ProductController {
     ProductUpdateResponse response = productUpdateService.update(
         userDetails.getAuthId(), productId, request);
     return ResponseEntity.ok(ApiResponse.success("상품 정보가 수정되었습니다", response));
+  }
+
+  @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+  @Operation(summary = "상품 삭제", description = "판매자가 자신의 상품을 소프트 삭제합니다. 진행 중인 주문이 있으면 삭제할 수 없습니다.")
+  @DeleteMapping("/{productId}")
+  public ResponseEntity<ApiResponse<Void>> deleteProduct(
+      @AuthenticationPrincipal CustomUserDetails userDetails,
+      @PathVariable Long productId) {
+    productDeleteService.delete(userDetails.getAuthId(), productId);
+    return ResponseEntity.ok(ApiResponse.success("상품이 삭제되었습니다", null));
+  }
+
+  @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+  @Operation(summary = "재고 조정", description = "판매자가 특정 상품 옵션(variant)의 재고를 조정합니다.")
+  @PatchMapping("/{productId}/variants/{variantId}/stock")
+  public ResponseEntity<ApiResponse<StockAdjustResponse>> adjustStock(
+      @AuthenticationPrincipal CustomUserDetails userDetails,
+      @PathVariable Long productId,
+      @PathVariable Long variantId,
+      @Valid @RequestBody StockAdjustRequest request) {
+    StockAdjustResponse response = stockAdjustService.adjust(
+        userDetails.getAuthId(), productId, variantId, request);
+    return ResponseEntity.ok(ApiResponse.success("재고가 조정되었습니다", response));
   }
 
   @Operation(summary = "카테고리 조회", description = "상품 등록과 검색에 사용할 카테고리 트리를 조회합니다.")
