@@ -56,7 +56,7 @@ public class User {
   @Column(nullable = false)
   private String name;
 
-  @Column(nullable = false, length = 13, unique = true)
+  @Column(length = 13, unique = true)
   private String phone;
 
   @Enumerated(EnumType.STRING)

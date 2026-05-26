@@ -44,7 +44,10 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
     OAuth2UserInfo userInfo = extractUserInfo(userRequest, oAuth2User);
     Auth auth = getOrRegisterUser(userInfo);
 
-    return new CustomOAuth2User(auth, oAuth2User.getAttributes());
+    AuthProvider provider = AuthProvider.valueOf(userInfo.getProvider().toUpperCase());
+    String providerId = userInfo.getProviderId();
+
+    return new CustomOAuth2User(auth, oAuth2User.getAttributes(), provider, providerId);
   }
 
   private OAuth2UserInfo extractUserInfo(OAuth2UserRequest userRequest, OAuth2User oAuth2User) {
@@ -64,8 +67,8 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
     String providerId = userInfo.getProviderId();
     String email = userInfo.getEmail();
 
-    Optional<AuthSocial> optionalSocial = authSocialRepo.findByProviderAndProviderId(provider,
-        providerId);
+    Optional<AuthSocial> optionalSocial = authSocialRepo.findByProviderAndProviderUserIdWithAuth(
+        provider, providerId);
     if (optionalSocial.isPresent()) {
       return optionalSocial.get().getAuth();
     }
@@ -73,14 +76,14 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
     Optional<AuthLocal> optionalLocal = authLocalRepo.findByEmail(email);
     if (optionalLocal.isPresent()) {
       Auth auth = optionalLocal.get().getAuth();
-      saveAuthSocial(auth, provider, providerId);
+      saveAuthSocial(auth, provider, providerId, email);
       return auth;
     }
 
     Auth newAuth = Auth.builder().role(Role.USER).status(AccountStatus.ACTIVE).build();
     authRepo.save(newAuth);
 
-    saveAuthSocial(newAuth, provider, providerId);
+    saveAuthSocial(newAuth, provider, providerId, email);
 
     eventPublisher.publishEvent(
         new OAuth2UserCreatedEvent(newAuth, userInfo.getEmail(), userInfo.getName()));
@@ -88,11 +91,12 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
     return newAuth;
   }
 
-  private void saveAuthSocial(Auth auth, AuthProvider provider, String providerId) {
+  private void saveAuthSocial(Auth auth, AuthProvider provider, String providerId, String email) {
     AuthSocial authSocial = AuthSocial.builder()
         .auth(auth)
         .providerUserId(providerId)
         .provider(provider)
+        .email(email)
         .build();
     authSocialRepo.save(authSocial);
   }

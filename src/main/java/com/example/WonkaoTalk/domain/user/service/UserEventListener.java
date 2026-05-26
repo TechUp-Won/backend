@@ -2,6 +2,7 @@ package com.example.WonkaoTalk.domain.user.service;
 
 import com.example.WonkaoTalk.domain.auth.event.OAuth2UserCreatedEvent;
 import com.example.WonkaoTalk.domain.user.entity.User;
+import com.example.WonkaoTalk.domain.user.enums.Gender;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ public class UserEventListener {
         .auth(event.auth())
         .name(event.name())
         .nickname(event.name())
+        .gender(Gender.NONE)
         //.phone() //TODO: 전화번호는 기본 설정 값으로 받아와야함!(사용자 테이블의 nullable 필드임 - 친구 추가를 위한 사용자 검색을 전화번호로 함
         .marketingAgree(false)
         .build();

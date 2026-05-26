@@ -1,6 +1,7 @@
 package com.example.WonkaoTalk.domain.auth.dto;
 
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
+import com.example.WonkaoTalk.domain.auth.enums.AuthProvider;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -16,6 +17,8 @@ public class CustomOAuth2User implements OAuth2User {
 
   private final Auth auth;
   private final Map<String, Object> attributes;
+  private final AuthProvider provider;
+  private final String providerId;
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -1,20 +1,22 @@
 package com.example.WonkaoTalk.domain.auth.dto;
 
-import com.example.WonkaoTalk.domain.auth.entity.Auth;
+import com.example.WonkaoTalk.domain.auth.enums.Role;
 import lombok.Builder;
 
 @Builder
 public record SocialLoginDto(
-    Auth auth,
+    Long authId,
     Long userId,
-    Long sellerId
+    Long sellerId,
+    Role role
 ) {
 
-  public SocialLoginDto of(Auth auth, Long userId, Long sellerId) {
+  public SocialLoginDto of(Long authId, Long userId, Long sellerId, Role role) {
     return SocialLoginDto.builder()
-        .auth(auth)
+        .authId(authId)
         .userId(userId)
         .sellerId(sellerId)
+        .role(role)
         .build();
   }
 }

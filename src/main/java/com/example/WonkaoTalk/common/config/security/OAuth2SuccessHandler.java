@@ -4,6 +4,7 @@ import com.example.WonkaoTalk.common.config.security.jwt.JwtTokenProvider;
 import com.example.WonkaoTalk.common.redis.RedisService;
 import com.example.WonkaoTalk.domain.auth.dto.CustomOAuth2User;
 import com.example.WonkaoTalk.domain.auth.dto.SocialLoginDto;
+import com.example.WonkaoTalk.domain.auth.enums.AuthProvider;
 import com.example.WonkaoTalk.domain.auth.service.AuthCommandService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,14 +32,17 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
     String email = (String) oAuth2User.getAttributes().get("email");
-
-    SocialLoginDto userInfo = authCommandService.generateSocialLoginData(email);
+    AuthProvider provider = oAuth2User.getProvider();
+    String providerId = oAuth2User.getProviderId();
+    
+    SocialLoginDto userInfo = authCommandService.generateSocialLoginData(email, provider,
+        providerId);
     String accessToken = jwtTokenProvider.createAccessToken(
         email,
-        userInfo.auth().getId(),
+        userInfo.authId(),
         userInfo.userId(),
         userInfo.sellerId(),
-        userInfo.auth().getRole().name());
+        userInfo.role().name());
     String refreshToken = jwtTokenProvider.createRefreshToken(email);
 
     redisService.setValues("RT:" + email, refreshToken,
