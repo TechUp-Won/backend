@@ -62,6 +62,16 @@ public class ProductVariant {
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
 
+  public void adjustStock(int changeAmount) {
+    this.stock += changeAmount;
+    if (this.stock == 0 && this.status == SaleStatus.ON_SALE) {
+      this.status = SaleStatus.OUT_OF_STOCK;
+    } else if (this.stock > 0 && this.status == SaleStatus.OUT_OF_STOCK
+        && this.product.getStatus() != SaleStatus.STOP_SALE) {
+      this.status = SaleStatus.ON_SALE;
+    }
+  }
+
   public boolean isSellable() {
     return this.deletedAt == null && this.product.isOnSale() && this.status == SaleStatus.ON_SALE;
   }

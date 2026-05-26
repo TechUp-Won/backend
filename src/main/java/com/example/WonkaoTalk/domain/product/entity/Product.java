@@ -97,6 +97,11 @@ public class Product {
     if (status != null) this.status = status;
   }
 
+  public void softDelete() {
+    this.deletedAt = LocalDateTime.now();
+    this.status = SaleStatus.STOP_SALE;
+  }
+
   public boolean isOnSale() {
     return this.deletedAt == null && this.status == SaleStatus.ON_SALE;
   }
