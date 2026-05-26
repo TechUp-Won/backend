@@ -3,6 +3,7 @@ package com.example.WonkaoTalk.domain.auth.service;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.auth.dto.AuthUserInfoDto;
+import com.example.WonkaoTalk.domain.auth.dto.SocialLoginDto;
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.entity.AuthLocal;
 import com.example.WonkaoTalk.domain.auth.entity.LoginHistory;
@@ -116,5 +117,19 @@ public class AuthCommandService {
       authLocalRepo.findByAuth(auth).ifPresent(AuthLocal::withdraw);
       auth.withdraw();
     }
+  }
+
+  @Transactional(readOnly = true)
+  public SocialLoginDto generateSocialLoginData(String email) {
+    AuthLocal authLocal = getAuthLocalByEmail(email);
+    Auth auth = authLocal.getAuth();
+
+    Long userId = userRepo.findByAuth(auth).map(User::getId).orElse(null);
+    Long sellerId = null;
+    if (auth.getRole().name().contains("SELLER")) {
+      sellerId = sellerRepo.findByAuth(auth).map(Seller::getId).orElse(null);
+    }
+
+    return new SocialLoginDto(auth, userId, sellerId);
   }
 }

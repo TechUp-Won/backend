@@ -9,12 +9,14 @@ import com.example.WonkaoTalk.domain.auth.dto.OAuth2UserInfo;
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.entity.AuthLocal;
 import com.example.WonkaoTalk.domain.auth.entity.AuthSocial;
+import com.example.WonkaoTalk.domain.auth.enums.AccountStatus;
 import com.example.WonkaoTalk.domain.auth.enums.AuthProvider;
 import com.example.WonkaoTalk.domain.auth.enums.Role;
 import com.example.WonkaoTalk.domain.auth.event.OAuth2UserCreatedEvent;
 import com.example.WonkaoTalk.domain.auth.repo.AuthLocalRepo;
 import com.example.WonkaoTalk.domain.auth.repo.AuthRepo;
 import com.example.WonkaoTalk.domain.auth.repo.AuthSocialRepo;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -39,7 +41,6 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
   @Transactional
   public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
     OAuth2User oAuth2User = super.loadUser(userRequest);
-    
     OAuth2UserInfo userInfo = extractUserInfo(userRequest, oAuth2User);
     Auth auth = getOrRegisterUser(userInfo);
 
@@ -60,39 +61,39 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
 
   private Auth getOrRegisterUser(OAuth2UserInfo userInfo) {
     AuthProvider provider = AuthProvider.valueOf(userInfo.getProvider().toUpperCase());
+    String providerId = userInfo.getProviderId();
+    String email = userInfo.getEmail();
 
-    AuthSocial existingSocial = authSocialRepo.findByProviderAndProviderId(provider,
-        userInfo.getProviderId()).orElse(null);
-    if (existingSocial != null) {
-      return existingSocial.getAuth();
+    Optional<AuthSocial> optionalSocial = authSocialRepo.findByProviderAndProviderId(provider,
+        providerId);
+    if (optionalSocial.isPresent()) {
+      return optionalSocial.get().getAuth();
     }
 
-    AuthLocal existingLocal = authLocalRepo.findByEmail(userInfo.getEmail())
-        .orElse(null);
-    if (existingLocal != null) {
-      Auth auth = existingLocal.getAuth();
-      AuthSocial authSocial = AuthSocial.builder()
-          .auth(auth)
-          .providerUserId(userInfo.getProviderId())
-          .provider(provider)
-          .build();
-      authSocialRepo.save(authSocial);
+    Optional<AuthLocal> optionalLocal = authLocalRepo.findByEmail(email);
+    if (optionalLocal.isPresent()) {
+      Auth auth = optionalLocal.get().getAuth();
+      saveAuthSocial(auth, provider, providerId);
       return auth;
     }
 
-    Auth newAuth = Auth.builder().role(Role.USER).build();
+    Auth newAuth = Auth.builder().role(Role.USER).status(AccountStatus.ACTIVE).build();
     authRepo.save(newAuth);
 
-    AuthSocial newAuthSocial = AuthSocial.builder()
-        .auth(newAuth)
-        .providerUserId(userInfo.getProviderId())
-        .provider(provider)
-        .build();
-    authSocialRepo.save(newAuthSocial);
+    saveAuthSocial(newAuth, provider, providerId);
 
     eventPublisher.publishEvent(
         new OAuth2UserCreatedEvent(newAuth, userInfo.getEmail(), userInfo.getName()));
 
     return newAuth;
+  }
+
+  private void saveAuthSocial(Auth auth, AuthProvider provider, String providerId) {
+    AuthSocial authSocial = AuthSocial.builder()
+        .auth(auth)
+        .providerUserId(providerId)
+        .provider(provider)
+        .build();
+    authSocialRepo.save(authSocial);
   }
 }
