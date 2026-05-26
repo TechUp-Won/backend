@@ -67,7 +67,7 @@ class StockAdjustServiceTest {
     when(store.getId()).thenReturn(STORE_ID);
     when(sellerRepo.findByAuthId(AUTH_ID)).thenReturn(Optional.of(seller));
     when(storeRepo.findBySeller(seller)).thenReturn(Optional.of(store));
-    when(productRepo.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
+    when(productRepo.findByIdWithLock(PRODUCT_ID)).thenReturn(Optional.of(product));
     when(product.getStore()).thenReturn(store);
     when(product.getDeletedAt()).thenReturn(null);
     when(stockHistoryRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -148,7 +148,7 @@ class StockAdjustServiceTest {
   @Test
   @DisplayName("상품을 찾을 수 없으면 PROD_NOT_FOUND를 던진다")
   void adjust_throwsException_whenProductNotFound() {
-    when(productRepo.findById(PRODUCT_ID)).thenReturn(Optional.empty());
+    when(productRepo.findByIdWithLock(PRODUCT_ID)).thenReturn(Optional.empty());
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> stockAdjustService.adjust(AUTH_ID, PRODUCT_ID, VARIANT_ID, restockRequest(10)));

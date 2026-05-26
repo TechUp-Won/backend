@@ -79,7 +79,7 @@ public class StockAdjustService {
   }
 
   private Product findOwnProduct(Long productId, Store store) {
-    Product product = productRepo.findById(productId)
+    Product product = productRepo.findByIdWithLock(productId)
         .orElseThrow(() -> new BusinessException(ErrorCode.PROD_NOT_FOUND));
     if (product.getDeletedAt() != null) {
       throw new BusinessException(ErrorCode.PROD_DELETED);
