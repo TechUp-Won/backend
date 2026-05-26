@@ -1,14 +1,12 @@
 package com.example.WonkaoTalk.domain.auth.dto;
 
 import java.util.Map;
+import lombok.AllArgsConstructor;
 
+@AllArgsConstructor
 public class GoogleUserInfo implements OAuth2UserInfo {
 
   private Map<String, Object> attributes;
-
-  public GoogleUserInfo(Map<String, Object> attributes) {
-    this.attributes = attributes;
-  }
 
   @Override
   public String getProvider() {

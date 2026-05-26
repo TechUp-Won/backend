@@ -1,14 +1,16 @@
 package com.example.WonkaoTalk.domain.auth.dto;
 
 import java.util.Map;
+import lombok.AllArgsConstructor;
 
+@AllArgsConstructor
 public class NaverUserInfo implements OAuth2UserInfo {
 
   private Map<String, Object> attributes;
 
-  public NaverUserInfo(Map<String, Object> attributes) {
-    this.attributes = (Map<String, Object>) attributes.get("response");
-  }
+//  public NaverUserInfo(Map<String, Object> attributes) {
+//    this.attributes = (Map<String, Object>) attributes.get("response");
+//  }
 
   @Override
   public String getProvider() {
