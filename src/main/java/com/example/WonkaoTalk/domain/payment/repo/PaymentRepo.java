@@ -9,5 +9,5 @@ public interface PaymentRepo extends JpaRepository<Payment, Long> {
 
   Optional<Payment> findByTossOrderId(String tossOrderId);
   
-  List<Payment> findByOrder_OrderIdAndOrder_User_IdOrderByCreatedAtDesc(Long orderId, Long userId);
+  List<Payment> findByOrder_OrderIdOrderByCreatedAtDesc(Long orderId);
 }

@@ -215,9 +215,7 @@ public class OrderService {
 
     List<OrderItem> orderItems = orderItemRepo.findByOrder(order);
 
-    List<Payment> payments = paymentRepo.findByOrder_OrderIdAndOrder_User_IdOrderByCreatedAtDesc(
-        orderId,
-        userId);
+    List<Payment> payments = paymentRepo.findByOrder_OrderIdOrderByCreatedAtDesc(orderId);
 
     if (orderItems.isEmpty()) {
       throw new BusinessException(ErrorCode.ORDER_ITEM_NOT_FOUND);
