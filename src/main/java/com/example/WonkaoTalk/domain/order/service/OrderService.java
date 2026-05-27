@@ -235,7 +235,7 @@ public class OrderService {
     Order order = orderRepo.findByUserIdAndOrderId(userId, orderId)
         .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
-    order.softDelete();
+    orderRepo.delete(order);
   }
 
   // 옵션 중복 검증 메서드

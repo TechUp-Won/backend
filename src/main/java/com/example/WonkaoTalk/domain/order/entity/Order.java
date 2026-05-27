@@ -124,8 +124,4 @@ public class Order {
   public void markPaymentCanceled() {
     this.orderStatus = OrderStatus.PAYMENT_CANCELED;
   }
-
-  public void softDelete() {
-    this.deletedAt = LocalDateTime.now();
-  }
 }
