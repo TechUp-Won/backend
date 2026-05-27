@@ -77,6 +77,7 @@ public enum ErrorCode {
 
   // 주문 도메인
   ORDER_NOT_FOUND(404, "ORDER-NOT-FOUND", "주문을 찾을 수 없습니다."),
+  ORDER_ITEM_NOT_FOUND(404, "ORDER-ITEM_NOT-FOUND", "주문 상품을 찾을 수 없습니다."),
 
   // 결제 도메인
   PAYMENT_NOT_FOUND(404, "PAYMENT-NOT-FOUND", "결제 정보를 찾을 수 없습니다."),

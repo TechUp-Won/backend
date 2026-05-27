@@ -17,6 +17,8 @@ import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -24,6 +26,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Entity
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "orders")
+@SQLDelete(sql = "UPDATE orders SET deleted_at = NOW() WHERE order_id = ?")
+@SQLRestriction("deleted_at IS NULL")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Order {
@@ -67,6 +71,9 @@ public class Order {
   @Column(name = "title", nullable = false)
   // 주문 명 (xx외 2건)
   private String orderTitle;
+
+  @Column(name = "deleted_at")
+  private LocalDateTime deletedAt;
 
   private Order(String orderNumber, User user, OrderStatus orderStatus,
       Long originalAmount, Long discountAmount, Long pointUsedAmount, Long finalAmount,
@@ -116,5 +123,9 @@ public class Order {
 
   public void markPaymentCanceled() {
     this.orderStatus = OrderStatus.PAYMENT_CANCELED;
+  }
+
+  public void softDelete() {
+    this.deletedAt = LocalDateTime.now();
   }
 }

@@ -1,10 +1,13 @@
 package com.example.WonkaoTalk.domain.payment.repo;
 
 import com.example.WonkaoTalk.domain.payment.entity.Payment;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PaymentRepo extends JpaRepository<Payment, Long> {
 
   Optional<Payment> findByTossOrderId(String tossOrderId);
+  
+  List<Payment> findByOrder_OrderIdAndOrder_User_IdOrderByCreatedAtDesc(Long orderId, Long userId);
 }
