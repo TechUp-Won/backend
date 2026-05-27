@@ -191,8 +191,6 @@ public class OrderService {
   // 주문 목록 가지고 오는 메서드
   @Transactional(readOnly = true)
   public OrderListResponse getOrders(Long userId, Pageable pageable) {
-    User user = userRepo.findById(userId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
     Page<Order> orderPage = orderRepo.findByUserId(userId, pageable);
 
     // 조회 한 오더 정보를 pageInfo와 Summary로 만들어서 OrderListResponse로 만들어야함
