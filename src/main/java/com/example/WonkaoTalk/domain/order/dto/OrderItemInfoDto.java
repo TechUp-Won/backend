@@ -6,8 +6,8 @@ public record OrderItemInfoDto(
     String productName,
     String optionSummary,
     Long productAmount,
-    int quantity
-    // TODO: 썸네일도 추가해야함. OrderItem에 썸네일 스냅샷 추가 후 변경 예정
+    int quantity,
+    String productImageUrl
 ) {
 
   public static OrderItemInfoDto from(OrderItem orderItem) {
@@ -15,7 +15,8 @@ public record OrderItemInfoDto(
         orderItem.getProductName(),
         orderItem.getOptionSummary(),
         orderItem.getProductAmount(),
-        orderItem.getQuantity()
+        orderItem.getQuantity(),
+        orderItem.getProductImageUrl()
     );
   }
 

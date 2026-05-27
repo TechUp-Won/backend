@@ -44,13 +44,17 @@ public class OrderItem {
   @Column
   private Integer quantity;
 
+  @Column(name = "product_image_url", columnDefinition = "TEXT")
+  private String productImageUrl;
+
   private OrderItem(
       Order order,
       ProductVariant productVariant,
       String productName,
       String optionSummary,
       Long productAmount,
-      Integer quantity
+      Integer quantity,
+      String productImageUrl
   ) {
     this.order = order;
     this.productVariant = productVariant;
@@ -58,6 +62,7 @@ public class OrderItem {
     this.optionSummary = optionSummary;
     this.productAmount = productAmount;
     this.quantity = quantity;
+    this.productImageUrl = productImageUrl;
   }
 
   public static OrderItem createOrderItem(
@@ -66,7 +71,8 @@ public class OrderItem {
       String productName,
       String optionSummary,
       Long productAmount,
-      Integer quantity
+      Integer quantity,
+      String productImageUrl
   ) {
     return new OrderItem(
         order,
@@ -74,7 +80,8 @@ public class OrderItem {
         productName,
         optionSummary,
         productAmount,
-        quantity
+        quantity,
+        productImageUrl
     );
   }
 }
