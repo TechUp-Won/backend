@@ -5,11 +5,18 @@ import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.order.dto.OrderCreateRequest;
 import com.example.WonkaoTalk.domain.order.dto.OrderCreateRequest.DeliveryRequestDto;
 import com.example.WonkaoTalk.domain.order.dto.OrderCreateResponse;
+import com.example.WonkaoTalk.domain.order.dto.OrderDetailResponse;
+import com.example.WonkaoTalk.domain.order.dto.OrderDetailResponse.PaymentInfoDto;
+import com.example.WonkaoTalk.domain.order.dto.OrderInfoDto;
 import com.example.WonkaoTalk.domain.order.dto.OrderItemDto;
+import com.example.WonkaoTalk.domain.order.dto.OrderItemInfoDto;
+import com.example.WonkaoTalk.domain.order.dto.OrderListResponse;
+import com.example.WonkaoTalk.domain.order.dto.OrderListResponse.OrderSummaryDto;
 import com.example.WonkaoTalk.domain.order.dto.OrderPreviewRequest;
 import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponse;
 import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponse.OrderPreviewItemDto;
 import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponse.SummaryDto;
+import com.example.WonkaoTalk.domain.order.dto.PageInfoDto;
 import com.example.WonkaoTalk.domain.order.entity.Delivery;
 import com.example.WonkaoTalk.domain.order.entity.Order;
 import com.example.WonkaoTalk.domain.order.entity.OrderItem;
@@ -17,6 +24,7 @@ import com.example.WonkaoTalk.domain.order.repo.DeliveryRepo;
 import com.example.WonkaoTalk.domain.order.repo.OrderItemRepo;
 import com.example.WonkaoTalk.domain.order.repo.OrderRepo;
 import com.example.WonkaoTalk.domain.payment.entity.Payment;
+import com.example.WonkaoTalk.domain.payment.repo.PaymentRepo;
 import com.example.WonkaoTalk.domain.payment.service.PaymentService;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
@@ -34,6 +42,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,6 +58,7 @@ public class OrderService {
   private final OrderRepo orderRepo;
   private final OrderItemRepo orderItemRepo;
   private final DeliveryRepo deliveryRepo;
+  private final PaymentRepo paymentRepo;
 
   private final PaymentService paymentService;
 
@@ -126,7 +137,7 @@ public class OrderService {
     // 13. 주문 생성 응답 반환
     // orderId, orderNumber, paymentId, tossOrderId, amount, orderName
     return new OrderCreateResponse(
-        new OrderCreateResponse.OrderCreateInfoDto(
+        new OrderInfoDto(
             savedOrder.getOrderId(),
             savedOrder.getOrderNumber(),
             savedOrder.getOrderTitle(),
@@ -175,6 +186,56 @@ public class OrderService {
 
     // 8. response dto 생성 및 return
     return new OrderPreviewResponse(orderPreviewItemDtos, summaryDto);
+  }
+
+  // 주문 목록 가지고 오는 메서드
+  @Transactional(readOnly = true)
+  public OrderListResponse getOrders(Long userId, Pageable pageable) {
+    Page<Order> orderPage = orderRepo.findByUserId(userId, pageable);
+
+    // 조회 한 오더 정보를 pageInfo와 Summary로 만들어서 OrderListResponse로 만들어야함
+    // 먼저 summary 를 만들어야함
+    List<OrderSummaryDto> summaryDtos = orderPage.getContent().stream()
+        .map(order -> new OrderSummaryDto(order.getOrderId(), order.getOrderNumber(),
+            order.getOrderTitle(), order.getOrderStatus(), order.getFinalAmount(),
+            order.getCreatedAt()))
+        .toList();
+    // 그다음은 PageInfo인데 이건 어떻게만들지? from 만들어 놨잖아
+    return new OrderListResponse(
+        summaryDtos,
+        PageInfoDto.from(orderPage)
+    );
+  }
+
+  // 주문 상세정보 전달 메서드
+  @Transactional(readOnly = true)
+  public OrderDetailResponse getOrderDetail(Long userId, Long orderId) {
+    Order order = orderRepo.findByUserIdAndOrderId(userId, orderId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+
+    List<OrderItem> orderItems = orderItemRepo.findByOrder(order);
+
+    List<Payment> payments = paymentRepo.findByOrder_OrderIdOrderByCreatedAtDesc(orderId);
+
+    if (orderItems.isEmpty()) {
+      throw new BusinessException(ErrorCode.ORDER_ITEM_NOT_FOUND);
+    }
+
+    return new OrderDetailResponse(
+        OrderInfoDto.from(order),
+        orderItems.stream().map(OrderItemInfoDto::from).toList(),
+        payments.stream().map(PaymentInfoDto::from).toList()
+    );
+
+  }
+
+  // 주문 정보 삭제 메서드
+  @Transactional
+  public void deleteOrder(Long userId, Long orderId) {
+    Order order = orderRepo.findByUserIdAndOrderId(userId, orderId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+
+    orderRepo.delete(order);
   }
 
   // 옵션 중복 검증 메서드

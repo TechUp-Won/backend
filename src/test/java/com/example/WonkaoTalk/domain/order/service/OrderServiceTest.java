@@ -222,4 +222,19 @@ public class OrderServiceTest {
     assertThat(savedDelivery.getOrder()).isNotNull();
   }
 
+  @Test
+  @DisplayName("주문 삭제 시 Repository delete를 호출한다.")
+  public void deleteOrder_CallsRepositoryDelete() {
+    // given
+    Order order = mock(Order.class);
+
+    when(orderRepo.findByUserIdAndOrderId(1L, 10L)).thenReturn(Optional.of(order));
+
+    // when
+    orderService.deleteOrder(1L, 10L);
+
+    // then
+    verify(orderRepo).delete(order);
+  }
+
 }
