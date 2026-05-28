@@ -37,6 +37,7 @@ public class SecurityConfig {
     http
         // REST API 서버이므로 CSRF 보호 비활성화
         .csrf(AbstractHttpConfigurer::disable)
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .formLogin(AbstractHttpConfigurer::disable)
         .httpBasic(AbstractHttpConfigurer::disable)
         .sessionManagement(
