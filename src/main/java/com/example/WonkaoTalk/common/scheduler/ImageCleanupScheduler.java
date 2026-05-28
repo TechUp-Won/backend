@@ -4,6 +4,7 @@ import com.example.WonkaoTalk.domain.image.service.ImageService;
 import com.example.WonkaoTalk.domain.order.repo.OrderItemRepo;
 import com.example.WonkaoTalk.domain.product.entity.DeletedProductImage;
 import com.example.WonkaoTalk.domain.product.repo.DeletedProductImageRepo;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -40,17 +41,15 @@ public class ImageCleanupScheduler {
         .filter(img -> !referencedUrls.contains(img.getUrl()))
         .toList();
 
-    List<DeletedProductImage> successfullyDeleted = toDelete.stream()
-        .filter(img -> {
-          try {
-            imageService.deleteByUrl(img.getUrl());
-            return true;
-          } catch (Exception e) {
-            log.error("S3 이미지 삭제 실패 (다음 실행 시 재시도): {}", img.getUrl(), e);
-            return false;
-          }
-        })
-        .toList();
+    List<DeletedProductImage> successfullyDeleted = new ArrayList<>();
+    for (DeletedProductImage img : toDelete) {
+      try {
+        imageService.deleteByUrl(img.getUrl());
+        successfullyDeleted.add(img);
+      } catch (Exception e) {
+        log.error("S3 이미지 삭제 실패 (다음 실행 시 재시도): {}", img.getUrl(), e);
+      }
+    }
 
     List<DeletedProductImage> referencedImages = candidates.stream()
         .filter(img -> referencedUrls.contains(img.getUrl()))
