@@ -11,7 +11,7 @@ public record SocialLoginDto(
     Role role
 ) {
 
-  public SocialLoginDto of(Long authId, Long userId, Long sellerId, Role role) {
+  public static SocialLoginDto of(Long authId, Long userId, Long sellerId, Role role) {
     return SocialLoginDto.builder()
         .authId(authId)
         .userId(userId)
