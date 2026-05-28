@@ -68,6 +68,10 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
     String providerId = userInfo.getProviderId();
     String email = userInfo.getEmail();
 
+    if (email == null || email.isBlank()) {
+      throw new BusinessException(ErrorCode.OAUTH_NULL_EMAIL);
+    }
+    
     Optional<AuthSocial> optionalSocial = authSocialRepo.findByProviderAndProviderUserIdWithAuth(
         provider, providerId);
     if (optionalSocial.isPresent()) {
