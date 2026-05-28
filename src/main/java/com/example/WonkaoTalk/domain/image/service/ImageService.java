@@ -130,7 +130,14 @@ public class ImageService {
   }
 
   public void deleteByUrl(String url) {
-    String key = url.substring(endpoint.length() + 1 + bucket.length() + 1);
+    if (url == null) {
+      return;
+    }
+    String prefix = endpoint + "/" + bucket + "/";
+    if (!url.startsWith(prefix)) {
+      throw new BusinessException(ErrorCode.IMAGE_INVALID_KEY);
+    }
+    String key = url.substring(prefix.length());
     s3Client.deleteObject(DeleteObjectRequest.builder()
         .bucket(bucket)
         .key(key)
