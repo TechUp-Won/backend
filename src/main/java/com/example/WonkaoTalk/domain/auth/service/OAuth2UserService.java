@@ -71,7 +71,7 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
     if (email == null || email.isBlank()) {
       throw new BusinessException(ErrorCode.OAUTH_NULL_EMAIL);
     }
-    
+
     Optional<AuthSocial> optionalSocial = authSocialRepo.findByProviderAndProviderUserIdWithAuth(
         provider, providerId);
     if (optionalSocial.isPresent()) {
@@ -91,7 +91,8 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
     saveAuthSocial(newAuth, provider, providerId, email);
 
     eventPublisher.publishEvent(
-        new OAuth2UserCreatedEvent(newAuth, userInfo.getEmail(), userInfo.getName()));
+        new OAuth2UserCreatedEvent(newAuth, userInfo.getEmail(), userInfo.getName(),
+            userInfo.getPhone()));
 
     return newAuth;
   }

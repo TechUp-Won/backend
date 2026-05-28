@@ -24,7 +24,7 @@ public class UserEventListener {
         .name(event.name())
         .nickname(event.name())
         .gender(Gender.NONE)
-        //.phone() //TODO: 전화번호는 기본 설정 값으로 받아와야함!(사용자 테이블의 nullable 필드임 - 친구 추가를 위한 사용자 검색을 전화번호로 함
+        .phone(event.phone())
         .marketingAgree(false)
         .build();
 
