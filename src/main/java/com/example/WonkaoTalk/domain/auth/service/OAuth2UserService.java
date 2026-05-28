@@ -2,10 +2,10 @@ package com.example.WonkaoTalk.domain.auth.service;
 
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
-import com.example.WonkaoTalk.domain.auth.dto.CustomOAuth2User;
-import com.example.WonkaoTalk.domain.auth.dto.GoogleUserInfo;
-import com.example.WonkaoTalk.domain.auth.dto.NaverUserInfo;
-import com.example.WonkaoTalk.domain.auth.dto.OAuth2UserInfo;
+import com.example.WonkaoTalk.domain.auth.dto.OAuth.CustomOAuth2User;
+import com.example.WonkaoTalk.domain.auth.dto.OAuth.GoogleUserInfo;
+import com.example.WonkaoTalk.domain.auth.dto.OAuth.NaverUserInfo;
+import com.example.WonkaoTalk.domain.auth.dto.OAuth.OAuth2UserInfo;
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.entity.AuthLocal;
 import com.example.WonkaoTalk.domain.auth.entity.AuthSocial;

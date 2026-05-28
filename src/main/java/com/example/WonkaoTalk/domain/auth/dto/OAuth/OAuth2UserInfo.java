@@ -1,4 +1,4 @@
-package com.example.WonkaoTalk.domain.auth.dto;
+package com.example.WonkaoTalk.domain.auth.dto.OAuth;
 
 public interface OAuth2UserInfo {
 

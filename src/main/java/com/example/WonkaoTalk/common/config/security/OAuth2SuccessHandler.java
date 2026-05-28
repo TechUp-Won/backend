@@ -2,7 +2,7 @@ package com.example.WonkaoTalk.common.config.security;
 
 import com.example.WonkaoTalk.common.config.security.jwt.JwtTokenProvider;
 import com.example.WonkaoTalk.common.redis.RedisService;
-import com.example.WonkaoTalk.domain.auth.dto.CustomOAuth2User;
+import com.example.WonkaoTalk.domain.auth.dto.OAuth.CustomOAuth2User;
 import com.example.WonkaoTalk.domain.auth.dto.SocialLoginDto;
 import com.example.WonkaoTalk.domain.auth.enums.AuthProvider;
 import com.example.WonkaoTalk.domain.auth.service.AuthCommandService;
@@ -34,7 +34,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     String email = (String) oAuth2User.getAttributes().get("email");
     AuthProvider provider = oAuth2User.getProvider();
     String providerId = oAuth2User.getProviderId();
-    
+
     SocialLoginDto userInfo = authCommandService.generateSocialLoginData(email, provider,
         providerId);
     String accessToken = jwtTokenProvider.createAccessToken(

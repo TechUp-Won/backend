@@ -1,4 +1,4 @@
-package com.example.WonkaoTalk.domain.auth.dto;
+package com.example.WonkaoTalk.domain.auth.dto.OAuth;
 
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.enums.AuthProvider;
