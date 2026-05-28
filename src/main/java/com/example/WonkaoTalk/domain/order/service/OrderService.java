@@ -373,7 +373,8 @@ public class OrderService {
             item.productName(),
             item.variantName(),
             item.discountedPrice(),
-            item.quantity()
+            item.quantity(),
+            item.thumbnailUrl()
         ))
         .toList();
   }
