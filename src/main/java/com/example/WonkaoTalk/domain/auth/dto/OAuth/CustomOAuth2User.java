@@ -19,6 +19,7 @@ public class CustomOAuth2User implements OAuth2User {
   private final Map<String, Object> attributes;
   private final AuthProvider provider;
   private final String providerId;
+  private final String email;
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {

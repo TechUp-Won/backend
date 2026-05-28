@@ -31,7 +31,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
       Authentication authentication) throws IOException {
 
     CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
-    String email = (String) oAuth2User.getAttributes().get("email");
+    String email = oAuth2User.getEmail();
     AuthProvider provider = oAuth2User.getProvider();
     String providerId = oAuth2User.getProviderId();
 
