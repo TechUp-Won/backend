@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -16,13 +17,15 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ImageCleanupScheduler {
 
+  private static final int BATCH_SIZE = 1000;
+
   private final DeletedProductImageRepo deletedProductImageRepo;
   private final OrderItemRepo orderItemRepo;
   private final ImageService imageService;
 
   @Scheduled(cron = "0 0 2 * * *")
   public void cleanupDeletedProductImages() {
-    List<DeletedProductImage> candidates = deletedProductImageRepo.findAll();
+    List<DeletedProductImage> candidates = deletedProductImageRepo.findAll(PageRequest.of(0, BATCH_SIZE)).getContent();
     if (candidates.isEmpty()) {
       return;
     }
