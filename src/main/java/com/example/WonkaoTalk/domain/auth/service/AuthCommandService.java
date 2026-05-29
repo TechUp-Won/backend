@@ -3,13 +3,17 @@ package com.example.WonkaoTalk.domain.auth.service;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.auth.dto.AuthUserInfoDto;
+import com.example.WonkaoTalk.domain.auth.dto.SocialLoginDto;
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.entity.AuthLocal;
+import com.example.WonkaoTalk.domain.auth.entity.AuthSocial;
 import com.example.WonkaoTalk.domain.auth.entity.LoginHistory;
+import com.example.WonkaoTalk.domain.auth.enums.AuthProvider;
 import com.example.WonkaoTalk.domain.auth.enums.LoginStatus;
 import com.example.WonkaoTalk.domain.auth.enums.Role;
 import com.example.WonkaoTalk.domain.auth.repo.AuthLocalRepo;
 import com.example.WonkaoTalk.domain.auth.repo.AuthRepo;
+import com.example.WonkaoTalk.domain.auth.repo.AuthSocialRepo;
 import com.example.WonkaoTalk.domain.auth.repo.LoginHistoryRepo;
 import com.example.WonkaoTalk.domain.seller.entity.Seller;
 import com.example.WonkaoTalk.domain.seller.repo.SellerRepo;
@@ -25,6 +29,7 @@ public class AuthCommandService {
 
   private final AuthRepo authRepo;
   private final AuthLocalRepo authLocalRepo;
+  private final AuthSocialRepo authSocialRepo;
   private final LoginHistoryRepo loginHistoryRepo;
   private final UserRepo userRepo;
   private final SellerRepo sellerRepo;
@@ -116,5 +121,21 @@ public class AuthCommandService {
       authLocalRepo.findByAuth(auth).ifPresent(AuthLocal::withdraw);
       auth.withdraw();
     }
+  }
+
+  @Transactional(readOnly = true)
+  public SocialLoginDto generateSocialLoginData(String email, AuthProvider provider,
+      String providerId) {
+    Auth auth = authSocialRepo.findByProviderAndProviderUserIdWithAuth(provider, providerId)
+        .map(AuthSocial::getAuth)
+        .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_NOT_FOUND));
+
+    Long userId = userRepo.findByAuth(auth).map(User::getId).orElse(null);
+    Long sellerId = null;
+    if (auth.getRole().name().contains("SELLER")) {
+      sellerId = sellerRepo.findByAuth(auth).map(Seller::getId).orElse(null);
+    }
+
+    return new SocialLoginDto(auth.getId(), userId, sellerId, auth.getRole());
   }
 }

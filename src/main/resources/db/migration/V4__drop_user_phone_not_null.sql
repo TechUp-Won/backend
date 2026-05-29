@@ -1,0 +1,19 @@
+CREATE TABLE IF NOT EXISTS users (
+    id BIGSERIAL PRIMARY KEY,
+    nickname VARCHAR(20) NOT NULL,
+    image VARCHAR(255) NOT NULL,
+    birth_date DATE,
+    name VARCHAR(255) NOT NULL,
+    phone VARCHAR(13) UNIQUE,
+    gender VARCHAR(255) NOT NULL DEFAULT 'NONE',
+    marketing_agree BOOLEAN NOT NULL DEFAULT FALSE,
+    auth_id BIGINT NOT NULL UNIQUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    deleted_at TIMESTAMP,
+
+    CONSTRAINT fk_users_auth FOREIGN KEY (auth_id) REFERENCES auth(id)
+);
+
+ALTER TABLE users
+    ALTER COLUMN phone DROP NOT NULL;
