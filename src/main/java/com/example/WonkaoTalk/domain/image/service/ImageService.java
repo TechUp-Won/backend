@@ -129,6 +129,21 @@ public class ImageService {
         .build());
   }
 
+  public void deleteByUrl(String url) {
+    if (url == null) {
+      return;
+    }
+    String prefix = endpoint + "/" + bucket + "/";
+    if (!url.startsWith(prefix)) {
+      throw new BusinessException(ErrorCode.IMAGE_INVALID_KEY);
+    }
+    String key = url.substring(prefix.length());
+    s3Client.deleteObject(DeleteObjectRequest.builder()
+        .bucket(bucket)
+        .key(key)
+        .build());
+  }
+
   private String extractExtension(String filename) {
     int dotIndex = filename.lastIndexOf('.');
     if (dotIndex < 0 || dotIndex == filename.length() - 1) {

@@ -54,3 +54,7 @@ minio/
 
 ### macOS ###
 .DS_Store
+
+### AI CLI ###
+.claude
+.antigravitycli
