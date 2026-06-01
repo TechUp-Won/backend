@@ -37,6 +37,7 @@ public class PaymentService {
   private final ProductVariantRepo productVariantRepo;
   private final TossPaymentsProperties tossPaymentsProperties;
   private final TossPaymentsClient tossPaymentsClient;
+  private final PaymentFailRecorder paymentFailRecorder;
 
   // 주문 생성
   @Transactional
@@ -134,8 +135,8 @@ public class PaymentService {
       log.warn(
           "TossPayments confirm failed. paymentId={}, tossOrderId={}, tossCode={}, tossMessage={}",
           payment.getPaymentId(), payment.getTossOrderId(), e.getCode(), e.getMessage());
-      payment.markFailed(e.getCode(), e.getMessage());
-      payment.getOrder().markPaymentFailed();
+      paymentFailRecorder.recordFail(payment.getPaymentId(), e.getCode(), e.getMessage());
+
       throw new BusinessException(ErrorCode.PAYMENT_APPROVAL_FAILED);
     }
   }
