@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '4.0.6'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
 }
 
 group = 'com.example'
@@ -83,4 +84,50 @@ dependencies {
 
 test {
     useJUnitPlatform()
+    finalizedBy tasks.named('jacocoTestReport')
+}
+
+// ── JaCoCo ─────────────────────────────────────────────────────────────────
+
+jacoco {
+    toolVersion = '0.8.13'
+}
+
+jacocoTestReport {
+    dependsOn tasks.named('test')
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+// Per-domain coverage reports
+def domains = [
+    'auth', 'chat', 'image', 'order', 'payment',
+    'product', 'search', 'seller', 'shipping', 'store', 'term', 'user'
+]
+
+domains.each { domain ->
+    tasks.register("jacocoReport${domain.capitalize()}", JacocoReport) {
+        group       = 'verification'
+        description = "JaCoCo coverage report for domain: ${domain}"
+        dependsOn tasks.named('test')
+        executionData tasks.named('test')
+        sourceDirectories.setFrom(sourceSets.main.java.srcDirs)
+        classDirectories.setFrom(
+            sourceSets.main.output.classesDirs.asFileTree.matching {
+                include "**/domain/${domain}/**"
+            }
+        )
+        reports {
+            xml.required  = true
+            html.required = true
+        }
+    }
+}
+
+tasks.register('jacocoAllDomainReports') {
+    group       = 'verification'
+    description = 'Generates JaCoCo coverage reports for all domains'
+    dependsOn domains.collect { "jacocoReport${it.capitalize()}" }
 }
