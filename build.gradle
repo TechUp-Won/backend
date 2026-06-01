@@ -112,7 +112,7 @@ domains.each { domain ->
         group       = 'verification'
         description = "JaCoCo coverage report for domain: ${domain}"
         dependsOn tasks.named('test')
-        executionData tasks.named('test')
+        executionData fileTree(layout.buildDirectory.dir("jacoco")).include("*.exec")
         sourceDirectories.setFrom(sourceSets.main.java.srcDirs)
         classDirectories.setFrom(
             sourceSets.main.output.classesDirs.asFileTree.matching {
