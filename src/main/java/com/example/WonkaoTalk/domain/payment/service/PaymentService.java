@@ -16,6 +16,7 @@ import com.example.WonkaoTalk.domain.payment.dto.PaymentFailRequest;
 import com.example.WonkaoTalk.domain.payment.dto.PaymentFailResponse;
 import com.example.WonkaoTalk.domain.payment.entity.Payment;
 import com.example.WonkaoTalk.domain.payment.entity.PaymentStatus;
+import com.example.WonkaoTalk.domain.payment.event.PaymentFailedEvent;
 import com.example.WonkaoTalk.domain.payment.repo.PaymentRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepo;
 import java.time.LocalDateTime;
@@ -24,6 +25,7 @@ import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,7 +39,7 @@ public class PaymentService {
   private final ProductVariantRepo productVariantRepo;
   private final TossPaymentsProperties tossPaymentsProperties;
   private final TossPaymentsClient tossPaymentsClient;
-  private final PaymentFailRecorder paymentFailRecorder;
+  private final ApplicationEventPublisher eventPublisher;
 
   // 주문 생성
   @Transactional
@@ -135,7 +137,8 @@ public class PaymentService {
       log.warn(
           "TossPayments confirm failed. paymentId={}, tossOrderId={}, tossCode={}, tossMessage={}",
           payment.getPaymentId(), payment.getTossOrderId(), e.getCode(), e.getMessage());
-      paymentFailRecorder.recordFail(payment.getPaymentId(), e.getCode(), e.getMessage());
+      eventPublisher.publishEvent(
+          new PaymentFailedEvent(payment.getPaymentId(), e.getCode(), e.getMessage()));
 
       throw new BusinessException(ErrorCode.PAYMENT_APPROVAL_FAILED);
     }
