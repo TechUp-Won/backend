@@ -39,6 +39,10 @@ public class CartService {
   private final UserRepo userRepo;
 
   public CartResponse getCart(Long userId) {
+    if (!userRepo.existsById(userId)) {
+      throw new BusinessException(ErrorCode.NOT_FOUND);
+    }
+
     Optional<Cart> cartOpt = cartRepository.findByUserId(userId);
 
     if (cartOpt.isEmpty()) {

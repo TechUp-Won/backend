@@ -63,6 +63,7 @@ class CartServiceTest {
   void setUp() {
     User mockUser = mock(User.class);
     when(mockUser.getId()).thenReturn(1L);
+    when(userRepo.existsById(anyLong())).thenReturn(true);
     when(userRepo.findById(anyLong())).thenReturn(Optional.of(mockUser));
   }
 
@@ -149,6 +150,17 @@ class CartServiceTest {
 
     assertThat(response.getCartItems().get(0).getSellable()).isTrue();
     assertThat(response.getCartItems().get(1).getSellable()).isFalse();
+  }
+
+  @Test
+  @DisplayName("userId에 해당하는 User가 없으면 NOT_FOUND를 던진다")
+  void getCart_throwsNotFound_whenUserNotFound() {
+    when(userRepo.existsById(anyLong())).thenReturn(false);
+
+    BusinessException ex = assertThrows(BusinessException.class,
+        () -> cartService.getCart(1L));
+
+    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
   }
 
   // ── addToCart - 입력 검증 ─────────────────────────────────────────────────────

@@ -95,14 +95,12 @@ class CartServiceIntegrationTest {
   }
 
   @Test
-  @DisplayName("존재하지 않는 userId로 요청 시 빈 응답을 반환한다")
-  void getCart_returnsEmpty_whenUserNotFound() {
-    CartResponse response = cartService.getCart(999L);
+  @DisplayName("존재하지 않는 userId로 요청 시 NOT_FOUND를 던진다")
+  void getCart_throwsNotFound_whenUserNotFound() {
+    BusinessException ex = assertThrows(BusinessException.class,
+        () -> cartService.getCart(999L));
 
-    assertThat(response.getCartId()).isNull();
-    assertThat(response.getCartItems()).isEmpty();
-    assertThat(response.getSummary().getOriginalTotalAmount()).isEqualTo(0);
-    assertThat(response.getSummary().getDiscountTotalAmount()).isEqualTo(0);
+    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
   }
 
   @Test
