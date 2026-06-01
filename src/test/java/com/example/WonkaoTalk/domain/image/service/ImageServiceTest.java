@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -163,7 +164,9 @@ class ImageServiceTest {
   @Test
   @DisplayName("S3에 존재하지 않는 key는 IMAGE_NOT_FOUND_KEY 예외를 던진다")
   void validateAndGetProductUrl_keyNotFound_throwsImageNotFoundKey() {
-    when(s3Client.headObject(any(HeadObjectRequest.class)))
+    when(s3Client.headObject(argThat((HeadObjectRequest req) ->
+        "wonkao-talk".equals(req.bucket())
+        && "temp/550e8400-e29b-41d4-a716-446655440000.jpg".equals(req.key()))))
         .thenThrow(NoSuchKeyException.builder().build());
 
     BusinessException ex = assertThrows(BusinessException.class,
@@ -176,7 +179,9 @@ class ImageServiceTest {
   @Test
   @DisplayName("유효한 temp key는 products 경로의 전체 URL을 반환한다")
   void validateAndGetProductUrl_validKey_returnsFullUrl() {
-    when(s3Client.headObject(any(HeadObjectRequest.class)))
+    when(s3Client.headObject(argThat((HeadObjectRequest req) ->
+        "wonkao-talk".equals(req.bucket())
+        && "temp/550e8400-e29b-41d4-a716-446655440000.jpg".equals(req.key()))))
         .thenReturn(HeadObjectResponse.builder().build());
 
     String result = imageService.validateAndGetProductUrl(
@@ -184,6 +189,9 @@ class ImageServiceTest {
 
     assertThat(result).isEqualTo(
         "http://localhost:9000/wonkao-talk/products/550e8400-e29b-41d4-a716-446655440000.jpg");
+    verify(s3Client).headObject(argThat((HeadObjectRequest req) ->
+        "wonkao-talk".equals(req.bucket())
+        && "temp/550e8400-e29b-41d4-a716-446655440000.jpg".equals(req.key())));
   }
 
   // ── handleProductCreated ──────────────────────────────────────────────────────
@@ -193,21 +201,51 @@ class ImageServiceTest {
   void handleProductCreated_success_movesAllFiles() {
     when(s3Client.copyObject(any(CopyObjectRequest.class)))
         .thenReturn(CopyObjectResponse.builder().build());
-    when(s3Client.deleteObject(any(DeleteObjectRequest.class)))
+    when(s3Client.deleteObject(argThat((DeleteObjectRequest req) ->
+        req != null
+        && "wonkao-talk".equals(req.bucket())
+        && "temp/550e8400-e29b-41d4-a716-446655440000.jpg".equals(req.key()))))
+        .thenReturn(DeleteObjectResponse.builder().build());
+    when(s3Client.deleteObject(argThat((DeleteObjectRequest req) ->
+        req != null
+        && "wonkao-talk".equals(req.bucket())
+        && "temp/661f9511-f3ac-52e5-b827-557766551111.png".equals(req.key()))))
         .thenReturn(DeleteObjectResponse.builder().build());
 
     imageService.handleProductCreated(new ProductCreatedEvent(
         List.of("temp/550e8400-e29b-41d4-a716-446655440000.jpg",
             "temp/661f9511-f3ac-52e5-b827-557766551111.png")));
 
-    verify(s3Client, org.mockito.Mockito.times(2)).copyObject(any(CopyObjectRequest.class));
-    verify(s3Client, org.mockito.Mockito.times(2)).deleteObject(any(DeleteObjectRequest.class));
+    verify(s3Client).copyObject(argThat((CopyObjectRequest req) ->
+        "wonkao-talk".equals(req.sourceBucket())
+        && "temp/550e8400-e29b-41d4-a716-446655440000.jpg".equals(req.sourceKey())
+        && "wonkao-talk".equals(req.destinationBucket())
+        && "products/550e8400-e29b-41d4-a716-446655440000.jpg".equals(req.destinationKey())));
+    verify(s3Client).copyObject(argThat((CopyObjectRequest req) ->
+        "wonkao-talk".equals(req.sourceBucket())
+        && "temp/661f9511-f3ac-52e5-b827-557766551111.png".equals(req.sourceKey())
+        && "wonkao-talk".equals(req.destinationBucket())
+        && "products/661f9511-f3ac-52e5-b827-557766551111.png".equals(req.destinationKey())));
+    verify(s3Client).deleteObject(argThat((DeleteObjectRequest req) ->
+        "wonkao-talk".equals(req.bucket())
+        && "temp/550e8400-e29b-41d4-a716-446655440000.jpg".equals(req.key())));
+    verify(s3Client).deleteObject(argThat((DeleteObjectRequest req) ->
+        "wonkao-talk".equals(req.bucket())
+        && "temp/661f9511-f3ac-52e5-b827-557766551111.png".equals(req.key())));
   }
 
   @Test
   @DisplayName("파일 이동 중 예외가 발생해도 나머지 파일 처리를 계속한다")
   void handleProductCreated_moveThrows_continuesOtherFiles() {
-    when(s3Client.copyObject(any(CopyObjectRequest.class)))
+    when(s3Client.copyObject(argThat((CopyObjectRequest req) ->
+        req != null
+        && "wonkao-talk".equals(req.sourceBucket())
+        && "temp/550e8400-e29b-41d4-a716-446655440000.jpg".equals(req.sourceKey()))))
+        .thenThrow(new RuntimeException("S3 error"));
+    when(s3Client.copyObject(argThat((CopyObjectRequest req) ->
+        req != null
+        && "wonkao-talk".equals(req.sourceBucket())
+        && "temp/661f9511-f3ac-52e5-b827-557766551111.png".equals(req.sourceKey()))))
         .thenThrow(new RuntimeException("S3 error"));
 
     assertDoesNotThrow(() ->
@@ -215,7 +253,17 @@ class ImageServiceTest {
             List.of("temp/550e8400-e29b-41d4-a716-446655440000.jpg",
                 "temp/661f9511-f3ac-52e5-b827-557766551111.png"))));
 
-    verify(s3Client, org.mockito.Mockito.times(2)).copyObject(any(CopyObjectRequest.class));
+    verify(s3Client).copyObject(argThat((CopyObjectRequest req) ->
+        "wonkao-talk".equals(req.sourceBucket())
+        && "temp/550e8400-e29b-41d4-a716-446655440000.jpg".equals(req.sourceKey())
+        && "wonkao-talk".equals(req.destinationBucket())
+        && "products/550e8400-e29b-41d4-a716-446655440000.jpg".equals(req.destinationKey())));
+    verify(s3Client).copyObject(argThat((CopyObjectRequest req) ->
+        "wonkao-talk".equals(req.sourceBucket())
+        && "temp/661f9511-f3ac-52e5-b827-557766551111.png".equals(req.sourceKey())
+        && "wonkao-talk".equals(req.destinationBucket())
+        && "products/661f9511-f3ac-52e5-b827-557766551111.png".equals(req.destinationKey())));
+    verify(s3Client, never()).deleteObject(any(DeleteObjectRequest.class));
   }
 
   // ── deleteByUrl ───────────────────────────────────────────────────────────────
@@ -239,13 +287,18 @@ class ImageServiceTest {
   @Test
   @DisplayName("유효한 URL은 해당 S3 객체를 삭제한다")
   void deleteByUrl_validUrl_callsDeleteObject() {
-    when(s3Client.deleteObject(any(DeleteObjectRequest.class)))
+    when(s3Client.deleteObject(argThat((DeleteObjectRequest req) ->
+        req != null
+        && "wonkao-talk".equals(req.bucket())
+        && "products/550e8400-e29b-41d4-a716-446655440000.jpg".equals(req.key()))))
         .thenReturn(DeleteObjectResponse.builder().build());
 
     imageService.deleteByUrl(
         "http://localhost:9000/wonkao-talk/products/550e8400-e29b-41d4-a716-446655440000.jpg");
 
-    verify(s3Client).deleteObject(any(DeleteObjectRequest.class));
+    verify(s3Client).deleteObject(argThat((DeleteObjectRequest req) ->
+        "wonkao-talk".equals(req.bucket())
+        && "products/550e8400-e29b-41d4-a716-446655440000.jpg".equals(req.key())));
   }
 
   // ── 헬퍼 ──────────────────────────────────────────────────────────────────────
