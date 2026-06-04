@@ -4,6 +4,7 @@ import com.example.WonkaoTalk.common.config.security.jwt.JwtTokenProvider;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.common.redis.RedisService;
+import com.example.WonkaoTalk.domain.auth.dto.AuthIntegrationResultDto;
 import com.example.WonkaoTalk.domain.auth.dto.AuthUserInfoDto;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckRequest;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckResponse;
@@ -11,10 +12,12 @@ import com.example.WonkaoTalk.domain.auth.dto.LoginRequest;
 import com.example.WonkaoTalk.domain.auth.dto.TokenDto;
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.entity.AuthLocal;
+import com.example.WonkaoTalk.domain.auth.entity.AuthSocial;
 import com.example.WonkaoTalk.domain.auth.enums.LoginStatus;
 import com.example.WonkaoTalk.domain.auth.enums.Role;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -40,7 +43,10 @@ public class AuthService {
     }
     String encodedPassword = passwordEncoder.encode(password);
 
-    return authCommandService.saveAuthLocal(email, encodedPassword, role);
+    Auth auth = authCommandService.saveAuth(role);
+    authCommandService.saveAuthLocal(auth, email, encodedPassword);
+
+    return auth;
   }
 
   public TokenDto login(LoginRequest request, HttpServletRequest httpRequest) {
@@ -81,6 +87,24 @@ public class AuthService {
     Auth auth = authLocal.getAuth();
 
     return publishToken(authLocal.getEmail(), auth);
+  }
+
+  public AuthIntegrationResultDto linkOrCreateLocal(String email, String password, Role role) {
+    if (authCommandService.existsByEmail(email)) {
+      throw new BusinessException(ErrorCode.AUTH_DUPLICATE_EMAIL);
+    }
+    String encodedPassword = passwordEncoder.encode(password);
+
+    Optional<AuthSocial> optionalSocial = authCommandService.getFirstAuthSocialByEmail(email);
+    if (optionalSocial.isPresent()) {
+      Auth existingAuth = optionalSocial.get().getAuth();
+      authCommandService.saveAuthLocal(existingAuth, email, encodedPassword);
+      return new AuthIntegrationResultDto(existingAuth, false);
+    }
+
+    Auth newAuth = authCommandService.saveAuth(role);
+    authCommandService.saveAuthLocal(newAuth, email, encodedPassword);
+    return new AuthIntegrationResultDto(newAuth, true);
   }
 
   private TokenDto publishToken(String email, Auth auth) {

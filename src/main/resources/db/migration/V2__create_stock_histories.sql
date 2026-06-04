@@ -1,4 +1,4 @@
-CREATE TABLE stock_histories (
+CREATE TABLE IF NOT EXISTS stock_histories (
     id                  BIGSERIAL       PRIMARY KEY,
     product_variant_id  BIGINT          NOT NULL REFERENCES product_variants(id),
     order_id            BIGINT          REFERENCES orders(id),

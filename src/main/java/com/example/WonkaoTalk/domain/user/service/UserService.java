@@ -2,6 +2,7 @@ package com.example.WonkaoTalk.domain.user.service;
 
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
+import com.example.WonkaoTalk.domain.auth.dto.AuthIntegrationResultDto;
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.enums.Role;
 import com.example.WonkaoTalk.domain.auth.service.AuthService;
@@ -38,19 +39,25 @@ public class UserService {
       throw new BusinessException(ErrorCode.USER_REGISTERED_PHONE);
     }
 
-    Auth auth = authService.createAuthLocal(request.email(), request.password(), Role.USER);
+    AuthIntegrationResultDto result = authService.linkOrCreateLocal(request.email(),
+        request.password(), Role.USER);
+    Auth auth = result.auth();
 
-    User user = User.builder()
-        .auth(auth)
-        .name(request.name())
-        .nickname(request.nickname())
-        .phone(request.phone())
-        .birthDate(request.birthDate())
-        .gender(request.gender())
-        .build();
-
-    userRepo.save(user);
-
+    User user;
+    if (result.isNewCreated()) {
+      user = User.builder()
+          .auth(auth)
+          .name(request.name())
+          .nickname(request.nickname())
+          .phone(request.phone())
+          .birthDate(request.birthDate())
+          .gender(request.gender())
+          .build();
+      userRepo.save(user);
+    } else {
+      user = userRepo.findByAuth(auth)
+          .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    }
     return UserSignUpResponse.of(auth, user);
   }
 

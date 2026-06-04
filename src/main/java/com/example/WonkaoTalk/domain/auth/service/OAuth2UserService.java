@@ -78,9 +78,18 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
       return optionalSocial.get().getAuth();
     }
 
+    Auth auth = null;
     Optional<AuthLocal> optionalLocal = authLocalRepo.findByEmail(email);
     if (optionalLocal.isPresent()) {
-      Auth auth = optionalLocal.get().getAuth();
+      auth = optionalLocal.get().getAuth();
+    } else {
+      Optional<AuthSocial> anySocial = authSocialRepo.findFirstByEmail(email);
+      if (anySocial.isPresent()) {
+        auth = anySocial.get().getAuth();
+      }
+    }
+
+    if (auth != null) {
       saveAuthSocial(auth, provider, providerId, email);
       return auth;
     }

@@ -19,6 +19,7 @@ import com.example.WonkaoTalk.domain.seller.entity.Seller;
 import com.example.WonkaoTalk.domain.seller.repo.SellerRepo;
 import com.example.WonkaoTalk.domain.user.entity.User;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,23 +41,24 @@ public class AuthCommandService {
   }
 
   @Transactional
-  public Auth saveAuthLocal(String email, String encodedPassword, Role role) {
+  public Auth saveAuth(Role role) {
+    Auth auth = Auth.builder().role(role).build();
+    return authRepo.save(auth);
+  }
+
+  @Transactional
+  public void saveAuthLocal(Auth auth, String email, String encodedPassword) {
     if (authLocalRepo.existsByEmail(email)) {
       throw new BusinessException(ErrorCode.AUTH_DUPLICATE_EMAIL);
     }
 
-    Auth auth = Auth.builder().role(role).build();
-    Auth savedAuth = authRepo.save(auth);
-
     AuthLocal authLocal = AuthLocal.builder()
-        .auth(savedAuth)
+        .auth(auth)
         .email(email)
         .passwordHash(encodedPassword)
         .failedAttemptsCount(0)
         .build();
     authLocalRepo.save(authLocal);
-
-    return savedAuth;
   }
 
   @Transactional(readOnly = true)
@@ -137,5 +139,10 @@ public class AuthCommandService {
     }
 
     return new SocialLoginDto(auth.getId(), userId, sellerId, auth.getRole());
+  }
+
+  @Transactional(readOnly = true)
+  public Optional<AuthSocial> getFirstAuthSocialByEmail(String email) {
+    return authSocialRepo.findFirstByEmail(email);
   }
 }
