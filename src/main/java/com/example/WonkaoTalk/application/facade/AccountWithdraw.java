@@ -1,39 +1,42 @@
 package com.example.WonkaoTalk.application.facade;
 
-import com.example.WonkaoTalk.domain.auth.service.AuthCommandService;
+import com.example.WonkaoTalk.common.oauth.OAuthRevocationClient;
 import com.example.WonkaoTalk.domain.auth.service.AuthService;
-import com.example.WonkaoTalk.domain.seller.service.SellerService;
-import com.example.WonkaoTalk.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AccountWithdraw {
 
-  private final UserService userService;
-  private final SellerService sellerService;
   private final AuthService authService;
-  private final AuthCommandService authCommandService;
+  private final OAuthRevocationClient oAuthRevocationClient;
+  private final WithdrawTransactionProcessor withdrawTransactionProcessor;
 
-  @Transactional
   public void withdrawUser(Long authId, String email, String accessToken) {
-    userService.withdrawUser(authId);
+    revokeSocialConnectionSafely(authId);
 
-    boolean hasActiveSeller = sellerService.existsActiveSeller(authId);
-    authCommandService.handleUserWithdraw(authId, hasActiveSeller);
+    withdrawTransactionProcessor.withdrawUser(authId);
 
     authService.invalidateToken(email, accessToken);
   }
 
-  @Transactional
   public void withdrawSeller(Long authId, String email, String accessToken) {
-    sellerService.withdrawSeller(authId);
+    revokeSocialConnectionSafely(authId);
 
-    boolean hasActiveUser = userService.existsActiveUser(authId);
-    authCommandService.handleSellerWithdraw(authId, hasActiveUser);
+    withdrawTransactionProcessor.withdrawSeller(authId);
 
     authService.invalidateToken(email, accessToken);
+  }
+
+  private void revokeSocialConnectionSafely(Long authId) {
+    // TODO: outbox 패턴을 통한 retry 정책 수립 필요(연동 해제 실패 시 별도의 테이블에 저장하여 AT 유효기간내에 재시도하는 scheduler 가 필요
+    try {
+      oAuthRevocationClient.revokeIfSocialAccountExists(authId);
+    } catch (Exception e) {
+      log.warn("소셜 연동 해제 실패, 내부 DB 탈퇴 로직은 계속 진행됩니다. authId: {}", authId, e);
+    }
   }
 }

@@ -108,8 +108,7 @@ public class AuthCommandService {
     if (hasActiveSeller) {
       auth.updateRole(Role.SELLER);
     } else {
-      authLocalRepo.findByAuth(auth).ifPresent(AuthLocal::withdraw);
-      auth.withdraw();
+      processFullWithdraw(auth);
     }
   }
 
@@ -120,8 +119,7 @@ public class AuthCommandService {
     if (hasActiveUser) {
       auth.updateRole(Role.USER);
     } else {
-      authLocalRepo.findByAuth(auth).ifPresent(AuthLocal::withdraw);
-      auth.withdraw();
+      processFullWithdraw(auth);
     }
   }
 
@@ -145,4 +143,13 @@ public class AuthCommandService {
   public Optional<AuthSocial> getFirstAuthSocialByEmail(String email) {
     return authSocialRepo.findFirstByEmail(email);
   }
+
+
+  /*********** HELPER METHOD ************/
+  private void processFullWithdraw(Auth auth) {
+    authLocalRepo.findByAuth(auth).ifPresent(AuthLocal::withdraw);
+    authSocialRepo.findByAuth(auth).ifPresent(AuthSocial::withdraw);
+    auth.withdraw();
+  }
+
 }
