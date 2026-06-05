@@ -21,6 +21,7 @@ import com.example.WonkaoTalk.domain.store.entity.Store;
 import com.example.WonkaoTalk.domain.store.repo.StoreRepo;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,6 +44,7 @@ class ProductDeleteServiceTest {
   @Mock private StoreRepo storeRepo;
   @Mock private ProductRepo productRepo;
   @Mock private OrderItemRepo orderItemRepo;
+  @Mock private ApplicationEventPublisher eventPublisher;
 
   @InjectMocks private ProductDeleteService productDeleteService;
 
