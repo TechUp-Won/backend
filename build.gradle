@@ -65,6 +65,9 @@ dependencies {
     implementation 'org.flywaydb:flyway-database-postgresql'
     implementation 'org.springframework.boot:spring-boot-starter-flyway'
 
+    // --- Elasticsearch
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+
     // --- Testing
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-websocket-test'
@@ -84,6 +87,7 @@ dependencies {
 
 test {
     useJUnitPlatform()
+    systemProperty 'volume', System.getProperty('volume', '100')
     finalizedBy tasks.named('jacocoTestReport')
 }
 
