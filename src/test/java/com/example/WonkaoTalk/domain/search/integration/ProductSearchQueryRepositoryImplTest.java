@@ -79,6 +79,31 @@ class ProductSearchQueryRepositoryImplTest {
   }
 
   @Test
+  @DisplayName("상품명의 부분 문자열('셔츠'⊂'티셔츠')로도 매칭된다 — ngram 부분매칭")
+  void matchesByPartialSubstring() {
+    index(1L, "티셔츠", List.of("흰색"), 1L, 10000, 5);
+    index(2L, "원피스", List.of("블루"), 1L, 10000, 50);
+    refresh();
+
+    ProductSearchResult result = queryRepository.search(
+        "셔츠", null, null, null, ProductSortType.POPULAR, null, null, 10);
+
+    assertThat(result.ids()).containsExactly(1L);
+  }
+
+  @Test
+  @DisplayName("부분 문자열이라도 어디에도 없으면 매칭되지 않는다")
+  void excludesProduct_whenSubstringAbsent() {
+    index(1L, "티셔츠", List.of("흰색"), 1L, 10000, 5);
+    refresh();
+
+    ProductSearchResult result = queryRepository.search(
+        "바지", null, null, null, ProductSortType.POPULAR, null, null, 10);
+
+    assertThat(result.ids()).isEmpty();
+  }
+
+  @Test
   @DisplayName("모든 토큰이 매칭되지 않으면(AND) 결과에서 제외된다")
   void excludesProduct_whenNotAllTokensMatch() {
     // '흰색'은 매칭되나 '바지'는 상품명/옵션 어디에도 없음

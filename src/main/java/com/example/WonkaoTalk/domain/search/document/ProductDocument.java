@@ -13,6 +13,8 @@ import org.springframework.data.elasticsearch.annotations.DateFormat;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.InnerField;
+import org.springframework.data.elasticsearch.annotations.MultiField;
 import org.springframework.data.elasticsearch.annotations.Setting;
 
 /**
@@ -39,7 +41,15 @@ public class ProductDocument {
   @Field(type = FieldType.Text, analyzer = "nori_analyzer", copyTo = "searchText")
   private List<String> optionValues;
 
-  @Field(type = FieldType.Text, analyzer = "nori_analyzer")
+  /**
+   * {@code name} + {@code optionValues} 가 copy_to 되는 통합 검색 필드.
+   *
+   * <p>본필드는 nori(형태소 단위 통째 토큰 매칭)로, {@code searchText.ngram} 서브필드는 ngram(부분 문자열)으로
+   * 색인한다. nori 만으로는 "티셔츠"가 단일 토큰이라 "셔츠" 부분 검색이 매칭되지 않으므로 ngram 으로 보완한다.
+   */
+  @MultiField(
+      mainField = @Field(type = FieldType.Text, analyzer = "nori_analyzer"),
+      otherFields = @InnerField(suffix = "ngram", type = FieldType.Text, analyzer = "ngram_analyzer"))
   private String searchText;
 
   @Field(type = FieldType.Long)

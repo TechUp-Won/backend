@@ -38,11 +38,21 @@ public class ProductSearchQueryRepositoryImpl implements ProductSearchQueryRepos
       Long lastSortValue,
       int size
   ) {
-    // 상품명 + 옵션값(searchText copy_to)에 모든 토큰이 존재해야 매칭(AND). nori 가 토큰화/형태소 분석 담당.
-    Query match = Query.of(q -> q.match(m -> m
+    // 상품명 + 옵션값(searchText copy_to)에 모든 토큰이 존재해야 매칭(AND).
+    // nori(형태소 통째 토큰)로 못 잡는 부분 문자열("셔츠"→"티셔츠")은 ngram 서브필드로 보완한다.
+    // 두 방식 중 하나라도 매칭되면(should/min 1) 결과에 포함.
+    Query noriMatch = Query.of(q -> q.match(m -> m
         .field("searchText")
         .query(keyword)
         .operator(Operator.And)));
+    Query ngramMatch = Query.of(q -> q.match(m -> m
+        .field("searchText.ngram")
+        .query(keyword)
+        .operator(Operator.And)));
+    Query match = Query.of(q -> q.bool(b -> b
+        .should(noriMatch)
+        .should(ngramMatch)
+        .minimumShouldMatch("1")));
 
     List<Query> filters = buildFilters(categoryIds, minPrice, maxPrice);
 
