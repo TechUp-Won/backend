@@ -131,6 +131,48 @@ class ProductSearchQueryRepositoryImplTest {
   }
 
   @Test
+  @DisplayName("categoryIds 필터에 해당하는 카테고리의 상품만 조회된다")
+  void appliesCategoryFilter() {
+    index(1L, "티셔츠", List.of("흰색"), 1L, 10000, 5);
+    index(2L, "티셔츠", List.of("흰색"), 2L, 10000, 5);
+    refresh();
+
+    ProductSearchResult result = queryRepository.search(
+        "티셔츠", List.of(1L), null, null, ProductSortType.POPULAR, null, null, 10);
+
+    assertThat(result.ids()).containsExactly(1L);
+  }
+
+  @Test
+  @DisplayName("PRICE_ASC 정렬 시 discountedPrice 오름차순으로 정렬된다")
+  void sortsByPriceAsc_whenPriceAsc() {
+    index(1L, "티셔츠", List.of("흰색"), 1L, 30000, 5);
+    index(2L, "티셔츠", List.of("흰색"), 1L, 10000, 5);
+    index(3L, "티셔츠", List.of("흰색"), 1L, 20000, 5);
+    refresh();
+
+    ProductSearchResult result = queryRepository.search(
+        "티셔츠", null, null, null, ProductSortType.PRICE_ASC, null, null, 10);
+
+    assertThat(result.ids()).containsExactly(2L, 3L, 1L);
+  }
+
+  @Test
+  @DisplayName("LATEST 정렬 시 createdAt 내림차순으로 정렬된다")
+  void sortsByCreatedAtDesc_whenLatest() {
+    // index 헬퍼가 createdAt = 1_700_000_000_000 + id 로 부여 → id 가 클수록 최신
+    index(1L, "티셔츠", List.of("흰색"), 1L, 10000, 5);
+    index(2L, "티셔츠", List.of("흰색"), 1L, 10000, 5);
+    index(3L, "티셔츠", List.of("흰색"), 1L, 10000, 5);
+    refresh();
+
+    ProductSearchResult result = queryRepository.search(
+        "티셔츠", null, null, null, ProductSortType.LATEST, null, null, 10);
+
+    assertThat(result.ids()).containsExactly(3L, 2L, 1L);
+  }
+
+  @Test
   @DisplayName("가격 필터(discountedPrice)가 적용된다")
   void appliesPriceFilter() {
     index(1L, "티셔츠", List.of("흰색"), 1L, 8000, 5);
