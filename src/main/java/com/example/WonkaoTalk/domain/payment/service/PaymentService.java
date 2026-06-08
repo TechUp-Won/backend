@@ -17,6 +17,7 @@ import com.example.WonkaoTalk.domain.payment.dto.PaymentFailResponse;
 import com.example.WonkaoTalk.domain.payment.entity.Payment;
 import com.example.WonkaoTalk.domain.payment.entity.PaymentStatus;
 import com.example.WonkaoTalk.domain.payment.event.PaymentFailedEvent;
+import com.example.WonkaoTalk.domain.payment.event.PaymentInvalidEvent;
 import com.example.WonkaoTalk.domain.payment.repo.PaymentRepo;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -47,7 +48,7 @@ public class PaymentService {
     );
 
     // Order 상태가 PAYMENT_PENDING인지 검증
-    validateCheckoutAvailable(order);
+    validateOrderPaymentPending(order);
 
     // 이미 결제 된 주문인지 검증
     if (paymentRepo.existsByOrder_OrderIdAndStatus(orderId, PaymentStatus.PAID)) {
@@ -86,8 +87,10 @@ public class PaymentService {
   public PaymentConfirmResponse confirm(Long userId, PaymentConfirmRequest request) {
     Payment payment = paymentRepo.findByTossOrderId(request.orderId())
         .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
+
     // 결제 최종 승인 전 재검증
     validateOwner(payment, userId);
+    validateOrderPaymentPending(payment.getOrder());
     validateConfirmable(payment, request);
 
     try {
@@ -187,10 +190,17 @@ public class PaymentService {
       throw new BusinessException(ErrorCode.PAYMENT_INVALID_STATUS);
     }
     if (!payment.getTossOrderId().equals(request.orderId())) {
+      eventPublisher.publishEvent(
+          new PaymentInvalidEvent(payment.getPaymentId(), "ORDER_ID_MISMATCH",
+              "결제 주문번호가 일치하지 않습니다.")
+      );
       payment.markInvalid("ORDER_ID_MISMATCH", "결제 주문번호가 일치하지 않습니다.");
       throw new BusinessException(ErrorCode.PAYMENT_ORDER_MISMATCH);
     }
     if (!payment.getTotalAmount().equals(request.amount())) {
+      eventPublisher.publishEvent(
+          new PaymentInvalidEvent(payment.getPaymentId(), "AMOUNT_MISMATCH", "결제 금액이 일치하지 않습니다.")
+      );
       payment.markInvalid("AMOUNT_MISMATCH", "결제 금액이 일치하지 않습니다.");
       throw new BusinessException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
     }
@@ -199,18 +209,34 @@ public class PaymentService {
   // toss 측 승인 결과 확인
   private void validateTossConfirmResult(Payment payment, TossPaymentConfirmResult result) {
     if (result == null) {
+      eventPublisher.publishEvent(
+          new PaymentInvalidEvent(payment.getPaymentId(), "EMPTY_TOSS_RESPONSE",
+              "토스페이먼츠 승인 응답이 비어있습니다.")
+      );
       payment.markInvalid("EMPTY_TOSS_RESPONSE", "토스페이먼츠 승인 응답이 비어있습니다.");
       throw new BusinessException(ErrorCode.PAYMENT_APPROVAL_FAILED);
     }
     if (!payment.getTossOrderId().equals(result.orderId())) {
+      eventPublisher.publishEvent(
+          new PaymentInvalidEvent(payment.getPaymentId(), "TOSS_ORDER_ID_MISMATCH",
+              "토스페이먼츠 승인 주문번호가 일치하지 않습니다.")
+      );
       payment.markInvalid("TOSS_ORDER_ID_MISMATCH", "토스페이먼츠 승인 주문번호가 일치하지 않습니다.");
       throw new BusinessException(ErrorCode.PAYMENT_ORDER_MISMATCH);
     }
     if (!payment.getTotalAmount().equals(result.totalAmount())) {
+      eventPublisher.publishEvent(
+          new PaymentInvalidEvent(payment.getPaymentId(), "TOSS_AMOUNT_MISMATCH",
+              "토스페이먼츠 승인 금액이 일치하지 않습니다.")
+      );
       payment.markInvalid("TOSS_AMOUNT_MISMATCH", "토스페이먼츠 승인 금액이 일치하지 않습니다.");
       throw new BusinessException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
     }
     if (!"DONE".equals(result.status())) {
+      eventPublisher.publishEvent(
+          new PaymentFailedEvent(payment.getPaymentId(), "TOSS_STATUS_NOT_DONE",
+              "토스페이먼츠 결제 상태가 DONE이 아닙니다.")
+      );
       payment.markFailed("TOSS_STATUS_NOT_DONE", "토스페이먼츠 결제 상태가 DONE이 아닙니다.");
       throw new BusinessException(ErrorCode.PAYMENT_APPROVAL_FAILED);
     }
@@ -226,7 +252,7 @@ public class PaymentService {
   }
 
   // 주문 상태 검증
-  private void validateCheckoutAvailable(Order order) {
+  private void validateOrderPaymentPending(Order order) {
     if (order.getOrderStatus() != OrderStatus.PAYMENT_PENDING) {
       throw new BusinessException(ErrorCode.ORDER_INVALID_STATUS);
     }
