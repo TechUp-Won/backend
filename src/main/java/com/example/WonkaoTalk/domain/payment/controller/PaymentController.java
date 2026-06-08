@@ -3,7 +3,6 @@ package com.example.WonkaoTalk.domain.payment.controller;
 import com.example.WonkaoTalk.common.config.OpenApiConfig;
 import com.example.WonkaoTalk.common.response.ApiResponse;
 import com.example.WonkaoTalk.domain.auth.dto.CustomUserDetails;
-import com.example.WonkaoTalk.domain.payment.dto.PaymentCheckoutResponse;
 import com.example.WonkaoTalk.domain.payment.dto.PaymentConfirmRequest;
 import com.example.WonkaoTalk.domain.payment.dto.PaymentConfirmResponse;
 import com.example.WonkaoTalk.domain.payment.dto.PaymentFailRequest;
@@ -16,7 +15,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,18 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class PaymentController {
 
   private final PaymentService paymentService;
-
-  @Operation(summary = "결제창 호출 정보 조회", description = "토스 결제창 호출에 필요한 clientKey, orderId, 금액, 성공/실패 URL을 조회합니다.")
-  @GetMapping("/{paymentId}/checkout")
-  public ResponseEntity<ApiResponse<PaymentCheckoutResponse>> getCheckout(
-      @AuthenticationPrincipal CustomUserDetails userDetails,
-      @PathVariable Long paymentId
-  ) {
-    PaymentCheckoutResponse response = paymentService.getCheckout(userDetails.getUserId(),
-        paymentId);
-    return ResponseEntity.ok(ApiResponse.success("결제창 호출 정보가 조회되었습니다.", response));
-  }
-
+  
   @Operation(summary = "결제 승인", description = "토스 결제 인증 후 전달받은 paymentKey, orderId, amount를 검증하고 최종 승인합니다.")
   @PostMapping("/confirm")
   public ResponseEntity<ApiResponse<PaymentConfirmResponse>> confirm(

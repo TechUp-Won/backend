@@ -25,7 +25,6 @@ import com.example.WonkaoTalk.domain.order.repo.OrderItemRepo;
 import com.example.WonkaoTalk.domain.order.repo.OrderRepo;
 import com.example.WonkaoTalk.domain.payment.entity.Payment;
 import com.example.WonkaoTalk.domain.payment.repo.PaymentRepo;
-import com.example.WonkaoTalk.domain.payment.service.PaymentService;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
@@ -60,7 +59,7 @@ public class OrderService {
   private final DeliveryRepo deliveryRepo;
   private final PaymentRepo paymentRepo;
 
-  private final PaymentService paymentService;
+  private final OrderStockService orderStockService;
 
   // 주문 생성 로직 작성
   // 응답값으로 Order로 생성 요청한 값들의 성공적으로 생성 되었는지만 전달해주면됨.
@@ -90,7 +89,6 @@ public class OrderService {
 
     // 5. 재고 상태 확인 (요청 수량에 맞게 주문할 수 있는지)
     validateVariantStock(requestDto.items(), productVariants);
-    // TODO: 재고 감소로직 있어야함. (임시 컬럼만들어서 진행하던지 뭘 하던지 할듯..)
 
     // 7. 주문 금액 계산 -> 금액 계산위해 item 생성
     List<OrderPreviewItemDto> orderItems = createOrderPreviewItems(requestDto.items(),
@@ -123,15 +121,13 @@ public class OrderService {
 
     // 이렇게 객체 새로 생성해서 부여하는 방식이 옳은 방식일지 고민해볼 필요 있을듯
     Order savedOrder = orderRepo.save(order);
-    orderItemRepo.saveAll(createOrderItems(savedOrder, orderItems, productVariants));
+    List<OrderItem> orderItemList = createOrderItems(savedOrder, orderItems, productVariants);
 
-    // 12. Payment 생성
-    // status = READY
-    // tossOrderId 생성
-    // idempotencyKey 생성
-    // totalAmount = order.finalAmount
-    Payment payment = paymentService.createReadyPayment(savedOrder);
+    // 재고 차감 후 orderItem 저장
+    orderStockService.decreaseStocks(orderItemList);
+    orderItemRepo.saveAll(orderItemList);
 
+    // 12. 배송지 저장
     saveDelivery(savedOrder, requestDto.delivery());
 
     // 13. 주문 생성 응답 반환
@@ -145,12 +141,6 @@ public class OrderService {
             savedOrder.getDiscountAmount(),
             savedOrder.getPointUsedAmount(),
             savedOrder.getFinalAmount()
-        ),
-        new OrderCreateResponse.PaymentCreateInfoDto(
-            payment.getPaymentId(),
-            payment.getTossOrderId(),
-            payment.getTotalAmount(),
-            savedOrder.getOrderTitle()
         )
     );
   }

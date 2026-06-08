@@ -4,6 +4,7 @@ import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.payment.entity.Payment;
 import com.example.WonkaoTalk.domain.payment.event.PaymentFailedEvent;
+import com.example.WonkaoTalk.domain.payment.event.PaymentInvalidEvent;
 import com.example.WonkaoTalk.domain.payment.repo.PaymentRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,7 +15,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 @Service
 @RequiredArgsConstructor
-public class PaymentFailRecorder {
+public class PaymentResultRecorder {
 
   private final PaymentRepo paymentRepo;
 
@@ -25,6 +26,14 @@ public class PaymentFailRecorder {
         .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
 
     payment.markFailed(event.failCode(), event.failMessage());
-    payment.getOrder().markPaymentFailed();
+  }
+
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_ROLLBACK)
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public void recordInvalid(PaymentInvalidEvent event) {
+    Payment payment = paymentRepo.findById(event.paymentId())
+        .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
+
+    payment.markInvalid(event.failCode(), event.failMessage());
   }
 }

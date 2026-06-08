@@ -101,7 +101,7 @@ class PaymentIntegrationTest {
       orderItemRepo.save(orderItem);
 //      em.persist(orderItem);
 
-      Payment readyPayment = Payment.createReadyPayment(
+      Payment readyPayment = Payment.createPendingPayment(
           order,
           "ORD-TEST-001-PAY-001",
           "idem-key",
@@ -140,7 +140,7 @@ class PaymentIntegrationTest {
     assertThat(savedPayment.getFailCode()).isEqualTo("REJECT_CARD");
     assertThat(savedPayment.getFailMessage()).isEqualTo("카드 승인이 거절되었습니다.");
     assertThat(savedPayment.getFailedAt()).isNotNull();
-    assertThat(savedOrder.getOrderStatus()).isEqualTo(OrderStatus.PAYMENT_FAILED);
+    assertThat(savedOrder.getOrderStatus()).isEqualTo(OrderStatus.PAYMENT_PENDING);
   }
 
   private User saveUser() {
