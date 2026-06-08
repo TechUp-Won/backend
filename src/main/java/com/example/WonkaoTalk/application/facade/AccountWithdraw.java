@@ -16,17 +16,17 @@ public class AccountWithdraw {
   private final WithdrawTransactionProcessor withdrawTransactionProcessor;
 
   public void withdrawUser(Long authId, String email, String accessToken) {
-    revokeSocialConnectionSafely(authId);
-
     withdrawTransactionProcessor.withdrawUser(authId);
+
+    revokeSocialConnectionSafely(authId);
 
     authService.invalidateToken(email, accessToken);
   }
 
   public void withdrawSeller(Long authId, String email, String accessToken) {
-    revokeSocialConnectionSafely(authId);
-
     withdrawTransactionProcessor.withdrawSeller(authId);
+    
+    revokeSocialConnectionSafely(authId);
 
     authService.invalidateToken(email, accessToken);
   }
