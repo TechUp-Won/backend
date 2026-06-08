@@ -9,6 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.WonkaoTalk.common.config.JacksonConfig;
 import com.example.WonkaoTalk.common.config.security.jwt.JwtExceptionFilter;
+import com.example.WonkaoTalk.common.config.security.jwt.JwtTokenProvider;
+import com.example.WonkaoTalk.common.redis.RedisService;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckRequest;
 import com.example.WonkaoTalk.domain.auth.dto.EmailCheckResponse;
 import com.example.WonkaoTalk.domain.auth.dto.LoginRequest;
@@ -43,6 +45,10 @@ class AuthControllerTest {
   private AuthService authService;
   @MockitoBean
   private JwtExceptionFilter jwtExceptionFilter;
+  @MockitoBean
+  private JwtTokenProvider jwtTokenProvider;
+  @MockitoBean
+  private RedisService redisService;
 
   @Test
   @DisplayName("이메일 중복 검사 - 미가입 이메일 검사 성공")

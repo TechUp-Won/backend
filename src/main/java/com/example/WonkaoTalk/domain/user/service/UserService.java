@@ -55,8 +55,20 @@ public class UserService {
           .build();
       userRepo.save(user);
     } else {
-      user = userRepo.findByAuth(auth)
-          .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+      if (auth.getRole() == Role.SELLER) {
+        auth.updateRole(Role.USER_SELLER);
+      }
+      user = userRepo.findByAuth(auth).orElseGet(() -> {
+        User newUser = User.builder()
+            .auth(auth)
+            .name(request.name())
+            .nickname(request.nickname())
+            .phone(request.phone())
+            .birthDate(request.birthDate())
+            .gender(request.gender())
+            .build();
+        return userRepo.save(newUser);
+      });
     }
     return UserSignUpResponse.of(auth, user);
   }
