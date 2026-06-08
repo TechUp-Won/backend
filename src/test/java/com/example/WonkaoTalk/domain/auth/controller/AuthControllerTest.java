@@ -27,6 +27,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(controllers = AuthController.class)
+@AutoConfigureMockMvc(addFilters = false)
+@Import(JacksonConfig.class)
 class AuthControllerTest {
 
   private final Auth auth = Auth.builder().build();
