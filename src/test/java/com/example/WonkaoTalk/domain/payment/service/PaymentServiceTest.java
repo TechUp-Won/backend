@@ -323,6 +323,26 @@ public class PaymentServiceTest {
     }
 
     @Test
+    @DisplayName("주문 상태가 PAYMENT_PENDING이 아니면 ORDER_INVALID_STATUS 예외가 발생한다.")
+    public void fail_confirm_invalidOrderStatus() {
+      //given
+      Long userId = 1L;
+      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY", 35000L);
+      Payment payment = mockPendingPayment(userId, 1L, null, request.orderId(), 35000L,
+          OrderStatus.CREATED);
+
+      when(paymentRepo.findByTossOrderId(request.orderId())).thenReturn(Optional.of(payment));
+
+      //when
+      BusinessException exception = assertThrows(BusinessException.class,
+          () -> paymentService.confirm(userId, request));
+
+      //then
+      assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ORDER_INVALID_STATUS);
+      verify(tossPaymentsClient, never()).confirm(any(), any(), any(), any());
+    }
+
+    @Test
     @DisplayName("결제 주문번호가 일치하지 않으면 PAYMENT_ORDER_MISMATCH 예외가 발생하고 INVALID 상태로 변경된다.")
     public void fail_confirm_orderMismatch() {
       //given
@@ -692,7 +712,19 @@ public class PaymentServiceTest {
       String tossOrderId,
       Long totalAmount
   ) {
-    Order order = mockOrder(userId, orderId, OrderStatus.PAYMENT_PENDING, "가나 초콜릿 외 1건",
+    return mockPendingPayment(userId, orderId, paymentId, tossOrderId, totalAmount,
+        OrderStatus.PAYMENT_PENDING);
+  }
+
+  private Payment mockPendingPayment(
+      Long userId,
+      Long orderId,
+      Long paymentId,
+      String tossOrderId,
+      Long totalAmount,
+      OrderStatus orderStatus
+  ) {
+    Order order = mockOrder(userId, orderId, orderStatus, "가나 초콜릿 외 1건",
         totalAmount);
     Payment payment = Payment.createPendingPayment(order, tossOrderId, "idempotencyKey", totalAmount,
         LocalDateTime.now());
