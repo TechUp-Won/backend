@@ -4,11 +4,11 @@ import com.example.WonkaoTalk.domain.auth.entity.OAuthRevocationFailure;
 import com.example.WonkaoTalk.domain.auth.enums.FallbackStatus;
 import com.example.WonkaoTalk.domain.auth.repo.OAuthRevocationFailureRepo;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
@@ -17,11 +17,9 @@ public class OAuthRevocationScheduler {
 
   private static final int MAX_RETRY_COUNT = 5;
   private final OAuthRevocationFailureRepo failureRepo;
-  private final List<OAuthRevocationProvider> revocationProviders;
+  private final OAuthRevocationAsyncHandler asyncHandler;
 
-  // TODO: 외부 API 배치 병렬 처리로 성능 향상
   @Scheduled(cron = "0 0/10 * * * *")
-  @Transactional
   public void processRevocationFailures() {
     List<OAuthRevocationFailure> pendingList =
         failureRepo.findTop50ByStatusOrderByCreatedAtAsc(FallbackStatus.PENDING);
@@ -31,35 +29,17 @@ public class OAuthRevocationScheduler {
     }
     log.info("소셜 연동 해지 Fallback 배치를 시작합니다. 대상 건수: {}", pendingList.size());
 
-    for (OAuthRevocationFailure failure : pendingList) {
-      OAuthRevocationProvider providerClient = revocationProviders.stream()
-          .filter(provider -> provider.supports(failure.getProvider()))
-          .findFirst()
-          .orElse(null);
+    List<CompletableFuture<Void>> futures = pendingList.stream()
+        .map(failure -> CompletableFuture.runAsync(() ->
+                asyncHandler.processSingleFailure(
+                    failure.getId()), // 새로운 스레드에서 영속성 컨텍스트를 새로 연다
+            asyncHandler.getExecutor() // 커스텀 스레드 풀 사용
+        ))
+        .toList();
 
-      if (providerClient == null) {
-        log.error("지원하지 않는 Provider입니다. 강제 영구 실패 처리합니다. ID: {}", failure.getId());
-        failure.incrementRetryCount(0); // 즉시 영구 실패 처리
-        continue;
-      }
+    // 모든 병렬 작업이 끝날 때까지 대기 (join)
+    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
-      try {
-        // 외부 API 재시도
-        providerClient.revoke(failure.getProviderUserId(), failure.getProviderRefreshToken());
-        failure.markAsSuccess();
-        log.info("소셜 연동 해지 재시도 성공. Failure ID: {}", failure.getId());
-
-      } catch (Exception e) {
-        failure.incrementRetryCount(MAX_RETRY_COUNT);
-        log.warn("소셜 연동 해지 재시도 실패. Failure ID: {}, 현재 시도 횟수: {}",
-            failure.getId(), failure.getRetryCount(), e);
-
-        if (failure.getStatus() == FallbackStatus.PERMANENT_FAILURE) {
-          log.error("소셜 연동 해지 최대 재시도 횟수({}) 초과. 영구 실패(Dead Letter) 처리됩니다. 대상: {}",
-              MAX_RETRY_COUNT, failure.getProviderUserId());
-          // 추가적인 알림 로직을 여기에 구현할 수 있습니다.
-        }
-      }
-    }
+    log.info("소셜 연동 해지 Fallback 배치 완료.");
   }
 }
