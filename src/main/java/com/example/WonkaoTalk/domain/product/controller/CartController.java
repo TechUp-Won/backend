@@ -44,7 +44,7 @@ public class CartController {
   @GetMapping
   public ResponseEntity<ApiResponse<CartResponse>> getCart(
       @AuthenticationPrincipal CustomUserDetails userDetails) {
-    CartResponse response = cartService.getCart(userDetails.getAuthId());
+    CartResponse response = cartService.getCart(userDetails.getUserId());
     return ResponseEntity.ok(ApiResponse.success("조회가 완료되었습니다", response));
   }
 
@@ -53,7 +53,7 @@ public class CartController {
   public ResponseEntity<ApiResponse<CartAddResponse>> addToCart(
       @AuthenticationPrincipal CustomUserDetails userDetails,
       @Valid @RequestBody CartAddRequest request) {
-    CartAddResponse response = cartService.addToCart(userDetails.getAuthId(), request);
+    CartAddResponse response = cartService.addToCart(userDetails.getUserId(), request);
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success("장바구니에 상품이 추가되었습니다.", response));
   }
@@ -65,7 +65,7 @@ public class CartController {
       @PathVariable Long cartItemId,
       @Valid @RequestBody CartQuantityUpdateRequest request) {
     CartQuantityUpdateResponse response = cartService.updateCartItemQuantity(
-        userDetails.getAuthId(), cartItemId, request);
+        userDetails.getUserId(), cartItemId, request);
     return ResponseEntity.ok(ApiResponse.success("수정이 완료되었습니다", response));
   }
 
@@ -76,7 +76,7 @@ public class CartController {
       @PathVariable Long cartItemId,
       @Valid @RequestBody CartOptionUpdateRequest request) {
     CartOptionUpdateResponse response = cartService.updateCartItemOption(
-        userDetails.getAuthId(), cartItemId, request);
+        userDetails.getUserId(), cartItemId, request);
     return ResponseEntity.ok(ApiResponse.success("수정이 완료되었습니다", response));
   }
 
@@ -87,7 +87,7 @@ public class CartController {
       @RequestParam(required = false) List<Long> cartItemIds,
       @RequestParam(defaultValue = "false") boolean isAllDelete) {
     CartDeleteResponse response = cartService.deleteFromCart(
-        userDetails.getAuthId(), cartItemIds, isAllDelete);
+        userDetails.getUserId(), cartItemIds, isAllDelete);
     String message = isAllDelete ? "장바구니를 비웠습니다." : "선택하신 상품이 장바구니에서 삭제되었습니다.";
     return ResponseEntity.ok(ApiResponse.success(message, response));
   }

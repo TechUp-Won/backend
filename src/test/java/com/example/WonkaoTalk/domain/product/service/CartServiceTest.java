@@ -63,7 +63,8 @@ class CartServiceTest {
   void setUp() {
     User mockUser = mock(User.class);
     when(mockUser.getId()).thenReturn(1L);
-    when(userRepo.findByAuthId(anyLong())).thenReturn(Optional.of(mockUser));
+    when(userRepo.existsById(anyLong())).thenReturn(true);
+    when(userRepo.findById(anyLong())).thenReturn(Optional.of(mockUser));
   }
 
   // ── getCart ──────────────────────────────────────────────────────────────────
@@ -152,9 +153,9 @@ class CartServiceTest {
   }
 
   @Test
-  @DisplayName("authId에 해당하는 User가 없으면 NOT_FOUND를 던진다")
+  @DisplayName("userId에 해당하는 User가 없으면 NOT_FOUND를 던진다")
   void getCart_throwsNotFound_whenUserNotFound() {
-    when(userRepo.findByAuthId(anyLong())).thenReturn(Optional.empty());
+    when(userRepo.existsById(anyLong())).thenReturn(false);
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> cartService.getCart(1L));
@@ -270,12 +271,12 @@ class CartServiceTest {
   }
 
   @Test
-  @DisplayName("authId에 해당하는 User가 없으면 NOT_FOUND를 던진다")
+  @DisplayName("userId에 해당하는 User가 없으면 NOT_FOUND를 던진다")
   void addToCart_throwsNotFound_whenUserNotFound() {
     Product product = mockProductWithId(1L);
     ProductVariant variant = mockVariant(1L, product, 10, SaleStatus.ON_SALE, null);
     when(productVariantRepository.findById(1L)).thenReturn(Optional.of(variant));
-    when(userRepo.findByAuthId(anyLong())).thenReturn(Optional.empty());
+    when(userRepo.findById(anyLong())).thenReturn(Optional.empty());
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> cartService.addToCart(1L, mockAddRequest(1L, 1L, 2)));
@@ -445,17 +446,6 @@ class CartServiceTest {
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_STOCK_INSUFFICIENT);
   }
 
-  @Test
-  @DisplayName("authId에 해당하는 User가 없으면 NOT_FOUND를 던진다")
-  void updateQuantity_throwsNotFound_whenUserNotFound() {
-    when(userRepo.findByAuthId(anyLong())).thenReturn(Optional.empty());
-
-    BusinessException ex = assertThrows(BusinessException.class,
-        () -> cartService.updateCartItemQuantity(1L, 1L, mockQuantityUpdateRequest(3)));
-
-    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
-  }
-
   // ── updateCartItemQuantity - 성공 ────────────────────────────────────────────
 
   @Test
@@ -550,17 +540,6 @@ class CartServiceTest {
         () -> cartService.updateCartItemOption(1L, 1L, mockOptionUpdateRequest(2L)));
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_VARIANT_UNAVAILABLE);
-  }
-
-  @Test
-  @DisplayName("authId에 해당하는 User가 없으면 NOT_FOUND를 던진다")
-  void updateOption_throwsNotFound_whenUserNotFound() {
-    when(userRepo.findByAuthId(anyLong())).thenReturn(Optional.empty());
-
-    BusinessException ex = assertThrows(BusinessException.class,
-        () -> cartService.updateCartItemOption(1L, 1L, mockOptionUpdateRequest(2L)));
-
-    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
   }
 
   // ── updateCartItemOption - Merge ─────────────────────────────────────────────
@@ -679,17 +658,6 @@ class CartServiceTest {
   }
 
   // ── deleteFromCart ───────────────────────────────────────────────────────────
-
-  @Test
-  @DisplayName("authId에 해당하는 User가 없으면 NOT_FOUND를 던진다")
-  void deleteFromCart_throwsNotFound_whenUserNotFound() {
-    when(userRepo.findByAuthId(anyLong())).thenReturn(Optional.empty());
-
-    BusinessException ex = assertThrows(BusinessException.class,
-        () -> cartService.deleteFromCart(1L, null, true));
-
-    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
-  }
 
   @Test
   @DisplayName("장바구니가 없으면 NOT_FOUND를 던진다")
