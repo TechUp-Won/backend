@@ -23,10 +23,12 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -66,9 +68,18 @@ public class SearchService {
       categoryIds = getAllCategoryIds(request.categoryId());
     }
 
-    ProductSearchPage productPage = useDatabaseEngine()
-        ? searchProductsViaDatabase(request, categoryIds, sortType, size)
-        : searchProductsViaElasticsearch(request, categoryIds, sortType, size);
+    ProductSearchPage productPage;
+    if (useDatabaseEngine()) {
+      productPage = searchProductsViaDatabase(request, categoryIds, sortType, size);
+    } else {
+      try {
+        productPage = searchProductsViaElasticsearch(request, categoryIds, sortType, size);
+      } catch (Exception e) {
+        log.error("Elasticsearch 검색 중 장애 발생 — DB 검색 엔진으로 Fallback을 수행합니다. keyword={}",
+            request.keyword(), e);
+        productPage = searchProductsViaDatabase(request, categoryIds, sortType, size);
+      }
+    }
 
     List<StoreResult> storeResults = storeRepository.findByNameContaining(request.keyword())
         .stream()

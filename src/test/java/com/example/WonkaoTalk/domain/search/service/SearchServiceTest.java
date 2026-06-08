@@ -197,6 +197,24 @@ class SearchServiceTest {
     assertThat(response.stores().get(0).storeName()).isEqualTo("셔츠스토어");
   }
 
+  @Test
+  @DisplayName("ES 검색 중 예외 발생 시 DB 검색으로 Fallback을 수행한다")
+  void fallbacksToDatabase_whenElasticsearchThrowsException() {
+    SearchRequest request = new SearchRequest("셔츠", null, null, null, "popular", null, null, 2);
+    when(productSearchQueryRepository.search(anyString(), any(), any(), any(), any(), any(), any(), anyInt()))
+        .thenThrow(new RuntimeException("Elasticsearch connection failed"));
+
+    List<Product> products = mockProducts(2);
+    when(productRepository.findWithSearch(anyString(), any(), any(), any(), any(), any(), any(), anyInt()))
+        .thenReturn(products);
+
+    SearchResponse response = searchService.search(request);
+
+    assertThat(response.products()).hasSize(2);
+    verify(productRepository).findWithSearch(anyString(), any(), any(), any(), any(), any(), any(), anyInt());
+    verify(productRepository, never()).findWithStoreByIdIn(any());
+  }
+
   // ── DB 폴백 경로 (search.product.engine=database) ─────────────────────────────
 
   @Test
