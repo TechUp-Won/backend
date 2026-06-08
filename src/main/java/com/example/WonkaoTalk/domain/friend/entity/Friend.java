@@ -1,7 +1,7 @@
-package com.example.WonkaoTalk.domain.user.friend.entity;
+package com.example.WonkaoTalk.domain.friend.entity;
 
+import com.example.WonkaoTalk.domain.friend.enums.FriendStatus;
 import com.example.WonkaoTalk.domain.user.entity.User;
-import com.example.WonkaoTalk.domain.user.friend.enums.FriendStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;

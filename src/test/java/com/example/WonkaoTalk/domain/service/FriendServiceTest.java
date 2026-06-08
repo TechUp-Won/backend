@@ -1,18 +1,19 @@
-package com.example.WonkaoTalk.domain.user.friend.service;
+package com.example.WonkaoTalk.domain.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
+import com.example.WonkaoTalk.domain.friend.dto.FriendAddRequest;
+import com.example.WonkaoTalk.domain.friend.dto.FriendAddResponse;
+import com.example.WonkaoTalk.domain.friend.dto.FriendUpdateRequest;
+import com.example.WonkaoTalk.domain.friend.dto.FriendUpdateResponse;
+import com.example.WonkaoTalk.domain.friend.entity.Friend;
+import com.example.WonkaoTalk.domain.friend.enums.FriendStatus;
+import com.example.WonkaoTalk.domain.friend.repo.FriendRepo;
+import com.example.WonkaoTalk.domain.friend.service.FriendService;
 import com.example.WonkaoTalk.domain.user.entity.User;
-import com.example.WonkaoTalk.domain.user.friend.dto.FriendAddRequest;
-import com.example.WonkaoTalk.domain.user.friend.dto.FriendAddResponse;
-import com.example.WonkaoTalk.domain.user.friend.dto.FriendUpdateRequest;
-import com.example.WonkaoTalk.domain.user.friend.dto.FriendUpdateResponse;
-import com.example.WonkaoTalk.domain.user.friend.entity.Friend;
-import com.example.WonkaoTalk.domain.user.friend.enums.FriendStatus;
-import com.example.WonkaoTalk.domain.user.friend.repo.FriendRepo;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
 import java.util.List;
 import java.util.Optional;

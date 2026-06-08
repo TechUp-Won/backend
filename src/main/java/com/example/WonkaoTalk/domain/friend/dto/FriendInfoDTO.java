@@ -1,6 +1,6 @@
-package com.example.WonkaoTalk.domain.user.friend.dto;
+package com.example.WonkaoTalk.domain.friend.dto;
 
-import com.example.WonkaoTalk.domain.user.friend.entity.Friend;
+import com.example.WonkaoTalk.domain.friend.entity.Friend;
 import lombok.Builder;
 
 @Builder

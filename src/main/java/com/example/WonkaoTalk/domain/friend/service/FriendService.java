@@ -1,15 +1,15 @@
-package com.example.WonkaoTalk.domain.user.friend.service;
+package com.example.WonkaoTalk.domain.friend.service;
 
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
+import com.example.WonkaoTalk.domain.friend.dto.FriendAddRequest;
+import com.example.WonkaoTalk.domain.friend.dto.FriendAddResponse;
+import com.example.WonkaoTalk.domain.friend.dto.FriendStatusRequest;
+import com.example.WonkaoTalk.domain.friend.dto.FriendUpdateRequest;
+import com.example.WonkaoTalk.domain.friend.dto.FriendUpdateResponse;
+import com.example.WonkaoTalk.domain.friend.entity.Friend;
+import com.example.WonkaoTalk.domain.friend.repo.FriendRepo;
 import com.example.WonkaoTalk.domain.user.entity.User;
-import com.example.WonkaoTalk.domain.user.friend.dto.FriendAddRequest;
-import com.example.WonkaoTalk.domain.user.friend.dto.FriendAddResponse;
-import com.example.WonkaoTalk.domain.user.friend.dto.FriendStatusRequest;
-import com.example.WonkaoTalk.domain.user.friend.dto.FriendUpdateRequest;
-import com.example.WonkaoTalk.domain.user.friend.dto.FriendUpdateResponse;
-import com.example.WonkaoTalk.domain.user.friend.entity.Friend;
-import com.example.WonkaoTalk.domain.user.friend.repo.FriendRepo;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

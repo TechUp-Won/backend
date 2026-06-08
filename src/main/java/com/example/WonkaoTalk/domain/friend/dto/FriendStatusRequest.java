@@ -1,6 +1,6 @@
-package com.example.WonkaoTalk.domain.user.friend.dto;
+package com.example.WonkaoTalk.domain.friend.dto;
 
-import com.example.WonkaoTalk.domain.user.friend.enums.FriendStatus;
+import com.example.WonkaoTalk.domain.friend.enums.FriendStatus;
 import jakarta.validation.constraints.NotNull;
 
 public record FriendStatusRequest(
