@@ -12,12 +12,10 @@ import com.example.WonkaoTalk.domain.auth.dto.LoginRequest;
 import com.example.WonkaoTalk.domain.auth.dto.TokenDto;
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.entity.AuthLocal;
-import com.example.WonkaoTalk.domain.auth.entity.AuthSocial;
 import com.example.WonkaoTalk.domain.auth.enums.LoginStatus;
 import com.example.WonkaoTalk.domain.auth.enums.Role;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -95,16 +93,7 @@ public class AuthService {
     }
     String encodedPassword = passwordEncoder.encode(password);
 
-    Optional<AuthSocial> optionalSocial = authCommandService.getFirstAuthSocialByEmail(email);
-    if (optionalSocial.isPresent()) {
-      Auth existingAuth = optionalSocial.get().getAuth();
-      authCommandService.saveAuthLocal(existingAuth, email, encodedPassword);
-      return new AuthIntegrationResultDto(existingAuth, false);
-    }
-
-    Auth newAuth = authCommandService.saveAuth(role);
-    authCommandService.saveAuthLocal(newAuth, email, encodedPassword);
-    return new AuthIntegrationResultDto(newAuth, true);
+    return authCommandService.linkOrCreateTransaction(email, encodedPassword, role);
   }
 
   private TokenDto publishToken(String email, Auth auth) {

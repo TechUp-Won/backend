@@ -2,6 +2,7 @@ package com.example.WonkaoTalk.domain.auth.service;
 
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
+import com.example.WonkaoTalk.domain.auth.dto.AuthIntegrationResultDto;
 import com.example.WonkaoTalk.domain.auth.dto.AuthUserInfoDto;
 import com.example.WonkaoTalk.domain.auth.dto.SocialLoginDto;
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
@@ -123,6 +124,21 @@ public class AuthCommandService {
     }
   }
 
+  @Transactional
+  public AuthIntegrationResultDto linkOrCreateTransaction(String email, String encodedPassword,
+      Role role) {
+    Optional<AuthSocial> optionalSocial = getFirstAuthSocialByEmail(email);
+    if (optionalSocial.isPresent()) {
+      Auth existingAuth = optionalSocial.get().getAuth();
+      saveAuthLocal(existingAuth, email, encodedPassword);
+      return new AuthIntegrationResultDto(existingAuth, false);
+    }
+
+    Auth newAuth = saveAuth(role);
+    saveAuthLocal(newAuth, email, encodedPassword);
+    return new AuthIntegrationResultDto(newAuth, true);
+  }
+
   @Transactional(readOnly = true)
   public SocialLoginDto generateSocialLoginData(String email, AuthProvider provider,
       String providerId) {
@@ -143,7 +159,6 @@ public class AuthCommandService {
   public Optional<AuthSocial> getFirstAuthSocialByEmail(String email) {
     return authSocialRepo.findFirstByEmail(email);
   }
-
 
   /*********** HELPER METHOD ************/
   private void processFullWithdraw(Auth auth) {
