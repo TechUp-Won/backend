@@ -5,7 +5,7 @@ import com.example.WonkaoTalk.domain.auth.enums.FallbackStatus;
 import com.example.WonkaoTalk.domain.auth.repo.OAuthRevocationFailureRepo;
 import java.util.List;
 import java.util.concurrent.Executor;
-import lombok.RequiredArgsConstructor;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -14,17 +14,23 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class OAuthRevocationAsyncHandler {
 
   public static final int MAX_RETRY_COUNT = 5;
   private final OAuthRevocationFailureRepo failureRepo;
   private final List<OAuthRevocationProvider> revocationProviders;
-  @Qualifier("revocationExecutor")
+
+  @Getter
   private final Executor executor;
 
-  public Executor getExecutor() {
-    return this.executor;
+  public OAuthRevocationAsyncHandler(
+      OAuthRevocationFailureRepo failureRepo,
+      List<OAuthRevocationProvider> revocationProviders,
+      @Qualifier("revocationExecutor") Executor executor
+  ) {
+    this.failureRepo = failureRepo;
+    this.revocationProviders = revocationProviders;
+    this.executor = executor;
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
