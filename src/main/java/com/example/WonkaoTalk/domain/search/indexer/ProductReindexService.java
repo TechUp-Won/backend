@@ -10,9 +10,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 /**
@@ -37,8 +40,43 @@ public class ProductReindexService {
   private final ProductOptionRepo productOptionRepo;
   private final ProductSearchRepository searchRepository;
 
-  /** 색인 대상 전체를 청크 단위로 다시 색인한다. 총 색인 건수를 반환. */
+  private final AtomicBoolean isRunning = new AtomicBoolean(false);
+  private volatile ReindexStatus status = new ReindexStatus("IDLE", 0, 0L, null);
+
+  public record ReindexStatus(String state, int totalIndexed, long lastId, String errorMessage) {}
+
+  public ReindexStatus getStatus() {
+    return status;
+  }
+
+  /** 색인 대상 전체를 청크 단위로 다시 색인한다. 총 색인 건수를 반환 (동기 방식). */
   public int reindexAll() {
+    int total = runReindexing(null);
+    log.info("상품 전체 재색인 완료: {} 건", total);
+    return total;
+  }
+
+  /** 백그라운드 스레드에서 전체 재색인 작업을 실행한다 (비동기 방식). */
+  @Async
+  public void reindexAllAsync() {
+    if (!isRunning.compareAndSet(false, true)) {
+      log.warn("이미 재색인 작업이 진행 중입니다.");
+      return;
+    }
+    status = new ReindexStatus("RUNNING", 0, 0L, null);
+    try {
+      int total = runReindexing((t, id) -> status = new ReindexStatus("RUNNING", t, id, null));
+      status = new ReindexStatus("COMPLETED", total, status.lastId(), null);
+      log.info("상품 전체 재색인 완료: {} 건", total);
+    } catch (Exception e) {
+      log.error("재색인 중 에러 발생", e);
+      status = new ReindexStatus("FAILED", status.totalIndexed(), status.lastId(), e.getMessage());
+    } finally {
+      isRunning.set(false);
+    }
+  }
+
+  private int runReindexing(BiConsumer<Integer, Long> progressConsumer) {
     int total = 0;
     long lastId = 0L;
 
@@ -59,10 +97,11 @@ public class ProductReindexService {
 
       total += docs.size();
       lastId = ids.get(ids.size() - 1);
+      if (progressConsumer != null) {
+        progressConsumer.accept(total, lastId);
+      }
       log.info("상품 재색인 진행: 누적 {} 건 (마지막 id={})", total, lastId);
     }
-
-    log.info("상품 전체 재색인 완료: {} 건", total);
     return total;
   }
 

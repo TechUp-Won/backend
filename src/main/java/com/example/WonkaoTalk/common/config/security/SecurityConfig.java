@@ -57,6 +57,7 @@ public class SecurityConfig {
                 "/api/v1/users/signup",
                 "/api/v1/sellers/signup",
                 "/api/v1/search",
+                "/api/v1/search/reindex/**",
                 "/ws/**",
                 "/v3/api-docs/**",
                 "/swagger-ui/**",
