@@ -3,6 +3,8 @@ package com.example.WonkaoTalk.domain.seller.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
@@ -137,5 +139,29 @@ class SellerServiceTest {
     assertThat(response.sellerId()).isEqualTo(1L);
     assertThat(response.name()).isEqualTo("이병건스토어");
     assertThat(response.phone()).isEqualTo("010-1111-1111");
+  }
+
+  @Test
+  @DisplayName("판매자 탈퇴 시 개인정보가 마스킹되고 Soft Delete 처리된다.")
+  public void withdrawAndMaskSellerSuccess() {
+    // given
+    Seller seller = Seller.builder()
+        .buzNo("1234567890")
+        .name("판매자1")
+        .phone("010-1234-5678")
+        .build();
+    ReflectionTestUtils.setField(seller, "id", 1L);
+    given(sellerRepo.findByAuthId(1L)).willReturn(Optional.of(seller));
+
+    // when
+    sellerService.withdrawSeller(1L);
+
+    // then
+    then(sellerRepo).should(times(1)).findByAuthId(1L);
+
+    // 비즈니스 로직 검증: anonymize()가 호출되어 원본 데이터가 소실(마스킹)되었는지 확인
+    assertThat(seller.getBuzNo()).isNotEqualTo("1234567890");
+    assertThat(seller.getName()).isNotEqualTo("판매자1");
+    assertThat(seller.getPhone()).isNotEqualTo("010-1234-5678");
   }
 }

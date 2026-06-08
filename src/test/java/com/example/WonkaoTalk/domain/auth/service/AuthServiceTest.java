@@ -2,12 +2,16 @@ package com.example.WonkaoTalk.domain.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.example.WonkaoTalk.common.config.security.jwt.JwtTokenProvider;
@@ -38,9 +42,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
 
+  private final String email = "test@test.com";
+  private final String password = "Qwer1234!";
   @InjectMocks
   private AuthService authService;
-
   @Mock
   private AuthCommandService authCommandService;
   @Mock
@@ -49,7 +54,6 @@ class AuthServiceTest {
   private JwtTokenProvider jwtTokenProvider;
   @Mock
   private RedisService redisService;
-
   private MockHttpServletRequest httpRequest;
 
   @BeforeEach
@@ -60,10 +64,10 @@ class AuthServiceTest {
   }
 
   @Test
-  @DisplayName("사용 가능한 이메일 중복 검사")
+  @DisplayName("이메일 중복 검사 - 미가입 이메일 검사 성공")
   public void checkEmailAvailable() {
     //given
-    EmailCheckRequest request = new EmailCheckRequest("test@test.com");
+    EmailCheckRequest request = new EmailCheckRequest(email);
     given(authCommandService.existsByEmail(request.email())).willReturn(false);
 
     //when
@@ -74,33 +78,24 @@ class AuthServiceTest {
   }
 
   @Test
-  @DisplayName("인증 계정 생성 성공")
-  public void createAuthSuccess() {
+  @DisplayName("이메일 중복 검사 - 기가입 이메일 검사 성공")
+  public void checkEmailDuplicated() {
     //given
-    String email = "test@test.com";
-    String password = "Qwer1234";
-    Role role = Role.USER;
-
-    given(authCommandService.existsByEmail(email)).willReturn(false);
-    given(passwordEncoder.encode(password)).willReturn("EncodedPassword");
-
-    Auth auth = Auth.builder().role(role).build();
-    given(authCommandService.saveAuthLocal(email, "EncodedPassword", role)).willReturn(auth);
+    EmailCheckRequest request = new EmailCheckRequest(email);
+    given(authCommandService.existsByEmail(request.email())).willReturn(true);
 
     //when
-    Auth savedAuth = authService.createAuthLocal(email, password, role);
+    EmailCheckResponse response = authService.validateEmail(request);
 
     //then
-    assertThat(savedAuth).isNotNull();
-    assertThat(savedAuth.getRole()).isEqualTo(Role.USER);
-    verify(authCommandService).saveAuthLocal(email, "EncodedPassword", role);
+    assertThat(response.isValid()).isFalse();
+
   }
 
   @Test
-  @DisplayName("중복된 이메일로 계정 생성 시 예외 발생")
+  @DisplayName("회원가입 - 클라이언트 검증을 우회한 중복 가입 시도 실패")
   public void createAuthFailedByDuplicateEmail() {
     //given
-    String email = "test@test.com";
     given(authCommandService.existsByEmail(email)).willReturn(true);
 
     //when & then
@@ -112,28 +107,23 @@ class AuthServiceTest {
   }
 
   @Test
-  @DisplayName("정상적인 로그인 시도로 로그인에 성공한다.")
+  @DisplayName("로그인 - 유효한 자격증명 로그인 및 이력 기록")
   public void loginSuccess() {
     //given
-    LoginRequest request = new LoginRequest("test@test.com", "Qwer1234");
-
+    LoginRequest request = new LoginRequest(email, password);
     Auth auth = Auth.builder().role(Role.USER).build();
     ReflectionTestUtils.setField(auth, "id", 1L);
-
-    AuthLocal authLocal = AuthLocal.builder()
-        .email("test@test.com")
-        .passwordHash("encodedPassword")
-        .auth(auth)
+    AuthLocal authLocal = AuthLocal.builder().email(email).passwordHash("encoded").auth(auth)
         .build();
-
     AuthUserInfoDto userInfo = AuthUserInfoDto.of("침착맨", 1L, null);
 
-    given(authCommandService.getAuthLocalByEmail(anyString())).willReturn(authLocal);
-    given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
-    given(authCommandService.getAuthUserInfo(any(Auth.class))).willReturn(userInfo);
+    given(authCommandService.getAuthLocalByEmail(email)).willReturn(authLocal);
+    given(passwordEncoder.matches(password, authLocal.getPasswordHash())).willReturn(true);
+    given(authCommandService.getAuthUserInfo(auth)).willReturn(userInfo);
+
     given(jwtTokenProvider.createAccessToken(anyString(), any(Long.class), nullable(Long.class),
         nullable(Long.class), anyString())).willReturn("mockAccessToken");
-    given(jwtTokenProvider.createRefreshToken(anyString())).willReturn("mockRefreshToken");
+    given(jwtTokenProvider.createRefreshToken(email)).willReturn("mockRefreshToken");
     given(jwtTokenProvider.getRefreshTokenValidTime()).willReturn(1209600000L);
     given(jwtTokenProvider.getAccessTokenValidTime()).willReturn(1800000L);
 
@@ -144,6 +134,8 @@ class AuthServiceTest {
     assertThat(response).isNotNull();
     assertThat(response.accessToken()).isEqualTo("mockAccessToken");
     assertThat(response.profileName()).isEqualTo("침착맨");
+    then(authCommandService).should(times(1))
+        .saveLoginHistory(auth, LoginStatus.SUCCESS, "User-Agent", "127.0.0.1");
 
     // Redis 검증
     verify(redisService).setValues(eq("RT:test@test.com"), eq("mockRefreshToken"),
@@ -154,31 +146,31 @@ class AuthServiceTest {
   }
 
   @Test
-  @DisplayName("비밀번호가 일치하지 않아 로그인에 실패하고 예외 발생")
+  @DisplayName("로그인 - 비밀번호 불일치 시 예외 발생")
   public void loginFailPasswordMismatch() {
     //given
-    LoginRequest request = new LoginRequest("test@test.com", "wrongPassword");
+    LoginRequest request = new LoginRequest(email, "wrongPassword");
     Auth auth = Auth.builder().role(Role.USER).build();
     AuthLocal authLocal = AuthLocal.builder()
-        .email("test@test.com").passwordHash("encodedPassword").auth(auth).build();
+        .email(email).passwordHash("encoded").auth(auth).build();
 
-    given(authCommandService.getAuthLocalByEmail(anyString())).willReturn(authLocal);
-    given(passwordEncoder.matches(anyString(), anyString())).willReturn(false);
+    given(authCommandService.getAuthLocalByEmail(email)).willReturn(authLocal);
+    given(passwordEncoder.matches(password, authLocal.getPasswordHash())).willReturn(false);
 
     //when & then
     assertThatThrownBy(() -> authService.login(request, httpRequest))
         .isInstanceOf(BusinessException.class)
         .hasMessageContaining(ErrorCode.AUTH_MISMATCH_PASSWORD.getMessage());
-
+    then(authCommandService).should(times(1))
+        .saveLoginHistory(auth, LoginStatus.FAILURE, "User-Agent", "127.0.0.1");
     verify(authCommandService).saveLoginHistory(eq(auth), eq(LoginStatus.FAILURE), anyString(),
         anyString());
   }
 
   @Test
-  @DisplayName("정상적으로 로그아웃을 수행하여 Redis에서 토큰을 삭제한다.")
+  @DisplayName("로그아웃 - 명시적 로그아웃 및 블랙리스트 등록")
   public void logoutSuccess() {
     //given
-    String email = "test@test.com";
     String accessToken = "mockAccessToken";
     given(redisService.hasKey("RT:" + email)).willReturn(true);
     given(jwtTokenProvider.getExpiration(accessToken)).willReturn(1800000L);
@@ -192,11 +184,10 @@ class AuthServiceTest {
   }
 
   @Test
-  @DisplayName("토큰 재발급 성공")
+  @DisplayName("토큰 재발급 - 유요한 RT로 AT 갱신")
   public void reissueTokenSuccess() {
     //given
     String oldRefreshToken = "oldRefreshToken";
-    String email = "test@test.com";
     String redisKey = "RT:" + email;
 
     Auth auth = Auth.builder().role(Role.USER).build();
@@ -226,5 +217,41 @@ class AuthServiceTest {
     assertThat(result.refreshToken()).isEqualTo("newRefreshToken");
     verify(redisService).setValues(eq(redisKey), eq("newRefreshToken"),
         eq(Duration.ofMillis(9999L)));
+  }
+
+  @Test
+  @DisplayName("토큰 재발급 - 유효기간이 만료된 RT로 재발급 시도 실패")
+  public void reissueFailedByExpiredRefreshToken() {
+    // given
+    String expiredRefreshToken = "expired.refresh.token";
+    given(jwtTokenProvider.validateToken(expiredRefreshToken)).willReturn(false);
+
+    // when & then
+    BusinessException exception = assertThrows(BusinessException.class, () ->
+        authService.reissueToken(expiredRefreshToken)
+    );
+
+    assertEquals(ErrorCode.AUTH_INVALID_TOKEN, exception.getErrorCode());
+    verify(redisService, never()).getValues(anyString());
+  }
+
+  @Test
+  @DisplayName("토큰 재발급 - 토큰 탈취 감지 시 강제 로그아웃")
+  void reissue_Exception_TokenTheftSuspected() {
+    // given
+    String refreshToken = "stolen.refresh.token";
+
+    given(jwtTokenProvider.validateToken(refreshToken)).willReturn(true);
+    given(jwtTokenProvider.getEmailFromToken(refreshToken)).willReturn(email);
+
+    given(redisService.getValues("RT:" + email)).willReturn("different.refresh.token");
+
+    // when & then
+    BusinessException exception = assertThrows(BusinessException.class,
+        () -> authService.reissueToken(refreshToken));
+    assertEquals(ErrorCode.AUTH_SUSPECT_THEFT_TOKEN, exception.getErrorCode());
+
+    // 탈취 의심 시 해당 유저의 기존 Refresh Token을 즉각 삭제하는지 검증
+    verify(redisService, times(1)).deleteValues("RT:" + email);
   }
 }

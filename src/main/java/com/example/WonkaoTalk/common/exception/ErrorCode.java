@@ -29,6 +29,7 @@ public enum ErrorCode {
   OAUTH_NULL_EMAIL(400, "OAUTH-NULL-EMAIL", "소셜 이메일 정보가 제공되지 않았습니다."),
   OAUTH_INVALID_PROVIDER(400, "OAUTH-INVALID-PROVIDER", "지원하지 않는 소셜 로그인입니다."),
   OAUTH_NULL_TOKEN(500, "OAUTH-NULL-TOKEN", "소셜 제공자 토큰 정보를 찾을 수 없습니다."),
+
   // 유저 도메인
   USER_NOT_FOUND(404, "USER-NOT-FOUND-ID", "해당 사용자 ID를 찾을 수 없습니다."),
   USER_SELF_REF(400, "USER-SELF-REF", "자기 자신을 참조 할 수 없습니다."),

@@ -3,7 +3,7 @@ package com.example.WonkaoTalk.common.oauth;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.auth.enums.AuthProvider;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -11,16 +11,24 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
+@Slf4j
 @Component
-@RequiredArgsConstructor
 public class NaverRevocationProvider implements OAuthRevocationProvider {
 
-  private final RestClient restClient;
-  @Value("${spring.security.oauth2.client.registration.naver.client-id}")
-  private String clientId;
-  @Value("${spring.security.oauth2.client.registration.naver.client-secret}")
-  private String clientSecret;
+  private final String clientId;
+  private final String clientSecret;
+
+  public NaverRevocationProvider(
+      @Value("${spring.security.oauth2.client.registration.naver.client-id}")
+      String clientId,
+      @Value("${spring.security.oauth2.client.registration.naver.client-secret}")
+      String clientSecret
+  ) {
+    this.clientId = clientId;
+    this.clientSecret = clientSecret;
+  }
 
   @Override
   public boolean supports(AuthProvider provider) {
@@ -40,11 +48,15 @@ public class NaverRevocationProvider implements OAuthRevocationProvider {
     formData.add("access_token", providerAccessToken);
     formData.add("service_provider", "NAVER");
 
-    restClient.post()
-        .uri("https://nid.naver.com/oauth2.0/token")
-        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-        .body(formData)
-        .retrieve()
-        .toBodilessEntity();
+    try {
+      RestClient.create("https://nid.naver.com").post()
+          .uri("/oauth2.0/token")
+          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+          .body(formData)
+          .retrieve()
+          .toBodilessEntity();
+    } catch (RestClientException e) {
+      log.info("소셜 인증 해지 실패");
+    }
   }
 }
