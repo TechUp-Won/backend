@@ -2,17 +2,25 @@ package com.example.WonkaoTalk.common.oauth;
 
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
+import com.example.WonkaoTalk.domain.auth.entity.AuthSocial;
+import com.example.WonkaoTalk.domain.auth.entity.OAuthRevocationFailure;
 import com.example.WonkaoTalk.domain.auth.repo.AuthSocialRepo;
+import com.example.WonkaoTalk.domain.auth.repo.OAuthRevocationFailureRepo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class OAuthRevocationClient {
 
   private final List<OAuthRevocationProvider> revocationProviders;
   private final AuthSocialRepo authSocialRepo;
+  private final OAuthRevocationFailureRepo failureRepo;
 
   public void revokeIfSocialAccountExists(Long authId) {
     authSocialRepo.findByAuthId(authId).ifPresent(social -> {
@@ -21,9 +29,24 @@ public class OAuthRevocationClient {
           .findFirst()
           .orElseThrow(() -> new BusinessException(ErrorCode.OAUTH_INVALID_PROVIDER));
 
-      // 외부 API 호출 (실패 시 예외는 퍼사드 계층에서 잡거나, 여기서 Outbox 이벤트 발행)
-      // TODO: authSocial 스키마 수정 Provider RT 저장 해야함
-      // providerClient.revoke(social.getProviderUserId(), social.getProviderAccessToken());
+      try {
+        // 외부 API 호출 시도
+        providerClient.revoke(social.getProviderUserId(), social.getProviderRefreshToken());
+      } catch (Exception e) {
+        log.error("소셜 연동 해제 통신 실패. Outbox에 실패 이력을 기록합니다. AuthId: {}", authId, e);
+        // Fallback: 실패 이력 저장 (이후 스케줄러가 재시도)
+        saveFailureEvent(social);
+      }
     });
+  }
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  protected void saveFailureEvent(AuthSocial social) {
+    OAuthRevocationFailure failure = OAuthRevocationFailure.builder()
+        .provider(social.getProvider())
+        .providerUserId(social.getProviderUserId())
+        .providerRefreshToken(social.getProviderRefreshToken())
+        .build();
+    failureRepo.save(failure);
   }
 }

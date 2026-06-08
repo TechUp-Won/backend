@@ -16,6 +16,8 @@ public interface AuthSocialRepo extends JpaRepository<AuthSocial, Long> {
 
   Optional<AuthSocial> findByAuthId(Long authId);
 
+  Optional<AuthSocial> findByProviderUserId(String providerId);
+
   @Query("SELECT s FROM AuthSocial s JOIN FETCH s.auth WHERE s.provider = :provider AND s.providerUserId = :providerUserId")
   Optional<AuthSocial> findByProviderAndProviderUserIdWithAuth(
       @Param("provider") AuthProvider provider,

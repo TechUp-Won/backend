@@ -25,14 +25,13 @@ public class AccountWithdraw {
 
   public void withdrawSeller(Long authId, String email, String accessToken) {
     withdrawTransactionProcessor.withdrawSeller(authId);
-    
+
     revokeSocialConnectionSafely(authId);
 
     authService.invalidateToken(email, accessToken);
   }
 
   private void revokeSocialConnectionSafely(Long authId) {
-    // TODO: outbox 패턴을 통한 retry 정책 수립 필요(연동 해제 실패 시 별도의 테이블에 저장하여 AT 유효기간내에 재시도하는 scheduler 가 필요
     try {
       oAuthRevocationClient.revokeIfSocialAccountExists(authId);
     } catch (Exception e) {

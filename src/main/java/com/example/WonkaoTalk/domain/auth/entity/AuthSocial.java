@@ -1,7 +1,9 @@
 package com.example.WonkaoTalk.domain.auth.entity;
 
+import com.example.WonkaoTalk.common.converter.EncryptAttributeConverter;
 import com.example.WonkaoTalk.domain.auth.enums.AuthProvider;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
@@ -60,6 +62,16 @@ public class AuthSocial {
 
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
+
+  @Convert(converter = EncryptAttributeConverter.class)
+  @Column(name = "provider_refresh_token", length = 500)
+  private String providerRefreshToken;
+
+  public void updateRefreshToken(String refreshToken) {
+    if (refreshToken != null) {
+      this.providerRefreshToken = refreshToken;
+    }
+  }
 
   public void withdraw() {
     this.email = UUID.randomUUID().toString() + "@deleted.email";
