@@ -91,7 +91,7 @@ public class Payment {
     this.requestedAt = requestedAt;
   }
 
-  public static Payment createReadyPayment(
+  public static Payment createPendingPayment(
       Order order,
       String tossOrderId,
       String idempotencyKey,
@@ -104,7 +104,7 @@ public class Payment {
         tossOrderId,
         idempotencyKey,
         totalAmount,
-        PaymentStatus.READY,
+        PaymentStatus.PENDING,
         requestAt
     );
   }
@@ -117,6 +117,13 @@ public class Payment {
     this.paymentKey = paymentKey;
     this.status = PaymentStatus.PAID;
     this.approvedAt = LocalDateTime.now();
+  }
+
+  public void markAborted(String failCode, String failMessage) {
+    this.failCode = failCode;
+    this.failMessage = failMessage;
+    this.status = PaymentStatus.ABORTED;
+    this.failedAt = LocalDateTime.now();
   }
 
   public void markFailed(String failCode, String failMessage) {

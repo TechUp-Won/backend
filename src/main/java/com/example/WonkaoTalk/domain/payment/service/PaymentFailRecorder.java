@@ -25,6 +25,5 @@ public class PaymentFailRecorder {
         .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
 
     payment.markFailed(event.failCode(), event.failMessage());
-    payment.getOrder().markPaymentFailed();
   }
 }

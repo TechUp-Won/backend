@@ -3,8 +3,8 @@ package com.example.WonkaoTalk.domain.payment.service;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.order.entity.Order;
-import com.example.WonkaoTalk.domain.order.entity.OrderItem;
-import com.example.WonkaoTalk.domain.order.repo.OrderItemRepo;
+import com.example.WonkaoTalk.domain.order.entity.OrderStatus;
+import com.example.WonkaoTalk.domain.order.repo.OrderRepo;
 import com.example.WonkaoTalk.domain.payment.client.TossPaymentConfirmResult;
 import com.example.WonkaoTalk.domain.payment.client.TossPaymentsClient;
 import com.example.WonkaoTalk.domain.payment.client.TossPaymentsException;
@@ -18,9 +18,7 @@ import com.example.WonkaoTalk.domain.payment.entity.Payment;
 import com.example.WonkaoTalk.domain.payment.entity.PaymentStatus;
 import com.example.WonkaoTalk.domain.payment.event.PaymentFailedEvent;
 import com.example.WonkaoTalk.domain.payment.repo.PaymentRepo;
-import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepo;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -35,55 +33,42 @@ import org.springframework.transaction.annotation.Transactional;
 public class PaymentService {
 
   private final PaymentRepo paymentRepo;
-  private final OrderItemRepo orderItemRepo;
-  private final ProductVariantRepo productVariantRepo;
   private final TossPaymentsProperties tossPaymentsProperties;
   private final TossPaymentsClient tossPaymentsClient;
   private final ApplicationEventPublisher eventPublisher;
 
-  // 주문 생성
-  @Transactional
-  public Payment createReadyPayment(Order order) {
-    // 토스 주문 번호 만들기
-    String tossOrderId = generateTossOrderId(order.getOrderNumber());
-
-    // 멱등키 만들기
-    String idempotencyKey = generateIdempotencyKey();
-
-    LocalDateTime requestAt = LocalDateTime.now();
-
-    Payment payment = Payment.createReadyPayment(
-        order,
-        tossOrderId,
-        idempotencyKey,
-        order.getFinalAmount(),
-        requestAt
-    );
-
-    return paymentRepo.save(payment);
-
-  }
+  private final OrderRepo orderRepo;
 
   // 결제 정보 전달
   @Transactional
-  public PaymentCheckoutResponse getCheckout(Long userId, Long paymentId) {
+  public PaymentCheckoutResponse getCheckout(Long userId, Long orderId) {
+    Order order = orderRepo.findByUserIdAndOrderId(userId, orderId).orElseThrow(
+        () -> new BusinessException(ErrorCode.ORDER_NOT_FOUND)
+    );
+
+    // Order 상태가 PAYMENT_PENDING인지 검증
+    validateCheckoutAvailable(order);
+
+    // 이미 결제 된 주문인지 검증
+    if (paymentRepo.existsByOrder_OrderIdAndStatus(orderId, PaymentStatus.PAID)) {
+      throw new BusinessException(ErrorCode.PAYMENT_ALREADY_PAID);
+    }
+
     // 토스페이 환경 설정 검증
     if (tossPaymentsProperties.getClientKey() == null
         || tossPaymentsProperties.getClientKey().isBlank()) {
       throw new BusinessException(ErrorCode.PAYMENT_CLIENT_KEY_NOT_CONFIGURED);
     }
 
-    Payment payment = getPayment(paymentId);
-    validateOwner(payment, userId);
+    Payment payment = Payment.createPendingPayment(
+        order,
+        generateTossOrderId(order.getOrderNumber()),
+        generateIdempotencyKey(),
+        order.getFinalAmount(),
+        LocalDateTime.now()
+    );
 
-    // 결제 상태인지 확인
-    if (payment.getStatus() != PaymentStatus.READY
-        && payment.getStatus() != PaymentStatus.PENDING) {
-      throw new BusinessException(ErrorCode.PAYMENT_INVALID_STATUS);
-    }
-
-    // 결제대기 상태 변경
-    payment.markPending();
+    paymentRepo.save(payment);
 
     return new PaymentCheckoutResponse(
         payment.getPaymentId(),
@@ -106,9 +91,6 @@ public class PaymentService {
     validateConfirmable(payment, request);
 
     try {
-      // 토스 승인 전에 재고를 원자적으로 차감한다. 차감 실패 시 승인 요청을 보내지 않는다.
-      decreaseStocks(payment.getOrder());
-
       // 토스 페이먼츠로 confirm api 요청
       TossPaymentConfirmResult result = tossPaymentsClient.confirm(
           request.paymentKey(),
@@ -144,21 +126,6 @@ public class PaymentService {
     }
   }
 
-  // 재고 감소 처리
-  private void decreaseStocks(Order order) {
-    List<OrderItem> orderItems = orderItemRepo.findByOrder(order);
-
-    for (OrderItem orderItem : orderItems) {
-      int updatedCount = productVariantRepo.decreaseStockAtomic(
-          orderItem.getProductVariant().getId(),
-          orderItem.getQuantity()
-      );
-
-      if (updatedCount != 1) {
-        throw new BusinessException(ErrorCode.PROD_STOCK_INSUFFICIENT);
-      }
-    }
-  }
 
   // 결제 최종 승인 전 취소 시
   // TODO: 추후.. Pending 상태인 결제를 일괄 정리하는 로직도 필요..
@@ -167,12 +134,15 @@ public class PaymentService {
     Payment payment = findPaymentForFail(paymentId, request);
     validateOwner(payment, userId);
 
+    // PAYMENT 상태가 PENDING인지 검증
+    if (payment.getStatus() != PaymentStatus.PENDING) {
+      throw new BusinessException(ErrorCode.PAYMENT_INVALID_STATUS);
+    }
+
     if ("PAY_PROCESS_CANCELED".equals(request.code())) {
-      payment.markCanceled(request.code(), request.message());
-      payment.getOrder().markPaymentCanceled();
+      payment.markAborted(request.code(), request.message());
     } else {
       payment.markFailed(request.code(), request.message());
-      payment.getOrder().markPaymentFailed();
     }
 
     return new PaymentFailResponse(
@@ -213,18 +183,15 @@ public class PaymentService {
 
   // 승인 전 주문 금액, id, 상태값 검증
   private void validateConfirmable(Payment payment, PaymentConfirmRequest request) {
-    if (payment.getStatus() != PaymentStatus.READY
-        && payment.getStatus() != PaymentStatus.PENDING) {
+    if (payment.getStatus() != PaymentStatus.PENDING) {
       throw new BusinessException(ErrorCode.PAYMENT_INVALID_STATUS);
     }
     if (!payment.getTossOrderId().equals(request.orderId())) {
       payment.markInvalid("ORDER_ID_MISMATCH", "결제 주문번호가 일치하지 않습니다.");
-      payment.getOrder().markPaymentFailed();
       throw new BusinessException(ErrorCode.PAYMENT_ORDER_MISMATCH);
     }
     if (!payment.getTotalAmount().equals(request.amount())) {
       payment.markInvalid("AMOUNT_MISMATCH", "결제 금액이 일치하지 않습니다.");
-      payment.getOrder().markPaymentFailed();
       throw new BusinessException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
     }
   }
@@ -233,17 +200,14 @@ public class PaymentService {
   private void validateTossConfirmResult(Payment payment, TossPaymentConfirmResult result) {
     if (result == null) {
       payment.markInvalid("EMPTY_TOSS_RESPONSE", "토스페이먼츠 승인 응답이 비어있습니다.");
-      payment.getOrder().markPaymentFailed();
       throw new BusinessException(ErrorCode.PAYMENT_APPROVAL_FAILED);
     }
     if (!payment.getTossOrderId().equals(result.orderId())) {
       payment.markInvalid("TOSS_ORDER_ID_MISMATCH", "토스페이먼츠 승인 주문번호가 일치하지 않습니다.");
-      payment.getOrder().markPaymentFailed();
       throw new BusinessException(ErrorCode.PAYMENT_ORDER_MISMATCH);
     }
     if (!payment.getTotalAmount().equals(result.totalAmount())) {
       payment.markInvalid("TOSS_AMOUNT_MISMATCH", "토스페이먼츠 승인 금액이 일치하지 않습니다.");
-      payment.getOrder().markPaymentFailed();
       throw new BusinessException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
     }
     if (!"DONE".equals(result.status())) {
@@ -259,5 +223,12 @@ public class PaymentService {
 
   private String generateIdempotencyKey() {
     return UUID.randomUUID().toString();
+  }
+
+  // 주문 상태 검증
+  private void validateCheckoutAvailable(Order order) {
+    if (order.getOrderStatus() != OrderStatus.PAYMENT_PENDING) {
+      throw new BusinessException(ErrorCode.ORDER_INVALID_STATUS);
+    }
   }
 }

@@ -83,6 +83,7 @@ public enum ErrorCode {
   // 주문 도메인
   ORDER_NOT_FOUND(404, "ORDER-NOT-FOUND", "주문을 찾을 수 없습니다."),
   ORDER_ITEM_NOT_FOUND(404, "ORDER-ITEM-NOT-FOUND", "주문 상품을 찾을 수 없습니다."),
+  ORDER_INVALID_STATUS(409, "ORDER-INVALID-STATUS", "현재 주문 상태에서는 처리할 수 없습니다."),
 
   // 결제 도메인
   PAYMENT_NOT_FOUND(404, "PAYMENT-NOT-FOUND", "결제 정보를 찾을 수 없습니다."),
@@ -95,6 +96,7 @@ public enum ErrorCode {
       "토스페이먼츠 클라이언트 키가 설정되지 않았습니다."),
   PAYMENT_SECRET_KEY_NOT_CONFIGURED(500, "PAYMENT-SECRET-KEY-NOT-CONFIGURED",
       "토스페이먼츠 시크릿 키가 설정되지 않았습니다."),
+  PAYMENT_ALREADY_PAID(409, "PAYMENT-ALREADY-PAID", "이미 결제가 완료된 주문입니다."),
 
   // 채팅 도메인
   ROOM_NOT_FOUND(404, "CHAT-NOT-FOUND-ROOM", "존재하지 않는 채팅방입니다."),

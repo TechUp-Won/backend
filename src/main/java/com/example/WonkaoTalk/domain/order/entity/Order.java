@@ -117,11 +117,19 @@ public class Order {
     this.orderStatus = OrderStatus.PAID;
   }
 
-  public void markPaymentFailed() {
-    this.orderStatus = OrderStatus.PAYMENT_FAILED;
+  public void markCanceled() {
+    this.orderStatus = OrderStatus.CANCELED;
   }
 
-  public void markPaymentCanceled() {
-    this.orderStatus = OrderStatus.PAYMENT_CANCELED;
+  public void markExpired() {
+    this.orderStatus = OrderStatus.EXPIRED;
+  }
+
+  public void markCompleted() {
+    this.orderStatus = OrderStatus.COMPLETED;
+  }
+
+  public void markRefunded() {
+    this.orderStatus = OrderStatus.REFUNDED;
   }
 }
