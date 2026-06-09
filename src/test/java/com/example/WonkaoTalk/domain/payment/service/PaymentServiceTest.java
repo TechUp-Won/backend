@@ -236,9 +236,13 @@ public class PaymentServiceTest {
       Long userId = 1L;
       Long orderId = 1L;
       Long paymentId = 10L;
-      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY", 35000L);
-      Payment payment = mockPendingPayment(userId, orderId, paymentId, request.orderId(), 35000L);
-      TossPaymentConfirmResult result = mockTossConfirmResult("paymentKey", request.orderId(), "DONE",
+      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY",
+          35000L);
+      Order order = mockOrder(userId, orderId, OrderStatus.PAYMENT_PENDING, "가나 초콜릿 외 1건",
+          35000L);
+      Payment payment = mockPendingPayment(order, paymentId, request.orderId(), 35000L);
+      TossPaymentConfirmResult result = mockTossConfirmResult("paymentKey", request.orderId(),
+          "DONE",
           35000L);
 
       when(paymentRepo.findByTossOrderId(request.orderId())).thenReturn(Optional.of(payment));
@@ -252,7 +256,7 @@ public class PaymentServiceTest {
       assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
       assertThat(payment.getPaymentKey()).isEqualTo("paymentKey");
       assertThat(payment.getApprovedAt()).isNotNull();
-      verify(payment.getOrder()).markPaid();
+      verify(order).markPaid();
 
       assertThat(response.paymentId()).isEqualTo(paymentId);
       assertThat(response.orderId()).isEqualTo(orderId);
@@ -270,7 +274,8 @@ public class PaymentServiceTest {
     public void fail_confirm_paymentNotFound() {
       //given
       Long userId = 1L;
-      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY", 35000L);
+      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY",
+          35000L);
 
       when(paymentRepo.findByTossOrderId(request.orderId())).thenReturn(Optional.empty());
 
@@ -288,8 +293,11 @@ public class PaymentServiceTest {
     public void fail_confirm_forbidden() {
       //given
       Long userId = 1L;
-      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY", 35000L);
-      Payment payment = mockPendingPayment(2L, 1L, request.orderId(), 35000L);
+      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY",
+          35000L);
+      Order order = mockOrder(2L, 1L, OrderStatus.PAYMENT_PENDING, "가나 초콜릿 외 1건",
+          35000L);
+      Payment payment = mockPendingPayment(order, 1L, request.orderId(), 35000L);
 
       when(paymentRepo.findByTossOrderId(request.orderId())).thenReturn(Optional.of(payment));
 
@@ -307,8 +315,11 @@ public class PaymentServiceTest {
     public void fail_confirm_invalidPaymentStatus() {
       //given
       Long userId = 1L;
-      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY", 35000L);
-      Payment payment = mockPendingPayment(userId, 1L, request.orderId(), 35000L);
+      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY",
+          35000L);
+      Order order = mockOrder(userId, 1L, OrderStatus.PAYMENT_PENDING, "가나 초콜릿 외 1건",
+          35000L);
+      Payment payment = mockPendingPayment(order, 1L, request.orderId(), 35000L);
       payment.markPaid("alreadyPaidPaymentKey");
 
       when(paymentRepo.findByTossOrderId(request.orderId())).thenReturn(Optional.of(payment));
@@ -327,9 +338,10 @@ public class PaymentServiceTest {
     public void fail_confirm_invalidOrderStatus() {
       //given
       Long userId = 1L;
-      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY", 35000L);
-      Payment payment = mockPendingPayment(userId, 1L, null, request.orderId(), 35000L,
-          OrderStatus.CREATED);
+      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY",
+          35000L);
+      Order order = mockOrder(userId, 1L, OrderStatus.CREATED, "가나 초콜릿 외 1건", 35000L);
+      Payment payment = mockPendingPayment(order, 1L, request.orderId(), 35000L);
 
       when(paymentRepo.findByTossOrderId(request.orderId())).thenReturn(Optional.of(payment));
 
@@ -347,8 +359,11 @@ public class PaymentServiceTest {
     public void fail_confirm_orderMismatch() {
       //given
       Long userId = 1L;
-      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY", 35000L);
-      Payment payment = mockPendingPayment(userId, 1L, "ORD-5678PAY", 35000L);
+      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY",
+          35000L);
+      Order order = mockOrder(userId, 1L, OrderStatus.PAYMENT_PENDING, "가나 초콜릿 외 1건",
+          35000L);
+      Payment payment = mockPendingPayment(order, 1L, "ORD-5678PAY", 35000L);
 
       when(paymentRepo.findByTossOrderId(request.orderId())).thenReturn(Optional.of(payment));
 
@@ -368,8 +383,11 @@ public class PaymentServiceTest {
     public void fail_confirm_amountMismatch() {
       //given
       Long userId = 1L;
-      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY", 30000L);
-      Payment payment = mockPendingPayment(userId, 1L, request.orderId(), 35000L);
+      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY",
+          30000L);
+      Order order = mockOrder(userId, 1L, OrderStatus.PAYMENT_PENDING, "가나 초콜릿 외 1건",
+          35000L);
+      Payment payment = mockPendingPayment(order, 1L, request.orderId(), 35000L);
 
       when(paymentRepo.findByTossOrderId(request.orderId())).thenReturn(Optional.of(payment));
 
@@ -389,8 +407,11 @@ public class PaymentServiceTest {
     public void fail_confirm_emptyTossResponse() {
       //given
       Long userId = 1L;
-      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY", 35000L);
-      Payment payment = mockPendingPayment(userId, 1L, request.orderId(), 35000L);
+      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY",
+          35000L);
+      Order order = mockOrder(userId, 1L, OrderStatus.PAYMENT_PENDING, "가나 초콜릿 외 1건",
+          35000L);
+      Payment payment = mockPendingPayment(order, 1L, request.orderId(), 35000L);
 
       when(paymentRepo.findByTossOrderId(request.orderId())).thenReturn(Optional.of(payment));
       when(tossPaymentsClient.confirm(request.paymentKey(), request.orderId(), 35000L,
@@ -411,8 +432,11 @@ public class PaymentServiceTest {
     public void fail_confirm_tossOrderMismatch() {
       //given
       Long userId = 1L;
-      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY", 35000L);
-      Payment payment = mockPendingPayment(userId, 1L, request.orderId(), 35000L);
+      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY",
+          35000L);
+      Order order = mockOrder(userId, 1L, OrderStatus.PAYMENT_PENDING, "가나 초콜릿 외 1건",
+          35000L);
+      Payment payment = mockPendingPayment(order, 1L, request.orderId(), 35000L);
       TossPaymentConfirmResult result = mockTossConfirmResult("paymentKey", "ORD-5678PAY", "DONE",
           35000L);
 
@@ -435,9 +459,13 @@ public class PaymentServiceTest {
     public void fail_confirm_tossAmountMismatch() {
       //given
       Long userId = 1L;
-      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY", 35000L);
-      Payment payment = mockPendingPayment(userId, 1L, request.orderId(), 35000L);
-      TossPaymentConfirmResult result = mockTossConfirmResult("paymentKey", request.orderId(), "DONE",
+      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY",
+          35000L);
+      Order order = mockOrder(userId, 1L, OrderStatus.PAYMENT_PENDING, "가나 초콜릿 외 1건",
+          35000L);
+      Payment payment = mockPendingPayment(order, 1L, request.orderId(), 35000L);
+      TossPaymentConfirmResult result = mockTossConfirmResult("paymentKey", request.orderId(),
+          "DONE",
           30000L);
 
       when(paymentRepo.findByTossOrderId(request.orderId())).thenReturn(Optional.of(payment));
@@ -459,9 +487,13 @@ public class PaymentServiceTest {
     public void fail_confirm_tossStatusNotDone() {
       //given
       Long userId = 1L;
-      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY", 35000L);
-      Payment payment = mockPendingPayment(userId, 1L, request.orderId(), 35000L);
-      TossPaymentConfirmResult result = mockTossConfirmResult("paymentKey", request.orderId(), "WAITING",
+      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY",
+          35000L);
+      Order order = mockOrder(userId, 1L, OrderStatus.PAYMENT_PENDING, "가나 초콜릿 외 1건",
+          35000L);
+      Payment payment = mockPendingPayment(order, 1L, request.orderId(), 35000L);
+      TossPaymentConfirmResult result = mockTossConfirmResult("paymentKey", request.orderId(),
+          "WAITING",
           35000L);
 
       when(paymentRepo.findByTossOrderId(request.orderId())).thenReturn(Optional.of(payment));
@@ -483,8 +515,11 @@ public class PaymentServiceTest {
     public void fail_confirm_tossPaymentsException() {
       //given
       Long userId = 1L;
-      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY", 35000L);
-      Payment payment = mockPendingPayment(userId, 1L, request.orderId(), 35000L);
+      PaymentConfirmRequest request = new PaymentConfirmRequest("paymentKey", "ORD-1234PAY",
+          35000L);
+      Order order = mockOrder(userId, 1L, OrderStatus.PAYMENT_PENDING, "가나 초콜릿 외 1건",
+          35000L);
+      Payment payment = mockPendingPayment(order, 1L, request.orderId(), 35000L);
 
       when(paymentRepo.findByTossOrderId(request.orderId())).thenReturn(Optional.of(payment));
       when(tossPaymentsClient.confirm(request.paymentKey(), request.orderId(), 35000L,
@@ -517,7 +552,9 @@ public class PaymentServiceTest {
           "PAY_PROCESS_CANCELED",
           "사용자가 결제를 취소했습니다."
       );
-      Payment payment = mockPendingPayment(userId, orderId, paymentId, request.orderId(), 35000L);
+      Order order = mockOrder(userId, orderId, OrderStatus.PAYMENT_PENDING, "가나 초콜릿 외 1건",
+          35000L);
+      Payment payment = mockPendingPayment(order, paymentId, request.orderId(), 35000L);
 
       when(paymentRepo.findByTossOrderId(request.orderId())).thenReturn(Optional.of(payment));
 
@@ -549,7 +586,9 @@ public class PaymentServiceTest {
           "REJECT_CARD_COMPANY",
           "카드사에서 결제를 거절했습니다."
       );
-      Payment payment = mockPendingPayment(userId, orderId, paymentId, request.orderId(), 35000L);
+      Order order = mockOrder(userId, orderId, OrderStatus.PAYMENT_PENDING, "가나 초콜릿 외 1건",
+          35000L);
+      Payment payment = mockPendingPayment(order, paymentId, request.orderId(), 35000L);
 
       when(paymentRepo.findByTossOrderId(request.orderId())).thenReturn(Optional.of(payment));
 
@@ -581,7 +620,37 @@ public class PaymentServiceTest {
           "REJECT_CARD_COMPANY",
           "카드사에서 결제를 거절했습니다."
       );
-      Payment payment = mockPendingPayment(userId, orderId, paymentId, "ORD-1234PAY", 35000L);
+      Order order = mockOrder(userId, orderId, OrderStatus.PAYMENT_PENDING, "가나 초콜릿 외 1건",
+          35000L);
+      Payment payment = mockPendingPayment(order, paymentId, "ORD-1234PAY", 35000L);
+
+      when(paymentRepo.findById(paymentId)).thenReturn(Optional.of(payment));
+
+      //when
+      PaymentFailResponse response = paymentService.fail(userId, paymentId, request);
+
+      //then
+      assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
+      assertThat(response.paymentId()).isEqualTo(paymentId);
+      assertThat(response.tossOrderId()).isEqualTo("ORD-1234PAY");
+      assertThat(response.status()).isEqualTo("FAILED");
+    }
+
+    @Test
+    @DisplayName("요청 orderId가 null이면 paymentId로 Payment를 찾아 실패 처리한다.")
+    public void success_fail_findPaymentByPaymentIdWhenOrderIdIsNull() {
+      //given
+      Long userId = 1L;
+      Long orderId = 1L;
+      Long paymentId = 10L;
+      PaymentFailRequest request = new PaymentFailRequest(
+          null,
+          "REJECT_CARD_COMPANY",
+          "카드사에서 결제를 거절했습니다."
+      );
+      Order order = mockOrder(userId, orderId, OrderStatus.PAYMENT_PENDING, "가나 초콜릿 외 1건",
+          35000L);
+      Payment payment = mockPendingPayment(order, paymentId, "ORD-1234PAY", 35000L);
 
       when(paymentRepo.findById(paymentId)).thenReturn(Optional.of(payment));
 
@@ -621,7 +690,9 @@ public class PaymentServiceTest {
       Long orderId = 1L;
       Long paymentId = 10L;
       PaymentFailRequest request = new PaymentFailRequest("ORD-1234PAY", "FAIL_CODE", "결제 실패");
-      Payment payment = mockPendingPayment(userId, orderId, 20L, request.orderId(), 35000L);
+      Order order = mockOrder(userId, orderId, OrderStatus.PAYMENT_PENDING, "가나 초콜릿 외 1건",
+          35000L);
+      Payment payment = mockPendingPayment(order, 20L, request.orderId(), 35000L);
 
       when(paymentRepo.findByTossOrderId(request.orderId())).thenReturn(Optional.of(payment));
 
@@ -641,7 +712,9 @@ public class PaymentServiceTest {
       Long orderId = 1L;
       Long paymentId = 10L;
       PaymentFailRequest request = new PaymentFailRequest("ORD-1234PAY", "FAIL_CODE", "결제 실패");
-      Payment payment = mockPendingPayment(2L, orderId, paymentId, request.orderId(), 35000L);
+      Order order = mockOrder(2L, orderId, OrderStatus.PAYMENT_PENDING, "가나 초콜릿 외 1건",
+          35000L);
+      Payment payment = mockPendingPayment(order, paymentId, request.orderId(), 35000L);
 
       when(paymentRepo.findByTossOrderId(request.orderId())).thenReturn(Optional.of(payment));
 
@@ -661,7 +734,9 @@ public class PaymentServiceTest {
       Long orderId = 1L;
       Long paymentId = 10L;
       PaymentFailRequest request = new PaymentFailRequest("ORD-1234PAY", "FAIL_CODE", "결제 실패");
-      Payment payment = mockPendingPayment(userId, orderId, paymentId, request.orderId(), 35000L);
+      Order order = mockOrder(userId, orderId, OrderStatus.PAYMENT_PENDING, "가나 초콜릿 외 1건",
+          35000L);
+      Payment payment = mockPendingPayment(order, paymentId, request.orderId(), 35000L);
       payment.markPaid("paymentKey");
 
       when(paymentRepo.findByTossOrderId(request.orderId())).thenReturn(Optional.of(payment));
@@ -697,36 +772,13 @@ public class PaymentServiceTest {
   }
 
   private Payment mockPendingPayment(
-      Long userId,
-      Long orderId,
-      String tossOrderId,
-      Long totalAmount
-  ) {
-    return mockPendingPayment(userId, orderId, null, tossOrderId, totalAmount);
-  }
-
-  private Payment mockPendingPayment(
-      Long userId,
-      Long orderId,
+      Order order,
       Long paymentId,
       String tossOrderId,
       Long totalAmount
   ) {
-    return mockPendingPayment(userId, orderId, paymentId, tossOrderId, totalAmount,
-        OrderStatus.PAYMENT_PENDING);
-  }
-
-  private Payment mockPendingPayment(
-      Long userId,
-      Long orderId,
-      Long paymentId,
-      String tossOrderId,
-      Long totalAmount,
-      OrderStatus orderStatus
-  ) {
-    Order order = mockOrder(userId, orderId, orderStatus, "가나 초콜릿 외 1건",
-        totalAmount);
-    Payment payment = Payment.createPendingPayment(order, tossOrderId, "idempotencyKey", totalAmount,
+    Payment payment = Payment.createPendingPayment(order, tossOrderId, "idempotencyKey",
+        totalAmount,
         LocalDateTime.now());
     ReflectionTestUtils.setField(payment, "paymentId", paymentId);
     return payment;
