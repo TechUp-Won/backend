@@ -17,6 +17,8 @@ public class AsyncConfig {
     executor.setMaxPoolSize(50);  // 최대 확장 스레드
     executor.setQueueCapacity(100); // 큐 대기열
     executor.setThreadNamePrefix("RevocationAsync-");
+    executor.setWaitForTasksToCompleteOnShutdown(true);
+    executor.setAwaitTerminationSeconds(60);
     executor.initialize();
     return executor;
   }
