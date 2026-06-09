@@ -13,6 +13,12 @@ import org.springframework.web.client.RestClient;
 @Component
 public class GoogleRevocationProvider implements OAuthRevocationProvider {
 
+  private final RestClient restClient;
+
+  public GoogleRevocationProvider() {
+    this.restClient = RestClient.create("https://oauth2.googleapis.com");
+  }
+
   @Override
   public boolean supports(AuthProvider provider) {
     return provider == AuthProvider.GOOGLE;
@@ -23,8 +29,7 @@ public class GoogleRevocationProvider implements OAuthRevocationProvider {
     if (!StringUtils.hasText(providerAccessToken)) {
       throw new BusinessException(ErrorCode.OAUTH_NULL_TOKEN);
     }
-    RestClient.create("https://oauth2.googleapis.com")
-        .post()
+    restClient.post()
         .uri("/revoke?token=" + providerAccessToken)
         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
         .retrieve()

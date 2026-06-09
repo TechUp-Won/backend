@@ -20,6 +20,7 @@ public class NaverRevocationProvider implements OAuthRevocationProvider {
 
   private final String clientId;
   private final String clientSecret;
+  private final RestClient restClient;
 
   public NaverRevocationProvider(
       @Value("${spring.security.oauth2.client.registration.naver.client-id}")
@@ -29,6 +30,7 @@ public class NaverRevocationProvider implements OAuthRevocationProvider {
   ) {
     this.clientId = clientId;
     this.clientSecret = clientSecret;
+    this.restClient = RestClient.create("https://nid.naver.com");
   }
 
   @Override
@@ -54,7 +56,7 @@ public class NaverRevocationProvider implements OAuthRevocationProvider {
     formData.add("access_token", newAccessToken);
     formData.add("service_provider", "NAVER");
 
-    RestClient.create("https://nid.naver.com").post()
+    restClient.post()
         .uri("/oauth2.0/token")
         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
         .body(formData)
@@ -69,7 +71,7 @@ public class NaverRevocationProvider implements OAuthRevocationProvider {
     formData.add("client_secret", clientSecret);
     formData.add("refresh_token", refreshToken);
 
-    Map<String, Object> response = RestClient.create("https://nid.naver.com").post()
+    Map<String, Object> response = restClient.post()
         .uri("/oauth2.0/token")
         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
         .body(formData)
