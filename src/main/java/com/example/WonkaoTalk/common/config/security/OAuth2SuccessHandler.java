@@ -65,7 +65,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     if (client != null && client.getRefreshToken() != null) {
       String providerRefreshToken = client.getRefreshToken().getTokenValue();
 
-      authSocialRepo.findByProviderUserId(providerId).ifPresent(authSocial -> {
+      authSocialRepo.findByProviderAndProviderUserId(provider, providerId).ifPresent(authSocial -> {
         authSocial.updateRefreshToken(providerRefreshToken);
         authSocialRepo.save(authSocial); // Dirty Checking 혹은 명시적 save
       });
