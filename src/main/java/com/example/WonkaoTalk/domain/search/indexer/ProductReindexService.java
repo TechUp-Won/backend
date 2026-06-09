@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import jakarta.annotation.PreDestroy;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -21,10 +22,10 @@ import org.springframework.stereotype.Service;
 /**
  * 전체 재색인 배치 — 최초 도입 시 기존 상품 일괄 색인 및 드리프트 발생 시 정합성 회복용.
  *
- * <p>대용량을 고려해 (1) id 키셋 페이징으로 청크 단위 조회, (2) 청크별 옵션값을 한 번에 조회(N+1 회피),
+ * 대용량을 고려해 (1) id 키셋 페이징으로 청크 단위 조회, (2) 청크별 옵션값을 한 번에 조회(N+1 회피),
  * (3) ES bulk 색인({@code saveAll})으로 처리한다. 문서 ID = product.id 이므로 멱등하게 재실행 가능.
  *
- * <p>긴 단일 트랜잭션/영속성 컨텍스트 누적을 피하려고 클래스 레벨 트랜잭션을 두지 않는다.
+ * 긴 단일 트랜잭션/영속성 컨텍스트 누적을 피하려고 클래스 레벨 트랜잭션을 두지 않는다.
  * category 는 fetch join 으로 초기화되고 나머지 색인 필드는 모두 즉시 로딩이라 지연 로딩 문제는 없다.
  */
 @Slf4j
@@ -42,8 +43,7 @@ public class ProductReindexService {
 
   private final AtomicBoolean isRunning = new AtomicBoolean(false);
   private volatile ReindexStatus status = new ReindexStatus("IDLE", 0, 0L, null);
-
-  public record ReindexStatus(String state, int totalIndexed, long lastId, String errorMessage) {}
+  private volatile boolean cancelled = false;
 
   public ReindexStatus getStatus() {
     return status;
@@ -51,6 +51,7 @@ public class ProductReindexService {
 
   /** 색인 대상 전체를 청크 단위로 다시 색인한다. 총 색인 건수를 반환 (동기 방식). */
   public int reindexAll() {
+    cancelled = false;
     int total = runReindexing(null);
     log.info("상품 전체 재색인 완료: {} 건", total);
     return total;
@@ -64,23 +65,40 @@ public class ProductReindexService {
       return;
     }
     status = new ReindexStatus("RUNNING", 0, 0L, null);
+    cancelled = false;
     try {
       int total = runReindexing((t, id) -> status = new ReindexStatus("RUNNING", t, id, null));
-      status = new ReindexStatus("COMPLETED", total, status.lastId(), null);
-      log.info("상품 전체 재색인 완료: {} 건", total);
+      if (cancelled) {
+        status = new ReindexStatus("STOPPED", total, status.lastId(), "Application shutdown");
+        log.info("상품 전체 재색인 작업이 중단되었습니다: {} 건", total);
+      } else {
+        status = new ReindexStatus("COMPLETED", total, status.lastId(), null);
+        log.info("상품 전체 재색인 완료: {} 건", total);
+      }
     } catch (Exception e) {
-      log.error("재색인 중 에러 발생", e);
-      status = new ReindexStatus("FAILED", status.totalIndexed(), status.lastId(), e.getMessage());
+      if (cancelled) {
+        log.warn("애플리케이션 종료 중 재색인 중단 (예상된 예외): {}", e.getMessage());
+        status = new ReindexStatus("STOPPED", status.totalIndexed(), status.lastId(), "Application shutdown");
+      } else {
+        log.error("재색인 중 에러 발생", e);
+        status = new ReindexStatus("FAILED", status.totalIndexed(), status.lastId(), e.getMessage());
+      }
     } finally {
       isRunning.set(false);
     }
+  }
+
+  @PreDestroy
+  public void cancel() {
+    this.cancelled = true;
+    log.info("애플리케이션 종료 감지: 재색인 작업을 중단합니다.");
   }
 
   private int runReindexing(BiConsumer<Integer, Long> progressConsumer) {
     int total = 0;
     long lastId = 0L;
 
-    while (true) {
+    while (!cancelled && !Thread.currentThread().isInterrupted()) {
       List<Product> batch = productRepo.findIndexableForReindex(
           INDEXABLE_STATUSES, lastId, PageRequest.of(0, BATCH_SIZE));
       if (batch.isEmpty()) {
@@ -114,4 +132,6 @@ public class ProductReindexService {
     }
     return optionsByProduct;
   }
+
+  public record ReindexStatus(String state, int totalIndexed, long lastId, String errorMessage) {}
 }

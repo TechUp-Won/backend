@@ -107,6 +107,24 @@ class ProductReindexServiceTest {
     verify(searchRepository, never()).saveAll(any());
   }
 
+  @Test
+  @DisplayName("재색인 중에 취소되면 작업을 중단한다")
+  void reindexAll_stops_whenCancelledDuringExecution() {
+    Product p1 = product(1L);
+    when(productRepo.findIndexableForReindex(any(), any(), any()))
+        .thenAnswer(invocation -> {
+          reindexService.cancel();
+          return List.of(p1);
+        });
+    when(productOptionRepo.findOptionNamesByProductIds(List.of(1L)))
+        .thenReturn(List.of());
+
+    int total = reindexService.reindexAll();
+
+    assertThat(total).isEqualTo(1);
+    verify(searchRepository).saveAll(any());
+  }
+
   private Product product(Long id) {
     Category category = org.mockito.Mockito.mock(Category.class);
     when(category.getId()).thenReturn(10L);
