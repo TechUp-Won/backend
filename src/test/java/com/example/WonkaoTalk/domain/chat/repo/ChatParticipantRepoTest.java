@@ -117,6 +117,43 @@ class ChatParticipantRepoTest {
   }
 
   @Test
+  @DisplayName("같은 방에 없는 유저는 조회되지 않음")
+  void findChatRoomByUsersNotFound() {
+
+    // given
+    ChatRoom room = createRoom(RoomType.SINGLE, LocalDateTime.now());
+
+    joinRoom(room, 1L);
+    joinRoom(room, 2L);
+
+    // when
+    Optional<ChatRoom> result = chatParticipantRepo.findChatRoomByUsers(1L, 3L);
+
+    // then
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  @DisplayName("내가 참여하지 않은 방은 조회되지 않는다")
+  void findMyChatRoomsOnlyMine() {
+
+    // given
+    Long myId = 1L;
+    ChatRoom myRoom = createRoom(RoomType.SINGLE, LocalDateTime.now());
+    ChatRoom otherRoom = createRoom(RoomType.SINGLE, LocalDateTime.now().minusDays(1));
+    joinRoom(myRoom, myId);
+    joinRoom(otherRoom, 999L);
+
+    // when
+    Slice<ChatParticipant> result = chatParticipantRepo.findMyChatRooms(myId, null, null,
+        PageRequest.of(0, 10));
+
+    // then
+    assertThat(result.getContent()).hasSize(1);
+    assertThat(result.getContent().getFirst().getChatRoom().getId()).isEqualTo(myRoom.getId());
+  }
+
+  @Test
   @DisplayName("특정 방 참여자들의 마지막으로 읽은 메시지 목록 반환")
   void findAllParticipantsLastReadMessageIds() {
     // given
