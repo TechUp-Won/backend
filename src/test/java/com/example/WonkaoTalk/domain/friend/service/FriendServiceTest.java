@@ -1,4 +1,4 @@
-package com.example.WonkaoTalk.domain.service;
+package com.example.WonkaoTalk.domain.friend.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -12,7 +12,6 @@ import com.example.WonkaoTalk.domain.friend.dto.FriendUpdateResponse;
 import com.example.WonkaoTalk.domain.friend.entity.Friend;
 import com.example.WonkaoTalk.domain.friend.enums.FriendStatus;
 import com.example.WonkaoTalk.domain.friend.repo.FriendRepo;
-import com.example.WonkaoTalk.domain.friend.service.FriendService;
 import com.example.WonkaoTalk.domain.user.entity.User;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
 import java.util.List;
