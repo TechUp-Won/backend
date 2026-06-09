@@ -139,8 +139,9 @@ class ChatParticipantRepoTest {
 
     // given
     Long myId = 1L;
-    ChatRoom myRoom = createRoom(RoomType.SINGLE, LocalDateTime.now());
-    ChatRoom otherRoom = createRoom(RoomType.SINGLE, LocalDateTime.now().minusDays(1));
+    LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
+    ChatRoom myRoom = createRoom(RoomType.SINGLE, now);
+    ChatRoom otherRoom = createRoom(RoomType.SINGLE, now.minusDays(1));
     joinRoom(myRoom, myId);
     joinRoom(otherRoom, 999L);
 
