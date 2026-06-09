@@ -3,6 +3,7 @@ package com.example.WonkaoTalk.domain.search.indexer;
 import com.example.WonkaoTalk.domain.product.event.ProductIndexRequestedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -18,6 +19,7 @@ public class ProductIndexEventListener {
 
   private final ProductIndexService indexService;
 
+  @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void handle(ProductIndexRequestedEvent event) {
     try {
