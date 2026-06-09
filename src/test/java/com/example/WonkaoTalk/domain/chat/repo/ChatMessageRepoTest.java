@@ -92,7 +92,7 @@ class ChatMessageRepoTest {
     assertThat(result.getContent()).hasSize(2);
     assertThat(result.getContent().get(0).getId()).isEqualTo(myMsg2.getId());
     assertThat(result.getContent().get(1).getId()).isEqualTo(myMsg1.getId());
-    assertThat(result.getContent()).extracting("content")
+    assertThat(result.getContent()).extracting(ChatMessage::getContent)
         .doesNotContain("다른 방 메시지");
   }
 
