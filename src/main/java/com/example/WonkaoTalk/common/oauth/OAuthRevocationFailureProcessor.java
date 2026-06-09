@@ -15,7 +15,7 @@ public class OAuthRevocationFailureProcessor {
   private final OAuthRevocationFailureRepo failureRepo;
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  protected void saveFailureEvent(AuthSocial social) {
+  public void saveFailureEvent(AuthSocial social) {
     OAuthRevocationFailure failure = OAuthRevocationFailure.builder()
         .provider(social.getProvider())
         .providerUserId(social.getProviderUserId())
