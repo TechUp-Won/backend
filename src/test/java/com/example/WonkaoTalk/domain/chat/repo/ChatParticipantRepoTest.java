@@ -23,7 +23,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 @DataJpaTest(properties = {
     "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
-    "spring.jpa.hibernate.ddl-auto=create-drop"
+    "spring.jpa.hibernate.ddl-auto=create-drop",
+    "spring.flyway.enabled=false"
 })
 @Import(JpaConfig.class)
 class ChatParticipantRepoTest {
