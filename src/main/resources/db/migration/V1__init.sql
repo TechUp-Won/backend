@@ -21,7 +21,7 @@ CREATE TABLE auth_locals (
     deleted_at TIMESTAMP,
     CONSTRAINT fk_auth_locals_auth FOREIGN KEY (auth_id) REFERENCES auths(id)
 );
-CREATE UNIQUE INDEX uk_auth_locals_email_active ON auth_locals (email);
+CREATE UNIQUE INDEX uk_auth_locals_email_active ON auth_locals (email) WHERE deleted_at IS NULL;
 
 CREATE TABLE auth_socials (
     id BIGSERIAL PRIMARY KEY,
@@ -34,7 +34,7 @@ CREATE TABLE auth_socials (
     deleted_at TIMESTAMP,
     CONSTRAINT fk_auth_socials_auth FOREIGN KEY (auth_id) REFERENCES auths(id)
 );
-CREATE UNIQUE INDEX uk_auth_socials_provider_active ON auth_socials (provider, provider_id);
+CREATE UNIQUE INDEX uk_auth_socials_provider_active ON auth_socials (provider, provider_id) WHERE deleted_at IS NULL;
 
 CREATE TABLE login_histories (
     id BIGSERIAL PRIMARY KEY,
@@ -42,14 +42,14 @@ CREATE TABLE login_histories (
     ip_address VARCHAR(45),
     user_agent TEXT,
     status VARCHAR(50) NOT NULL,
-    login_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    login_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_login_histories_auth FOREIGN KEY (auth_id) REFERENCES auths(id)
 );
 
 CREATE TABLE oauth_revocation_failures (
    id BIGSERIAL PRIMARY KEY,
-   auth_id BIGINT NOT NULL,
    provider VARCHAR(50) NOT NULL,
-   provider_id VARCHAR(255),
+   provider_id VARCHAR(255) NOT NULL,
    provider_refresh_token VARCHAR(500),
    status VARCHAR(20) DEFAULT 'PENDING' NOT NULL,
    retry_count BIGINT NOT NULL DEFAULT 0,
@@ -87,13 +87,44 @@ CREATE TABLE friends (
     alias VARCHAR(20),
     memo TEXT,
     status VARCHAR(10) NOT NULL DEFAULT 'ACTIVE',
-    is_favorite BOOLEAN DEFAULT FALSE,
+    is_favorite BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
     CONSTRAINT fk_friends_user FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT fk_friends_target FOREIGN KEY (target_id) REFERENCES users(id)
 );
 CREATE UNIQUE INDEX uk_friends_user_friend ON friends (user_id, target_id);
+
+-- ==========================================
+--  Seller & Store 도메인
+-- ==========================================
+CREATE TABLE sellers (
+                         id BIGSERIAL PRIMARY KEY,
+                         auth_id BIGINT NOT NULL,
+                         buz_no VARCHAR(10) NOT NULL,
+                         name VARCHAR(255) NOT NULL,
+                         phone VARCHAR(20) NOT NULL,
+                         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                         updated_at TIMESTAMP,
+                         deleted_at TIMESTAMP,
+                         CONSTRAINT fk_sellers_auth FOREIGN KEY (auth_id) REFERENCES auths(id)
+);
+CREATE UNIQUE INDEX uk_sellers_buz_no_active ON sellers (buz_no) WHERE deleted_at IS NULL;
+
+CREATE TABLE stores (
+                        id BIGSERIAL PRIMARY KEY,
+                        seller_id BIGINT NOT NULL,
+                        name VARCHAR(255) NOT NULL,
+                        description TEXT,
+                        phone VARCHAR(20) NOT NULL,
+                        thumbnail VARCHAR(255) DEFAULT 'http://default.png',
+                        status VARCHAR(50) DEFAULT 'ACTIVE',
+                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP,
+                        deleted_at TIMESTAMP,
+                        CONSTRAINT fk_stores_seller FOREIGN KEY (seller_id) REFERENCES sellers(id)
+);
+CREATE UNIQUE INDEX uk_stores_seller_active ON stores (seller_id) WHERE deleted_at IS NULL;
 
 -- ==========================================
 --  Term 도메인 & Consents
@@ -110,7 +141,7 @@ CREATE TABLE term_versions (
     term_id BIGINT NOT NULL,
     version VARCHAR(20) NOT NULL,
     content TEXT NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     effective_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_term_versions_term FOREIGN KEY (term_id) REFERENCES terms(id)
 );
@@ -120,7 +151,9 @@ CREATE TABLE user_consents (
     terms_version_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
     is_agreed BOOLEAN NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_user_consents_term_version FOREIGN KEY (terms_version_id) REFERENCES term_versions(id),
+    CONSTRAINT fk_user_consents_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 CREATE TABLE seller_consents (
@@ -128,39 +161,10 @@ CREATE TABLE seller_consents (
     terms_version_id BIGINT NOT NULL,
     seller_id BIGINT NOT NULL,
     is_agreed BOOLEAN NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- ==========================================
---  Seller & Store 도메인
--- ==========================================
-CREATE TABLE sellers (
-    id BIGSERIAL PRIMARY KEY,
-    auth_id BIGINT NOT NULL,
-    buz_no VARCHAR(10) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    phone VARCHAR(20) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP,
-    deleted_at TIMESTAMP,
-    CONSTRAINT fk_sellers_auth FOREIGN KEY (auth_id) REFERENCES auths(id)
+    CONSTRAINT fk_seller_consents_term_version FOREIGN KEY (terms_version_id) REFERENCES term_versions(id),
+    CONSTRAINT fk_seller_consents_seller FOREIGN KEY (seller_id) REFERENCES sellers(id)
 );
-CREATE UNIQUE INDEX uk_sellers_buz_no_active ON sellers (buz_no) WHERE deleted_at IS NULL;
-
-CREATE TABLE stores (
-    id BIGSERIAL PRIMARY KEY,
-    seller_id BIGINT NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    phone VARCHAR(20) NOT NULL,
-    thumbnail VARCHAR(255) DEFAULT 'http://default.png',
-    status VARCHAR(50) DEFAULT 'ACTIVE',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP,
-    deleted_at TIMESTAMP,
-    CONSTRAINT fk_stores_seller FOREIGN KEY (seller_id) REFERENCES sellers(id)
-);
-CREATE UNIQUE INDEX uk_stores_seller_active ON stores (seller_id) WHERE deleted_at IS NULL;
 
 -- ==========================================
 --  Product 도메인
@@ -186,7 +190,9 @@ CREATE TABLE products (
     like_count INT NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
-    deleted_at TIMESTAMP
+    deleted_at TIMESTAMP,
+    CONSTRAINT fk_products_store FOREIGN KEY (store_id) REFERENCES stores(id),
+    CONSTRAINT fk_products_category FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
 CREATE TABLE product_details (
@@ -269,7 +275,8 @@ CREATE TABLE carts (
     user_id BIGINT NOT NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
-    CONSTRAINT uk_carts_user UNIQUE (user_id)
+    CONSTRAINT uk_carts_user UNIQUE (user_id),
+    CONSTRAINT fk_carts_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 CREATE TABLE cart_items (
@@ -295,9 +302,10 @@ CREATE TABLE shipping_addresses (
     address1 VARCHAR(255) NOT NULL,
     address2 VARCHAR(255),
     is_default BOOLEAN DEFAULT FALSE NOT NULL,
-    memo VARCHAR,
+    memo VARCHAR(255),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP
+    updated_at TIMESTAMP,
+    CONSTRAINT fk_shipping_addresses_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 -- ==========================================
@@ -316,7 +324,8 @@ CREATE TABLE orders (
     title VARCHAR(255),
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
-    deleted_at TIMESTAMP
+    deleted_at TIMESTAMP,
+    CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 CREATE UNIQUE INDEX uk_orders_order_number ON orders (order_number) WHERE deleted_at IS NULL;
