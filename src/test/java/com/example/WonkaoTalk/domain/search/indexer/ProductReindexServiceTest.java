@@ -157,7 +157,6 @@ class ProductReindexServiceTest {
   void reindexAllAsync_normalCompletion_statusIsCompleted() {
     // given
     when(productRepo.findIndexableForReindex(any(), any(), any())).thenReturn(List.of());
-    when(operations.withRefreshPolicy(any())).thenReturn(operations);
 
     // when
     reindexService.reindexAllAsync();
@@ -174,7 +173,6 @@ class ProductReindexServiceTest {
     // given: 첫 번째 청크 조회 시 예외 발생
     when(productRepo.findIndexableForReindex(any(), any(), any()))
         .thenThrow(new RuntimeException("DB 연결 오류"));
-    when(operations.withRefreshPolicy(any())).thenReturn(operations);
 
     // when
     reindexService.reindexAllAsync();
