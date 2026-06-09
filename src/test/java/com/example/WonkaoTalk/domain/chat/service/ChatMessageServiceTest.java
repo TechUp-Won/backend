@@ -57,6 +57,7 @@ class ChatMessageServiceTest {
   @Mock
   private UserRepo userRepo;
 
+  // 구분용: 메시지전송
   @Test
   @DisplayName("메시지 전송 성공")
   void sendMessageSuccess() {
@@ -113,6 +114,52 @@ class ChatMessageServiceTest {
 
     // then
     assertThat(result.content()).isEqualTo("답장");
+  }
+
+  @Test
+  @DisplayName("모든 참여자가 읽은 상태면 unreadCount 0")
+  void sendMessageAllReadUnreadCountZero() {
+    // given
+    User user = createUser(USER_ID, "나");
+    ChatRoom room = createRoom();
+    ChatParticipant participant = createParticipant(room);
+
+    given(chatRoomRepo.findById(ROOM_ID)).willReturn(Optional.of(room));
+    given(chatParticipantRepo.findByChatRoomIdAndUserId(ROOM_ID, USER_ID)).willReturn(
+        Optional.of(participant));
+    given(userRepo.findById(USER_ID)).willReturn(Optional.of(user));
+
+    givenSaveMessage(); // 반환되는 메시지 ID는 2L로 세팅됨
+    // 두 명의 참여자가 모두 최신 메시지(2L) 이상을 읽었다고 가정
+    givenUnreadIds(2L, 5L);
+
+    // when
+    ChatMessageResponse result = chatMessageService.sendMessage(USER_ID, ROOM_ID, request());
+
+    // then
+    assertThat(result.unreadCount()).isEqualTo(0);
+  }
+
+  @Test
+  @DisplayName("읽지 않은 참여자 존재 시 unreadCount 증가")
+  void sendMessageUnreadCountCalculated() {
+    // given
+    User user = createUser(USER_ID, "나");
+    ChatRoom room = createRoom();
+    ChatParticipant participant = createParticipant(room);
+
+    given(chatRoomRepo.findById(ROOM_ID)).willReturn(Optional.of(room));
+    given(chatParticipantRepo.findByChatRoomIdAndUserId(ROOM_ID, USER_ID)).willReturn(
+        Optional.of(participant));
+    given(userRepo.findById(USER_ID)).willReturn(Optional.of(user));
+    givenSaveMessage();
+    givenUnreadIds(1L, null);
+
+    // when
+    ChatMessageResponse result = chatMessageService.sendMessage(USER_ID, ROOM_ID, request());
+
+    // then
+    assertThat(result.unreadCount()).isEqualTo(2);
   }
 
   @Test
@@ -186,6 +233,7 @@ class ChatMessageServiceTest {
         .isEqualTo(ErrorCode.MESSAGE_NOT_FOUND);
   }
 
+  // 구분용: 목록조회쪽
   @Test
   @DisplayName("메시지 목록 조회 성공")
   void getMessageListSuccess() {
@@ -254,6 +302,51 @@ class ChatMessageServiceTest {
     // then
     assertThat(result.messageList()).isEmpty();
     assertThat(result.nextCursorId()).isNull();
+  }
+
+  @Test
+  @DisplayName("마지막 페이지 조회 시 반환 잘 되는지")
+  void getMessageListLastPageReturnsNullCursor() {
+    // given
+    ChatRoom room = createRoom();
+    ChatParticipant participant = createParticipant(room);
+    ChatMessage message = createMessage(room, 5L, USER_ID, "마지막 메시지");
+
+    given(chatParticipantRepo.findByChatRoomIdAndUserId(ROOM_ID, USER_ID)).willReturn(
+        Optional.of(participant));
+    givenMessageSlice(false, message);
+    givenUnreadIds();
+    given(userRepo.findAllById(any())).willReturn(List.of());
+
+    // when
+    ChatMessageListResponse result = chatMessageService.getMessageList(USER_ID, ROOM_ID, null, 20);
+
+    // then
+    assertThat(result.hasNext()).isFalse();
+    assertThat(result.nextCursorId()).isNull();
+  }
+
+  @Test
+  @DisplayName("기존 읽음 메시지가 최신이면 updateLastReadMessage 미호출")
+  void getMessageListKeepLastReadMessageWhenAlreadyLatest() {
+    // given
+    ChatRoom room = createRoom();
+    ChatParticipant participant = createParticipant(room);
+    ChatMessage alreadyReadMessage = createMessage(room, 20L, USER_ID, "읽은 메시지");
+    participant.updateLastReadMessage(alreadyReadMessage);
+    ChatMessage fetchedMessage = createMessage(room, 10L, 2L, "과거 메시지");
+
+    given(chatParticipantRepo.findByChatRoomIdAndUserId(ROOM_ID, USER_ID)).willReturn(
+        Optional.of(participant));
+    givenMessageSlice(true, fetchedMessage);
+    givenUnreadIds();
+    given(userRepo.findAllById(any())).willReturn(List.of());
+
+    // when
+    chatMessageService.getMessageList(USER_ID, ROOM_ID, null, 20);
+
+    // then
+    assertThat(participant.getLastReadMessage().getId()).isEqualTo(20L);
   }
 
   @Test
