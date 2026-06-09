@@ -19,7 +19,7 @@ public class EncryptAttributeConverter implements AttributeConverter<String, Str
 
   @Value("${oauth.encryption.key}")
   public void setKey(String key) {
-    KEY = key.getBytes();
+    KEY = key.getBytes(java.nio.charset.StandardCharsets.UTF_8);
   }
 
   @Override
