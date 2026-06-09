@@ -20,7 +20,7 @@ import org.springframework.data.elasticsearch.annotations.Setting;
 /**
  * 상품 검색용 ElasticSearch 문서.
  *
- * <p>방식 A(구현 계획 §3): 검색·필터·정렬에 필요한 최소 필드만 색인하고, 표시용 상세 데이터는 DB에서 fetch 한다.
+ * 방식 A(구현 계획 §3): 검색·필터·정렬에 필요한 최소 필드만 색인하고, 표시용 상세 데이터는 DB에서 fetch 한다.
  * {@code name} 과 {@code optionValues} 는 {@code searchText} 로 copy_to 되어, 단일 필드 매칭만으로
  * "흰색 티셔츠"(옵션값 + 상품명) 같은 멀티 토큰 질의를 처리한다.
  */
@@ -44,7 +44,7 @@ public class ProductDocument {
   /**
    * {@code name} + {@code optionValues} 가 copy_to 되는 통합 검색 필드.
    *
-   * <p>본필드는 nori(형태소 단위 통째 토큰 매칭)로, {@code searchText.ngram} 서브필드는 ngram(부분 문자열)으로
+   * 본필드는 nori(형태소 단위 통째 토큰 매칭)로, {@code searchText.ngram} 서브필드는 ngram(부분 문자열)으로
    * 색인한다. nori 만으로는 "티셔츠"가 단일 토큰이라 "셔츠" 부분 검색이 매칭되지 않으므로 ngram 으로 보완한다.
    */
   @MultiField(

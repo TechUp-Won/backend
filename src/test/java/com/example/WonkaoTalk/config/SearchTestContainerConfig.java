@@ -11,7 +11,7 @@ import org.testcontainers.utility.DockerImageName;
  * ES 통합 테스트용 컨테이너 설정. ES + analysis-nori 플러그인 이미지를 인라인으로 빌드해
  * {@code @ServiceConnection} 으로 spring.elasticsearch.uris 를 자동 주입한다.
  *
- * <p>운영용 elasticsearch.Dockerfile 과 동일한 구성(ES 9.2.8 + analysis-nori)을 유지한다.
+ * 운영용 elasticsearch.Dockerfile 과 동일한 구성(ES 9.2.8 + analysis-nori)을 유지한다.
  * Dockerfile 을 직접 build context 로 쓰지 않고 인라인 빌더를 쓰는 이유는, 프로젝트 디렉터리 전체가
  * Docker build context 로 전송되는 비용/이슈를 피하기 위함이다.
  */

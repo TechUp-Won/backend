@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 /**
  * 부팅 시 products 인덱스가 없으면 settings(nori)/mapping 과 함께 생성한다.
  *
- * <p>{@code @Document(createIndex = false)} 로 SDE 의 즉시 생성을 끄고 이 컴포넌트가 명시적으로 생성한다.
+ * {@code @Document(createIndex = false)} 로 SDE 의 즉시 생성을 끄고 이 컴포넌트가 명시적으로 생성한다.
  * ES 연결 실패 시에도 애플리케이션 부팅을 막지 않도록 예외를 격리한다.
  * 테스트 등 ES 없는 환경은 {@code search.index.auto-create=false} 로 비활성화한다.
  */

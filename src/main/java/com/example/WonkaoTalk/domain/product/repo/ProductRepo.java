@@ -17,7 +17,7 @@ public interface ProductRepo extends JpaRepository<Product, Long>, ProductRepoCu
   @Query("SELECT p FROM Product p WHERE p.id = :id")
   Optional<Product> findByIdWithLock(@Param("id") Long id);
 
-  /** ES 검색 결과 ID 목록으로 Store 까지 fetch (방식 A). 정렬은 호출 측에서 ES 순서로 재정렬. */
+  /** ES 검색 결과 ID 목록으로 Store 까지 fetch. 정렬은 호출 측에서 ES 순서로 재정렬. */
   @Query("SELECT p FROM Product p JOIN FETCH p.store WHERE p.id IN :ids")
   List<Product> findWithStoreByIdIn(@Param("ids") List<Long> ids);
 
