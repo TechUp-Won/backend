@@ -226,10 +226,11 @@ class ChatRoomServiceTest {
     given(chatMessageRepo.countUnreadMessages(ROOM_ID, null)).willReturn(5);
 
     // when
-    chatRoomService.getChatRoomList(USER_ID, null, null, 20);
+    ChatRoomListResponse result = chatRoomService.getChatRoomList(USER_ID, null, null, 20);
 
     // then
     verify(chatMessageRepo).countUnreadMessages(ROOM_ID, null);
+    assertThat(result.rooms().getFirst().unreadCount()).isEqualTo(5);
   }
 
   @Test
