@@ -72,7 +72,7 @@ public class ProductDocument {
         .id(product.getId())
         .name(product.getName())
         .optionValues(optionValues)
-        .categoryId(product.getCategory().getId())
+        .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
         .discountedPrice(product.getDiscountedPrice())
         .likeCount(product.getLikeCount())
         .createdAt(product.getCreatedAt().toInstant(ZoneOffset.UTC).toEpochMilli())
