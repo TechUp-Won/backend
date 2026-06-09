@@ -16,6 +16,7 @@ import com.example.WonkaoTalk.domain.auth.enums.Role;
 import com.example.WonkaoTalk.domain.auth.repo.AuthLocalRepo;
 import com.example.WonkaoTalk.domain.auth.repo.AuthRepo;
 import com.example.WonkaoTalk.domain.auth.repo.AuthSocialRepo;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -68,12 +69,12 @@ class AuthCommandServiceTest {
 
     given(authRepo.findById(authId)).willReturn(Optional.of(auth));
     given(authLocalRepo.findByAuth(auth)).willReturn(Optional.of(authLocal));
-    given(authSocialRepo.findByAuth(auth)).willReturn(Optional.of(authSocial));
+    given(authSocialRepo.findByAuth(auth)).willReturn(List.of(authSocial));
 
     // when (활성화된 판매자가 없음 = false)
     authCommandService.handleUserWithdraw(authId, false);
 
-    // then (상태 검증: 엔티티 내부의 anonymize()와 withdraw() 동작 확인)
+    // then (상태 검증: 엔티티 내부의 withdraw() 동작 확인)
     assertThat(authLocal.getEmail()).isNotEqualTo("test@test.com"); // 마스킹 적용 확인
     assertThat(authSocial.getProviderUserId()).isNotEqualTo("google_12345"); // 마스킹 적용 확인
 

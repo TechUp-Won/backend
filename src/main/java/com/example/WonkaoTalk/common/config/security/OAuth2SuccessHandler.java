@@ -5,6 +5,7 @@ import com.example.WonkaoTalk.common.redis.RedisService;
 import com.example.WonkaoTalk.domain.auth.dto.OAuth.CustomOAuth2User;
 import com.example.WonkaoTalk.domain.auth.dto.SocialLoginDto;
 import com.example.WonkaoTalk.domain.auth.enums.AuthProvider;
+import com.example.WonkaoTalk.domain.auth.repo.AuthSocialRepo;
 import com.example.WonkaoTalk.domain.auth.service.AuthCommandService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +15,9 @@ import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +29,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
   private final AuthCommandService authCommandService;
   private final JwtTokenProvider jwtTokenProvider;
   private final RedisService redisService;
+  private final OAuth2AuthorizedClientService authorizedClientService;
+  private final AuthSocialRepo authSocialRepo;
 
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -51,6 +57,19 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     response.addCookie(createCookie("refresh-token", refreshToken, true,
         (int) (jwtTokenProvider.getRefreshTokenValidTime() / 1000)));
     response.addCookie(createCookie("access-token", accessToken, false, 60));
+
+    OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
+    OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
+        oauthToken.getAuthorizedClientRegistrationId(), oauthToken.getName());
+
+    if (client != null && client.getRefreshToken() != null) {
+      String providerRefreshToken = client.getRefreshToken().getTokenValue();
+
+      authSocialRepo.findByProviderAndProviderUserId(provider, providerId).ifPresent(authSocial -> {
+        authSocial.updateRefreshToken(providerRefreshToken);
+        authSocialRepo.save(authSocial); // Dirty Checking 혹은 명시적 save
+      });
+    }
 
     getRedirectStrategy().sendRedirect(request, response, "http://localhost:3000");
   }

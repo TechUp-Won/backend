@@ -3,7 +3,10 @@ package com.example.WonkaoTalk.common.config.security;
 import com.example.WonkaoTalk.common.config.security.jwt.JwtAuthenticationFilter;
 import com.example.WonkaoTalk.common.config.security.jwt.JwtExceptionFilter;
 import com.example.WonkaoTalk.domain.auth.service.OAuth2UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +19,11 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -31,6 +39,7 @@ public class SecurityConfig {
   private final JwtExceptionFilter jwtExceptionFilter;
   private final OAuth2UserService oAuth2UserService;
   private final OAuth2SuccessHandler oAuth2SuccessHandler;
+  private final ClientRegistrationRepository clientRegistrationRepository;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -84,9 +93,13 @@ public class SecurityConfig {
 
             .anyRequest().authenticated() // 그 외의 다른 모든 요청은 인증을 거쳐야 함
         )
-        .oauth2Login(oauth2 ->
-            oauth2.userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
-                .successHandler(oAuth2SuccessHandler)
+        .oauth2Login(oauth2 -> oauth2
+            .authorizationEndpoint(endpoint -> endpoint
+                .authorizationRequestResolver(
+                    customAuthorizationRequestResolver(clientRegistrationRepository)))
+            .successHandler(oAuth2SuccessHandler)
+            .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
+
         )
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(jwtExceptionFilter, JwtAuthenticationFilter.class);
@@ -128,5 +141,38 @@ public class SecurityConfig {
             "ROLE_USER_SELLER > ROLE_USER\n" +
             "ROLE_USER_SELLER > ROLE_SELLER"
     );
+  }
+
+  private OAuth2AuthorizationRequestResolver customAuthorizationRequestResolver(
+      ClientRegistrationRepository clientRegistrationRepository) {
+    DefaultOAuth2AuthorizationRequestResolver defaultResolver =
+        new DefaultOAuth2AuthorizationRequestResolver(clientRegistrationRepository,
+            "/oauth2/authorization");
+
+    return new OAuth2AuthorizationRequestResolver() {
+      @Override
+      public OAuth2AuthorizationRequest resolve(HttpServletRequest request) {
+        OAuth2AuthorizationRequest authRequest = defaultResolver.resolve(request);
+        return authRequest != null ? customizeAuthorizationRequest(authRequest) : null;
+      }
+
+      @Override
+      public OAuth2AuthorizationRequest resolve(HttpServletRequest request,
+          String clientRegistrationId) {
+        OAuth2AuthorizationRequest authRequest = defaultResolver.resolve(request,
+            clientRegistrationId);
+        return authRequest != null ? customizeAuthorizationRequest(authRequest) : null;
+      }
+    };
+  }
+
+  private OAuth2AuthorizationRequest customizeAuthorizationRequest(OAuth2AuthorizationRequest req) {
+    Map<String, Object> extraParams = new HashMap<>(req.getAdditionalParameters());
+    // 구글에 오프라인 접근(RT 발급) 요청
+    if ("google".equals(req.getAttribute(OAuth2ParameterNames.REGISTRATION_ID))) {
+      extraParams.put("access_type", "offline");
+      // extraParams.put("prompt", "consent");
+    }
+    return OAuth2AuthorizationRequest.from(req).additionalParameters(extraParams).build();
   }
 }

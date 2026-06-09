@@ -8,11 +8,16 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientException;
 
 @Slf4j
 @Component
 public class GoogleRevocationProvider implements OAuthRevocationProvider {
+
+  private final RestClient restClient;
+
+  public GoogleRevocationProvider() {
+    this.restClient = RestClient.create("https://oauth2.googleapis.com");
+  }
 
   @Override
   public boolean supports(AuthProvider provider) {
@@ -24,20 +29,10 @@ public class GoogleRevocationProvider implements OAuthRevocationProvider {
     if (!StringUtils.hasText(providerAccessToken)) {
       throw new BusinessException(ErrorCode.OAUTH_NULL_TOKEN);
     }
-
-    try {
-      RestClient.create("https://oauth2.googleapis.com")
-          .post()
-          .uri("/revoke?token=" + providerAccessToken)
-          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-          .retrieve()
-          .toBodilessEntity();
-    } catch (RestClientException e) {
-      handleFailure(e);
-    }
-  }
-
-  private void handleFailure(RestClientException e) {
-    log.info("소셜 인증 해지 실패");
+    restClient.post()
+        .uri("/revoke?token=" + providerAccessToken)
+        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+        .retrieve()
+        .toBodilessEntity();
   }
 }

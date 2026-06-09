@@ -26,7 +26,7 @@ import org.springframework.util.StringUtils;
 public class SellerService {
 
   private final AuthService authService;
-  private final AuthRepo authRepo; //TODO: authRepo 의존성 제거
+  private final AuthRepo authRepo;
   private final SellerRepo sellerRepo;
 
   @Transactional
