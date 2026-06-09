@@ -74,6 +74,29 @@ class ChatMessageRepoTest {
   }
 
   @Test
+  @DisplayName("메시지 조회 시 요청한 채팅방 메시지가 내림차순으로 조회")
+  void findMessagesByCursorOrderingTest() {
+    // given
+    ChatRoom myRoom = createRoom();
+    ChatRoom otherRoom = createRoom();
+    ChatMessage myMsg1 = createMessage(myRoom, "내 방 메시지1");
+    ChatMessage myMsg2 = createMessage(myRoom, "내 방 메시지2");
+    createMessage(otherRoom, "다른 방 메시지");
+
+    // when
+    Slice<ChatMessage> result = chatMessageRepo.findMessagesByCursor(
+        myRoom.getId(), null, PageRequest.of(0, 10)
+    );
+
+    // then
+    assertThat(result.getContent()).hasSize(2);
+    assertThat(result.getContent().get(0).getId()).isEqualTo(myMsg2.getId());
+    assertThat(result.getContent().get(1).getId()).isEqualTo(myMsg1.getId());
+    assertThat(result.getContent()).extracting("content")
+        .doesNotContain("다른 방 메시지");
+  }
+
+  @Test
   @DisplayName("책갈피가 null일 때 방의 전체 메시지 개수를 반환")
   void countUnreadMessagesByNullId() {
     // given
@@ -104,6 +127,40 @@ class ChatMessageRepoTest {
 
     // then
     assertThat(unreadCount).isEqualTo(2);
+  }
+
+  @Test
+  @DisplayName("다른 채팅방 메시지는 조회되지 않는다")
+  void findMessagesOnlyTargetRoom() {
+
+    // given
+    ChatRoom room1 = createRoom();
+    ChatRoom room2 = createRoom();
+    createMessage(room1, "room1");
+    createMessage(room2, "room2");
+
+    // when
+    Slice<ChatMessage> result = chatMessageRepo.findMessagesByCursor(room1.getId(), null,
+        PageRequest.of(0, 10));
+
+    // then
+    assertThat(result.getContent()).extracting(ChatMessage::getContent).containsExactly("room1");
+  }
+
+  @Test
+  @DisplayName("마지막 메시지까지 읽은 경우 unreadCount는 0")
+  void countUnreadMessagesZero() {
+
+    // given
+    ChatRoom room = createRoom();
+    createMessage(room, "1");
+    ChatMessage latest = createMessage(room, "2");
+
+    // when
+    int count = chatMessageRepo.countUnreadMessages(room.getId(), latest.getId());
+
+    // then
+    assertThat(count).isZero();
   }
 
   // -- 헬퍼 메서드 --
