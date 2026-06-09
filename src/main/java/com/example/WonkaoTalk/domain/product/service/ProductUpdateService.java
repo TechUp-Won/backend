@@ -20,6 +20,7 @@ import com.example.WonkaoTalk.domain.product.entity.ProductOption;
 import com.example.WonkaoTalk.domain.product.entity.ProductOptionGroup;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
 import com.example.WonkaoTalk.domain.product.event.ProductCreatedEvent;
+import com.example.WonkaoTalk.domain.product.event.ProductIndexRequestedEvent;
 import com.example.WonkaoTalk.domain.product.repo.CategoryRepo;
 import com.example.WonkaoTalk.domain.product.repo.DeletedProductImageRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductDetailRepo;
@@ -174,6 +175,7 @@ public class ProductUpdateService {
     if (!objectKeysToMove.isEmpty()) {
       eventPublisher.publishEvent(new ProductCreatedEvent(objectKeysToMove));
     }
+    eventPublisher.publishEvent(ProductIndexRequestedEvent.upsert(product.getId()));
 
     return new ProductUpdateResponse(
         product.getId(),

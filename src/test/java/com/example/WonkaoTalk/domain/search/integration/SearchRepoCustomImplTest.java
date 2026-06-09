@@ -1,7 +1,8 @@
 package com.example.WonkaoTalk.domain.search.integration;
 
-// TODO: ElasticSearch 도입 시 이 테스트 파일 전체를 재작성해야 합니다.
-//       현재는 JPA LIKE 기반의 단순 문자열 포함 검색을 검증합니다.
+// 이 테스트는 ProductRepoCustomImpl.findWithSearch(JPA LIKE) — 즉 ES 불가 시의
+// DB 폴백 경로(search.product.engine=database)를 검증한다.
+// 옵션값 매칭/형태소 분석을 포함한 기본 검색 경로(ES)는 ProductSearchQueryRepositoryImplTest 에서 검증한다.
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -90,7 +90,8 @@ public class ProductRepoCustomImpl implements ProductRepoCustom {
     predicates.add(p.get("status").in(SaleStatus.ON_SALE, SaleStatus.OUT_OF_STOCK));
 
     p.fetch("store", JoinType.LEFT);
-    // TODO: ElasticSearch 등 검색 엔진 도입 시 동의어(예: 레드-빨강) 처리 및 스코어 기반 정렬로 교체 필요
+    // 상품 검색은 ElasticSearch(ProductSearchQueryRepository)로 전환됨. 이 메서드는 ES 불가 시
+    // search.product.engine=database 로 전환되는 폴백 경로다. 옵션값 매칭/형태소 분석은 ES만 지원한다.
 
     predicates.add(cb.like(p.get("name"), "%" + keyword + "%"));
 

@@ -83,10 +83,13 @@ services:
       "
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+    build:
+      context: .
+      dockerfile: elasticsearch.Dockerfile
     container_name: wonkao-talk-es
     ports:
       - "9200:9200"
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
+

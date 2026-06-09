@@ -5,6 +5,7 @@ import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.order.entity.OrderStatus;
 import com.example.WonkaoTalk.domain.order.repo.OrderItemRepo;
 import com.example.WonkaoTalk.domain.product.entity.Product;
+import com.example.WonkaoTalk.domain.product.event.ProductIndexRequestedEvent;
 import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
 import com.example.WonkaoTalk.domain.seller.entity.Seller;
 import com.example.WonkaoTalk.domain.seller.repo.SellerRepo;
@@ -12,6 +13,7 @@ import com.example.WonkaoTalk.domain.store.entity.Store;
 import com.example.WonkaoTalk.domain.store.repo.StoreRepo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +28,7 @@ public class ProductDeleteService {
   private final StoreRepo storeRepo;
   private final ProductRepo productRepo;
   private final OrderItemRepo orderItemRepo;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Transactional
   public void delete(Long authId, Long productId) {
@@ -37,6 +40,7 @@ public class ProductDeleteService {
     }
 
     product.softDelete();
+    eventPublisher.publishEvent(ProductIndexRequestedEvent.delete(productId));
   }
 
   private Store resolveStore(Long authId) {

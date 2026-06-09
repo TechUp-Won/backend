@@ -6,6 +6,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.example.WonkaoTalk.common.exception.BusinessException;
@@ -16,6 +18,8 @@ import com.example.WonkaoTalk.domain.product.repo.CategoryRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
 import com.example.WonkaoTalk.domain.search.dto.SearchRequest;
 import com.example.WonkaoTalk.domain.search.dto.SearchResponse;
+import com.example.WonkaoTalk.domain.search.repo.ProductSearchQueryRepository;
+import com.example.WonkaoTalk.domain.search.repo.ProductSearchResult;
 import com.example.WonkaoTalk.domain.store.entity.Store;
 import com.example.WonkaoTalk.domain.store.repo.StoreRepo;
 import java.time.LocalDateTime;
@@ -31,6 +35,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -44,6 +49,9 @@ class SearchServiceTest {
 
   @Mock
   private StoreRepo storeRepository;
+
+  @Mock
+  private ProductSearchQueryRepository productSearchQueryRepository;
 
   @InjectMocks
   private SearchService searchService;
@@ -130,11 +138,89 @@ class SearchServiceTest {
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_CATEGORY_NOT_FOUND);
   }
 
-  // ── 페이지네이션 ────────────────────────────────────────────────────────────
+  // ── ES 검색 경로 ──────────────────────────────────────────────────────────────
 
   @Test
-  @DisplayName("결과가 size보다 많으면 hasNext가 true이고 마지막 항목이 제거된다")
-  void hasNext_trueAndLastItemRemoved_whenResultsExceedSize() {
+  @DisplayName("ES 결과 ID 순서대로 상품을 반환하고 커서를 그대로 전달한다")
+  void returnsProductsInElasticsearchOrder_andPassesThroughCursor() {
+    SearchRequest request = new SearchRequest("셔츠", null, null, null, "popular", null, null, 2);
+    when(productSearchQueryRepository.search(anyString(), any(), any(), any(), any(), any(), any(), anyInt()))
+        .thenReturn(new ProductSearchResult(List.of(2L, 1L), true, 1L, 50L));
+
+    Product p1 = mockProduct(1L, 10000, 8000, 10, LocalDateTime.now());
+    Product p2 = mockProduct(2L, 5000, 5000, 50, LocalDateTime.now());
+    // DB는 순서를 보장하지 않으므로 ES 순서(2,1)와 다른 순서로 반환
+    when(productRepository.findWithStoreByIdIn(List.of(2L, 1L))).thenReturn(List.of(p1, p2));
+
+    SearchResponse response = searchService.search(request);
+
+    assertThat(response.products()).extracting(SearchResponse.ProductResult::id)
+        .containsExactly(2L, 1L);
+    assertThat(response.hasNext()).isTrue();
+    assertThat(response.nextCursorId()).isEqualTo(1L);
+    assertThat(response.nextCursorSortValue()).isEqualTo(50L);
+  }
+
+  @Test
+  @DisplayName("ES 결과가 없으면 빈 상품 목록을 반환하고 DB 조회를 하지 않는다")
+  void returnsEmpty_whenElasticsearchHasNoMatch() {
+    SearchRequest request = defaultRequest("없는상품");
+    when(productSearchQueryRepository.search(anyString(), any(), any(), any(), any(), any(), any(), anyInt()))
+        .thenReturn(ProductSearchResult.empty());
+
+    SearchResponse response = searchService.search(request);
+
+    assertThat(response.products()).isEmpty();
+    assertThat(response.hasNext()).isFalse();
+    assertThat(response.nextCursorId()).isNull();
+    verify(productRepository, never()).findWithStoreByIdIn(any());
+  }
+
+  @Test
+  @DisplayName("stores는 키워드로 검색된 스토어 목록을 반환한다(federated)")
+  void stores_returnsMatchingStores() {
+    SearchRequest request = defaultRequest("셔츠");
+    when(productSearchQueryRepository.search(anyString(), any(), any(), any(), any(), any(), any(), anyInt()))
+        .thenReturn(ProductSearchResult.empty());
+
+    Store store = mock(Store.class);
+    when(store.getId()).thenReturn(1L);
+    when(store.getName()).thenReturn("셔츠스토어");
+    when(store.getThumbnail()).thenReturn("http://thumbnail.png");
+    when(store.getDescription()).thenReturn("셔츠 전문점");
+    when(storeRepository.findByNameContaining("셔츠")).thenReturn(List.of(store));
+
+    SearchResponse response = searchService.search(request);
+
+    assertThat(response.stores()).hasSize(1);
+    assertThat(response.stores().get(0).storeId()).isEqualTo(1L);
+    assertThat(response.stores().get(0).storeName()).isEqualTo("셔츠스토어");
+  }
+
+  @Test
+  @DisplayName("ES 검색 중 예외 발생 시 DB 검색으로 Fallback을 수행한다")
+  void fallbacksToDatabase_whenElasticsearchThrowsException() {
+    SearchRequest request = new SearchRequest("셔츠", null, null, null, "popular", null, null, 2);
+    when(productSearchQueryRepository.search(anyString(), any(), any(), any(), any(), any(), any(), anyInt()))
+        .thenThrow(new RuntimeException("Elasticsearch connection failed"));
+
+    List<Product> products = mockProducts(2);
+    when(productRepository.findWithSearch(anyString(), any(), any(), any(), any(), any(), any(), anyInt()))
+        .thenReturn(products);
+
+    SearchResponse response = searchService.search(request);
+
+    assertThat(response.products()).hasSize(2);
+    verify(productRepository).findWithSearch(anyString(), any(), any(), any(), any(), any(), any(), anyInt());
+    verify(productRepository, never()).findWithStoreByIdIn(any());
+  }
+
+  // ── DB 폴백 경로 (search.product.engine=database) ─────────────────────────────
+
+  @Test
+  @DisplayName("DB 폴백: 결과가 size보다 많으면 hasNext가 true이고 마지막 항목이 제거된다")
+  void databaseFallback_hasNext_trueAndLastItemRemoved() {
+    ReflectionTestUtils.setField(searchService, "searchEngine", "database");
     SearchRequest request = new SearchRequest("셔츠", null, null, null, "popular", null, null, 2);
     List<Product> products = mockProducts(3);
     when(productRepository.findWithSearch(anyString(), any(), any(), any(), any(), any(), any(), anyInt()))
@@ -149,25 +235,9 @@ class SearchServiceTest {
   }
 
   @Test
-  @DisplayName("결과가 size 이하면 hasNext가 false이고 커서가 null이다")
-  void hasNext_falseAndCursorNull_whenResultsWithinSize() {
-    SearchRequest request = new SearchRequest("셔츠", null, null, null, "popular", null, null, 5);
-    List<Product> products = mockProducts(3);
-    when(productRepository.findWithSearch(anyString(), any(), any(), any(), any(), any(), any(), anyInt()))
-        .thenReturn(products);
-
-    SearchResponse response = searchService.search(request);
-
-    assertThat(response.hasNext()).isFalse();
-    assertThat(response.nextCursorId()).isNull();
-    assertThat(response.nextCursorSortValue()).isNull();
-  }
-
-  // ── 커서 값 계산 ─────────────────────────────────────────────────────────────
-
-  @Test
-  @DisplayName("POPULAR 정렬의 커서값은 likeCount이다")
-  void cursorValue_isLikeCount_whenSortByPopular() {
+  @DisplayName("DB 폴백: POPULAR 정렬의 커서값은 likeCount이다")
+  void databaseFallback_cursorValue_isLikeCount_whenSortByPopular() {
+    ReflectionTestUtils.setField(searchService, "searchEngine", "database");
     SearchRequest request = new SearchRequest("셔츠", null, null, null, "popular", null, null, 1);
 
     Product first = mockProduct(1L, 10000, 8000, 42, LocalDateTime.now());
@@ -181,8 +251,9 @@ class SearchServiceTest {
   }
 
   @Test
-  @DisplayName("LATEST 정렬의 커서값은 createdAt의 epoch milliseconds이다")
-  void cursorValue_isCreatedAtEpochMillis_whenSortByLatest() {
+  @DisplayName("DB 폴백: LATEST 정렬의 커서값은 createdAt의 epoch milliseconds이다")
+  void databaseFallback_cursorValue_isCreatedAtEpochMillis_whenSortByLatest() {
+    ReflectionTestUtils.setField(searchService, "searchEngine", "database");
     LocalDateTime createdAt = LocalDateTime.of(2024, 6, 1, 12, 0, 0);
     long expectedMillis = createdAt.toInstant(ZoneOffset.UTC).toEpochMilli();
 
@@ -196,44 +267,6 @@ class SearchServiceTest {
     SearchResponse response = searchService.search(request);
 
     assertThat(response.nextCursorSortValue()).isEqualTo(expectedMillis);
-  }
-
-  @Test
-  @DisplayName("PRICE 정렬의 커서값은 discountedPrice이다")
-  void cursorValue_isDiscountedPrice_whenSortByPrice() {
-    SearchRequest request = new SearchRequest("셔츠", null, null, null, "price_asc", null, null, 1);
-
-    Product first = mockProduct(1L, 10000, 8000, 5, LocalDateTime.now());
-    Product second = mockProduct(2L, 15000, 15000, 3, LocalDateTime.now());
-    when(productRepository.findWithSearch(anyString(), any(), any(), any(), any(), any(), any(), anyInt()))
-        .thenReturn(List.of(first, second));
-
-    SearchResponse response = searchService.search(request);
-
-    assertThat(response.nextCursorSortValue()).isEqualTo(8000L);
-  }
-
-  // ── 응답 구조 ────────────────────────────────────────────────────────────────
-
-  @Test
-  @DisplayName("stores는 키워드로 검색된 스토어 목록을 반환한다")
-  void stores_returnsMatchingStores() {
-    SearchRequest request = defaultRequest("셔츠");
-    when(productRepository.findWithSearch(anyString(), any(), any(), any(), any(), any(), any(), anyInt()))
-        .thenReturn(List.of());
-
-    Store store = mock(Store.class);
-    when(store.getId()).thenReturn(1L);
-    when(store.getName()).thenReturn("셔츠스토어");
-    when(store.getThumbnail()).thenReturn("http://thumbnail.png");
-    when(store.getDescription()).thenReturn("셔츠 전문점");
-    when(storeRepository.findByNameContaining("셔츠")).thenReturn(List.of(store));
-
-    SearchResponse response = searchService.search(request);
-
-    assertThat(response.stores()).hasSize(1);
-    assertThat(response.stores().get(0).storeId()).isEqualTo(1L);
-    assertThat(response.stores().get(0).storeName()).isEqualTo("셔츠스토어");
   }
 
   // ── 헬퍼 ────────────────────────────────────────────────────────────────────

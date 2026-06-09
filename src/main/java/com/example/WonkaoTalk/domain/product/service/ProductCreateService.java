@@ -20,6 +20,7 @@ import com.example.WonkaoTalk.domain.product.entity.VariantOptionMap;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
 import com.example.WonkaoTalk.domain.product.enums.StockChangeReason;
 import com.example.WonkaoTalk.domain.product.event.ProductCreatedEvent;
+import com.example.WonkaoTalk.domain.product.event.ProductIndexRequestedEvent;
 import com.example.WonkaoTalk.domain.product.repo.CategoryRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductDetailRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductImageRepo;
@@ -146,6 +147,7 @@ public class ProductCreateService {
     if (!objectKeysToMove.isEmpty()) {
       eventPublisher.publishEvent(new ProductCreatedEvent(objectKeysToMove));
     }
+    eventPublisher.publishEvent(ProductIndexRequestedEvent.upsert(product.getId()));
 
     return new ProductCreateResponse(
         product.getId(),
