@@ -20,6 +20,8 @@ import com.example.WonkaoTalk.domain.order.dto.OrderCreateResponse;
 import com.example.WonkaoTalk.domain.order.dto.OrderDetailResponse;
 import com.example.WonkaoTalk.domain.order.dto.OrderItemDto;
 import com.example.WonkaoTalk.domain.order.dto.OrderListResponse;
+import com.example.WonkaoTalk.domain.order.dto.OrderPreviewRequest;
+import com.example.WonkaoTalk.domain.order.dto.OrderPreviewResponse;
 import com.example.WonkaoTalk.domain.order.entity.Delivery;
 import com.example.WonkaoTalk.domain.order.entity.DeliveryStatus;
 import com.example.WonkaoTalk.domain.order.entity.Order;
@@ -87,11 +89,115 @@ public class OrderServiceTest {
   @DisplayName("주문 미리보기 검증")
   class PreviewOrderTest {
 
-    // TODO: success_previewOrder
-    // TODO: fail_previewOrder_duplicatedVariantId - 중복 variantId면 BAD_REQUEST
-    // TODO: fail_previewOrder_variantNotFound - 존재하지 않는 variantId면 NOT_FOUND
-    // TODO: fail_previewOrder_variantUnavailable - ON_SALE이 아니면 PROD_VARIANT_UNAVAILABLE
-    // TODO: fail_previewOrder_stockInsufficient - 재고 부족이면 PROD_STOCK_INSUFFICIENT
+    @Test
+    @DisplayName("주문 미리보기 성공")
+    public void success_previewOrder() {
+      //given
+      OrderPreviewRequest request = mockOrderPreviewRequest();
+      ProductVariant productVariant = mockProductVariant();
+      when(productVariantRepo.findAllById(List.of(10L))).thenReturn(List.of(productVariant));
+      when(productVariant.getId()).thenReturn(10L);
+      when(productVariant.getStatus()).thenReturn(SaleStatus.ON_SALE);
+      when(productVariant.getStock()).thenReturn(2);
+
+      Product product = mock(Product.class);
+      when(productVariant.getProduct()).thenReturn(product);
+      when(product.getId()).thenReturn(100L);
+      when(product.getName()).thenReturn("테스트 상품");
+      when(product.getThumbnail()).thenReturn("thumbnail.jpg");
+      when(product.getPrice()).thenReturn(12000);
+      when(product.getDiscountedPrice()).thenReturn(10000);
+
+      //when
+      OrderPreviewResponse response = orderService.previewOrder(request);
+
+      //then
+      assertThat(response.items()).hasSize(1);
+      assertThat(response.items().getFirst().productId()).isEqualTo(100L);
+      assertThat(response.items().getFirst().variantId()).isEqualTo(10L);
+      assertThat(response.items().getFirst().productName()).isEqualTo("테스트 상품");
+      assertThat(response.items().getFirst().price()).isEqualTo(12000L);
+      assertThat(response.items().getFirst().discountedPrice()).isEqualTo(10000L);
+      assertThat(response.items().getFirst().quantity()).isEqualTo(2);
+      assertThat(response.items().getFirst().itemOriginalAmount()).isEqualTo(24000L);
+      assertThat(response.items().getFirst().itemDiscountAmount()).isEqualTo(4000L);
+      assertThat(response.items().getFirst().itemFinalAmount()).isEqualTo(20000L);
+
+      assertThat(response.summary().originalAmount()).isEqualTo(24000L);
+      assertThat(response.summary().discountAmount()).isEqualTo(4000L);
+      assertThat(response.summary().finalAmount()).isEqualTo(20000L);
+
+    }
+
+    @Test
+    @DisplayName("중복 variantId면 BAD_REQUEST를 반환한다.")
+    public void fail_previewOrder_duplicatedVariantId() {
+      //given
+      OrderPreviewRequest request = new OrderPreviewRequest(
+          List.of(
+              new OrderItemDto(10L, 2),
+              new OrderItemDto(10L, 2))
+      );
+
+      //when
+      BusinessException exception = assertThrows(BusinessException.class,
+          () -> orderService.previewOrder(request));
+
+      //then
+      assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.BAD_REQUEST);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 variantId면 NOT_FOUND 반환")
+    public void fail_previewOrder_variantNotFound() {
+      //given
+      OrderPreviewRequest request = mockOrderPreviewRequest();
+      ProductVariant variant = mock(ProductVariant.class);
+      when(productVariantRepo.findAllById(List.of(10L))).thenReturn(Collections.emptyList());
+      //when
+      BusinessException exception = assertThrows(BusinessException.class,
+          () -> orderService.previewOrder(request));
+
+      //then
+      assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("ON_SALE이 아니면 PROD_VARIANT_UNAVAILABLE를 반환한다.")
+    public void fail_previewOrder_variantUnavailable() {
+      //given
+      OrderPreviewRequest request = mockOrderPreviewRequest();
+      ProductVariant productVariant = mock(ProductVariant.class);
+      when(productVariantRepo.findAllById(List.of(10L))).thenReturn(List.of(productVariant));
+      when(productVariant.getId()).thenReturn(10L);
+      when(productVariant.getStatus()).thenReturn(SaleStatus.STOP_SALE);
+
+      //when
+      BusinessException exception = assertThrows(BusinessException.class,
+          () -> orderService.previewOrder(request));
+
+      //then
+      assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PROD_VARIANT_UNAVAILABLE);
+    }
+
+    @Test
+    @DisplayName("재고 부족이면 PROD_STOCK_INSUFFICIENT를 반환한다.")
+    public void fail_previewOrder_stockInsufficient() {
+      //given
+      OrderPreviewRequest request = mockOrderPreviewRequest();
+      ProductVariant variant = mock(ProductVariant.class);
+      when(productVariantRepo.findAllById(List.of(10L))).thenReturn(List.of(variant));
+      when(variant.getId()).thenReturn(10L);
+      when(variant.getStatus()).thenReturn(SaleStatus.ON_SALE);
+      when(variant.getStock()).thenReturn(1);
+
+      //when
+      BusinessException exception = assertThrows(BusinessException.class,
+          () -> orderService.previewOrder(request));
+
+      //then
+      assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PROD_STOCK_INSUFFICIENT);
+    }
   }
 
   @Nested
@@ -163,7 +269,6 @@ public class OrderServiceTest {
       verify(orderStockService, never()).decreaseStocks(anyList());
     }
 
-    // TODO: fail_createOrder_duplicatedVariantId - 중복 variantId면 BAD_REQUEST
     @Test
     @DisplayName("중복 variantId면 BAD_REQUEST")
     public void fail_createOrder_duplicatedVariantId() {
@@ -184,7 +289,6 @@ public class OrderServiceTest {
       assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.BAD_REQUEST);
     }
 
-    // TODO: fail_createOrder_variantNotFound - 존재하지 않는 variantId면 NOT_FOUND
     @Test
     @DisplayName("존재하지 않는 variantId면 NOT_FOUND")
     public void fail_createOrder_variantNotFound() {
@@ -202,7 +306,6 @@ public class OrderServiceTest {
       assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
     }
 
-    // TODO: fail_createOrder_variantUnavailable - ON_SALE이 아니면 PROD_VARIANT_UNAVAILABLE
     @Test
     @DisplayName("ON_SALE이 아니면 PROD_VARIANT_UNAVAILABLE")
     public void fail_createOrder_variantUnavailable() {
@@ -224,7 +327,6 @@ public class OrderServiceTest {
       assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PROD_VARIANT_UNAVAILABLE);
     }
 
-    // TODO: fail_createOrder_stockInsufficient - 재고 부족이면 PROD_STOCK_INSUFFICIENT
     @Test
     @DisplayName("요청 수량보다 재고가 부족하면 PROD_STOCK_INSUFFICIENT 예외가 발생한다.")
     public void fail_createOrder_stockInsufficient() {
@@ -246,7 +348,6 @@ public class OrderServiceTest {
       assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PROD_STOCK_INSUFFICIENT);
     }
 
-    // TODO: success_createOrder_retryDuplicatedOrderNumber - 주문번호 중복 후 재시도 성공
     @Test
     @DisplayName("주문번호가 중복되면 재시도 후 주문을 생성한다.")
     public void success_createOrder_retryDuplicatedOrderNumber() {
@@ -280,7 +381,6 @@ public class OrderServiceTest {
 
     }
 
-    // TODO: fail_createOrder_orderNumberDuplicatedFiveTimes - 5회 모두 중복이면 SERVER_ERROR
     @Test
     @DisplayName("OrderNumber가 5회 모두 중복이면 SERVER_ERROR를 발생한다.")
     public void fail_createOrder_orderNumberDuplicatedFiveTimes() {
@@ -315,7 +415,6 @@ public class OrderServiceTest {
       assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.SERVER_ERROR);
     }
 
-    // TODO: success_createOrder_multipleItems_orderTitle - 상품 2개 이상이면 "상품명 외 N건"
     @Test
     @DisplayName("상품 2개 이상이면 주문 명에 상품명 외 N건을 반환한다.")
     public void success_createOrder_multipleItems_orderTitle() {
@@ -376,7 +475,6 @@ public class OrderServiceTest {
   @DisplayName("주문 목록 조회 검증")
   class GetOrdersTest {
 
-    // TODO: success_getOrders - 주문 목록과 PageInfo를 반환한다.
     @Test
     @DisplayName("주문 목록과 PageInfo를 반환한다.")
     public void success_getOrders() {
@@ -411,7 +509,6 @@ public class OrderServiceTest {
   @DisplayName("주문 상세 조회 검증")
   class GetOrderDetailTest {
 
-    // TODO: success_getOrderDetail - 주문, 주문 상품, 결제 목록을 반환한다.
     @Test
     @DisplayName("주문, 주문 상품, 결제 목록을 반환한다.")
     public void success_getOrderDetail() {
@@ -440,7 +537,6 @@ public class OrderServiceTest {
           .containsExactly("포카칩", "썬칩");
     }
 
-    // TODO: fail_getOrderDetail_orderNotFound - 주문이 없으면 ORDER_NOT_FOUND
     @Test
     @DisplayName("주문 상세 조회 시 주문이 없으면 ORDER_NOT_FOUND를 반환한다.")
     public void fail_getOrderDetail_orderNotFound() {
@@ -456,7 +552,6 @@ public class OrderServiceTest {
       assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ORDER_NOT_FOUND);
     }
 
-    // TODO: fail_getOrderDetail_orderItemNotFound - 주문 상품이 비어 있으면 ORDER_ITEM_NOT_FOUND
     @Test
     @DisplayName("주문 상세 조회 시 주문 아이템 비어 있으면 ORDER_ITEM_NOT_FOUND를 반환한다.")
     public void fail_getOrderDetail_orderItemNotFound() {
@@ -473,6 +568,7 @@ public class OrderServiceTest {
           () -> orderService.getOrderDetail(1L, order.getOrderId()));
 
       //then
+      assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ORDER_ITEM_NOT_FOUND);
     }
   }
 
@@ -705,5 +801,11 @@ public class OrderServiceTest {
     lenient().when(payment.getApprovedAt()).thenReturn(LocalDateTime.now());
 
     return payment;
+  }
+
+  private OrderPreviewRequest mockOrderPreviewRequest() {
+    return new OrderPreviewRequest(
+        List.of(new OrderItemDto(10L, 2))
+    );
   }
 }
