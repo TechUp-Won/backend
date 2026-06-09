@@ -1,46 +1,139 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '4.0.6'
-	id 'io.spring.dependency-management' version '1.1.7'
+    id 'java'
+    id 'org.springframework.boot' version '4.0.6'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
 }
 
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(25)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-	implementation 'org.springframework.boot:spring-boot-starter-kafka'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-	implementation 'org.springframework.boot:spring-boot-starter-websocket'
-	compileOnly 'org.projectlombok:lombok'
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
-	runtimeOnly 'org.postgresql:postgresql'
-	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-data-redis-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-kafka-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-websocket-test'
-	testCompileOnly 'org.projectlombok:lombok'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	testAnnotationProcessor 'org.projectlombok:lombok'
+    // --- Web & Presentation ---
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+    // --- API Docs ---
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
+
+    // --- Security & Auth ---
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+    // --- JWT (Java JWT) ---
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
+    // --- Data Storage & Messaging ---
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-kafka'
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // --- Monitoring & Dev Tools ---
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    // --- AWS SDK v2 (S3 / MinIO)
+    implementation platform('software.amazon.awssdk:bom:2.31.9')
+    implementation 'software.amazon.awssdk:s3'
+    implementation 'software.amazon.awssdk:s3-transfer-manager'
+
+    // --- XSS Sanitizer
+    implementation 'org.jsoup:jsoup:1.18.3'
+
+    // --- Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // --- Flyway
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+    implementation 'org.springframework.boot:spring-boot-starter-flyway'
+
+    // --- Elasticsearch
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+
+    // --- Testing
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-websocket-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-redis-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-kafka-test'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:testcontainers-postgresql'
+    testImplementation 'org.testcontainers:testcontainers-kafka'
+    testImplementation 'org.testcontainers:testcontainers-elasticsearch'
+    testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+    testImplementation 'com.redis:testcontainers-redis'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly 'com.h2database:h2'
 }
 
-tasks.named('test') {
-	useJUnitPlatform()
+test {
+    useJUnitPlatform()
+    systemProperty 'volume', System.getProperty('volume', '100')
+    finalizedBy tasks.named('jacocoTestReport')
+}
+
+// ── JaCoCo ─────────────────────────────────────────────────────────────────
+
+jacoco {
+    toolVersion = '0.8.13'
+}
+
+jacocoTestReport {
+    dependsOn tasks.named('test')
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+// Per-domain coverage reports
+def domains = [
+        'auth', 'chat', 'friend', 'image', 'order', 'payment',
+        'product', 'search', 'seller', 'shipping', 'store', 'term', 'user'
+]
+
+domains.each { domain ->
+    tasks.register("jacocoReport${domain.capitalize()}", JacocoReport) {
+        group = 'verification'
+        description = "JaCoCo coverage report for domain: ${domain}"
+        dependsOn tasks.named('test')
+        executionData fileTree(layout.buildDirectory.dir("jacoco")).include("*.exec")
+        sourceDirectories.setFrom(sourceSets.main.java.srcDirs)
+        classDirectories.setFrom(
+                sourceSets.main.output.classesDirs.asFileTree.matching {
+                    include "**/domain/${domain}/**"
+                }
+        )
+        reports {
+            xml.required = true
+            html.required = true
+        }
+    }
+}
+
+tasks.register('jacocoAllDomainReports') {
+    group = 'verification'
+    description = 'Generates JaCoCo coverage reports for all domains'
+    dependsOn domains.collect { "jacocoReport${it.capitalize()}" }
 }

@@ -1,0 +1,20 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  profiles:
+    active: local, secret
+
+# 테스트 기본값: ES 미연결 환경에서 부팅 가능하도록 인덱스 자동생성/ES 검색을 끈다.
+# ES 통합 테스트는 @TestPropertySource 로 elasticsearch 엔진과 auto-create 를 켠다.
+search:
+  index:
+    auto-create: false
+  product:
+    engine: database
+
+jwt:
+  # TODO: 배포 시 환경변수로 jwt secret key 주입 필요
+  # secret: ${JWT_SECRET_KEY} # 시스템 환경변수에서 값을 주입받음
+  access-expiration-time: 1800000 # 30분
+  refresh-expiration-time: 1209600000 # 14일

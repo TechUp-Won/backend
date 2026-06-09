@@ -1,0 +1,81 @@
+package com.example.WonkaoTalk.domain.auth.entity;
+
+import com.example.WonkaoTalk.common.converter.EncryptAttributeConverter;
+import com.example.WonkaoTalk.domain.auth.enums.AuthProvider;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import java.time.LocalDateTime;
+import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+@Entity
+@Getter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@EntityListeners(AuditingEntityListener.class)
+@SQLDelete(sql = "UPDATE auth_socials SET deleted_at = NOW() WHERE id = ?")
+@SQLRestriction("deleted_at IS NULL")
+@Table(name = "auth_socials")
+public class AuthSocial {
+
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "auth_id", nullable = false)
+  private Auth auth;
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private AuthProvider provider;
+
+  @Column(name = "provider_id", nullable = false)
+  private String providerUserId;
+
+  @Column(nullable = false)
+  private String email;
+
+  @LastModifiedDate
+  @Column(name = "updated_at")
+  private LocalDateTime updatedAt;
+
+  @Column(name = "deleted_at")
+  private LocalDateTime deletedAt;
+
+  @Convert(converter = EncryptAttributeConverter.class)
+  @Column(name = "provider_refresh_token", length = 500)
+  private String providerRefreshToken;
+
+  public void updateRefreshToken(String refreshToken) {
+    if (refreshToken != null) {
+      this.providerRefreshToken = refreshToken;
+    }
+  }
+
+  public void withdraw() {
+    this.email = UUID.randomUUID().toString() + "@deleted.email";
+    this.providerUserId = UUID.randomUUID().toString();
+    this.deletedAt = LocalDateTime.now();
+  }
+}

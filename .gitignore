@@ -1,9 +1,14 @@
 HELP.md
+.env
+.env.*
+!.env.example
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+### AI 문서 ###
+docs/
 
 ### STS ###
 .apt_generated
@@ -35,3 +40,25 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### application-local ###
+application-local.yml
+application-local.yaml
+application-secret.yml
+*/application-local.y*
+
+### Docker volume data ###
+postgres/
+kafka/
+minio/
+
+### 대용량 데이터 생성 도구 (로컬 전용) ###
+docker-compose.override.yml
+src/test/java/com/example/WonkaoTalk/domain/product/datagen/
+
+### macOS ###
+.DS_Store
+
+### AI CLI ###
+.claude
+.antigravitycli

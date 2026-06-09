@@ -1,0 +1,9 @@
+package com.example.WonkaoTalk.domain.product.enums;
+
+public enum StockChangeReason {
+  SALE,          // 결제 완료로 인한 차감
+  CANCEL,        // 주문 취소로 인한 복구
+  INITIAL_STOCK, // 상품 최초 등록 시 초기 재고
+  RESTOCK,       // 판매자 입고
+  ADJUSTMENT     // 판매자 수동 조정
+}
