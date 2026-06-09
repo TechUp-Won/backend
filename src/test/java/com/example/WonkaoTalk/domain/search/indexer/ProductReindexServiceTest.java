@@ -6,6 +6,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import com.example.WonkaoTalk.domain.product.entity.Category;
 import com.example.WonkaoTalk.domain.product.entity.Product;
@@ -131,6 +134,65 @@ class ProductReindexServiceTest {
 
     assertThat(total).isEqualTo(1);
     verify(operations).save(any(), any(IndexCoordinates.class));
+  }
+
+  // ── reindexAllAsync() ────────────────────────────────────────────────────────
+
+  @Test
+  @DisplayName("이미 재색인이 실행 중이면 조기 반환하고 상태가 변경되지 않는다")
+  void reindexAllAsync_alreadyRunning_returnsEarly() {
+    // given: isRunning을 true로 설정
+    AtomicBoolean isRunning = (AtomicBoolean) ReflectionTestUtils.getField(reindexService, "isRunning");
+    isRunning.set(true);
+
+    // when: 비동기 메서드 호출 (@Async 없이 동기 실행)
+    reindexService.reindexAllAsync();
+
+    // then: productRepo를 전혀 호출하지 않는다
+    verify(productRepo, never()).findIndexableForReindex(any(), any(), any());
+  }
+
+  @Test
+  @DisplayName("재색인 비동기 실행 정상 완료 시 상태가 COMPLETED가 된다")
+  void reindexAllAsync_normalCompletion_statusIsCompleted() {
+    // given
+    when(productRepo.findIndexableForReindex(any(), any(), any())).thenReturn(List.of());
+
+    // when
+    reindexService.reindexAllAsync();
+
+    // then
+    ProductReindexService.ReindexStatus status = reindexService.getStatus();
+    assertThat(status.state()).isEqualTo("COMPLETED");
+    assertThat(status.totalIndexed()).isEqualTo(0);
+  }
+
+  @Test
+  @DisplayName("재색인 비동기 실행 중 예외 발생 시 상태가 FAILED가 된다")
+  void reindexAllAsync_exceptionDuringExecution_statusIsFailed() {
+    // given: 첫 번째 청크 조회 시 예외 발생
+    when(productRepo.findIndexableForReindex(any(), any(), any()))
+        .thenThrow(new RuntimeException("DB 연결 오류"));
+
+    // when
+    reindexService.reindexAllAsync();
+
+    // then
+    ProductReindexService.ReindexStatus status = reindexService.getStatus();
+    assertThat(status.state()).isEqualTo("FAILED");
+    assertThat(status.errorMessage()).isEqualTo("DB 연결 오류");
+  }
+
+  @Test
+  @DisplayName("getStatus는 현재 상태를 반환한다")
+  void getStatus_returnsCurrentStatus() {
+    // given: 초기 상태는 IDLE
+    ProductReindexService.ReindexStatus status = reindexService.getStatus();
+
+    // when & then
+    assertThat(status.state()).isEqualTo("IDLE");
+    assertThat(status.totalIndexed()).isEqualTo(0);
+    assertThat(status.errorMessage()).isNull();
   }
 
   private Product product(Long id) {

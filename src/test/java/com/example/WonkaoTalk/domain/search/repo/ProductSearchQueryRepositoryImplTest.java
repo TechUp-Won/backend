@@ -1,4 +1,4 @@
-package com.example.WonkaoTalk.domain.search.integration;
+package com.example.WonkaoTalk.domain.search.repo;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -6,9 +6,6 @@ import com.example.WonkaoTalk.config.SearchTestContainerConfig;
 import com.example.WonkaoTalk.config.TestContainerConfig;
 import com.example.WonkaoTalk.domain.product.enums.ProductSortType;
 import com.example.WonkaoTalk.domain.search.document.ProductDocument;
-import com.example.WonkaoTalk.domain.search.repo.ProductSearchQueryRepository;
-import com.example.WonkaoTalk.domain.search.repo.ProductSearchResult;
-import com.example.WonkaoTalk.domain.search.repo.ProductSearchRepository;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

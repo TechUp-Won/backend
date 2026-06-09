@@ -1,4 +1,4 @@
-package com.example.WonkaoTalk.domain.search.integration;
+package com.example.WonkaoTalk.domain.search.repo;
 
 // 이 테스트는 ProductRepoCustomImpl.findWithSearch(JPA LIKE) — 즉 ES 불가 시의
 // DB 폴백 경로(search.product.engine=database)를 검증한다.
