@@ -40,7 +40,7 @@ public class OAuthRevocationFailure {
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
-  private FallbackStatus status;
+  private FallbackStatus status = FallbackStatus.PENDING;
 
   @Column(nullable = false)
   private int retryCount;
@@ -58,12 +58,13 @@ public class OAuthRevocationFailure {
     this.provider = provider;
     this.providerUserId = providerUserId;
     this.providerRefreshToken = providerRefreshToken;
+    this.status = FallbackStatus.PENDING;
   }
 
   public void markAsSuccess() {
     this.status = FallbackStatus.SUCCESS;
   }
-  
+
   public void incrementRetryCount(int maxRetry) {
     this.retryCount++;
     if (this.retryCount >= maxRetry) {
