@@ -6,13 +6,13 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import com.example.WonkaoTalk.domain.product.entity.Category;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
 import com.example.WonkaoTalk.domain.product.repo.ProductOptionRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
 import com.example.WonkaoTalk.domain.search.document.ProductDocument;
-import com.example.WonkaoTalk.domain.search.repo.ProductSearchRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +27,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 
 /**
  * 전체 재색인 배치 단위 테스트 — 청크 반복, 옵션값 그룹핑, bulk 저장을 검증한다.
@@ -42,7 +44,10 @@ class ProductReindexServiceTest {
   private ProductOptionRepo productOptionRepo;
 
   @Mock
-  private ProductSearchRepository searchRepository;
+  private ElasticsearchOperations operations;
+
+  @Mock
+  private ElasticsearchClient esClient;
 
   @InjectMocks
   private ProductReindexService reindexService;
@@ -64,11 +69,12 @@ class ProductReindexServiceTest {
             new Object[]{1L, "흰색"},
             new Object[]{1L, "검정"},
             new Object[]{2L, "블루"}));
+    when(operations.withRefreshPolicy(any())).thenReturn(operations);
 
     int total = reindexService.reindexAll();
 
     assertThat(total).isEqualTo(2);
-    verify(searchRepository).saveAll(docsCaptor.capture());
+    verify(operations).save(docsCaptor.capture(), any(IndexCoordinates.class));
     List<ProductDocument> docs = docsCaptor.getValue();
     assertThat(docs).hasSize(2);
 
@@ -87,11 +93,12 @@ class ProductReindexServiceTest {
         .thenReturn(List.of());
     when(productOptionRepo.findOptionNamesByProductIds(List.of(1L)))
         .thenReturn(List.of());
+    when(operations.withRefreshPolicy(any())).thenReturn(operations);
 
     int total = reindexService.reindexAll();
 
     assertThat(total).isEqualTo(1);
-    verify(searchRepository).saveAll(docsCaptor.capture());
+    verify(operations).save(docsCaptor.capture(), any(IndexCoordinates.class));
     assertThat(docsCaptor.getValue()).hasSize(1);
     assertThat(docsCaptor.getValue().get(0).getOptionValues()).isEmpty();
   }
@@ -104,7 +111,7 @@ class ProductReindexServiceTest {
     int total = reindexService.reindexAll();
 
     assertThat(total).isZero();
-    verify(searchRepository, never()).saveAll(any());
+    verify(operations, never()).save(any(), any(IndexCoordinates.class));
   }
 
   @Test
@@ -118,11 +125,12 @@ class ProductReindexServiceTest {
         });
     when(productOptionRepo.findOptionNamesByProductIds(List.of(1L)))
         .thenReturn(List.of());
+    when(operations.withRefreshPolicy(any())).thenReturn(operations);
 
     int total = reindexService.reindexAll();
 
     assertThat(total).isEqualTo(1);
-    verify(searchRepository).saveAll(any());
+    verify(operations).save(any(), any(IndexCoordinates.class));
   }
 
   private Product product(Long id) {

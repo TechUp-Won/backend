@@ -1,11 +1,11 @@
 package com.example.WonkaoTalk.domain.search.indexer;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
 import com.example.WonkaoTalk.domain.product.repo.ProductOptionRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
 import com.example.WonkaoTalk.domain.search.document.ProductDocument;
-import com.example.WonkaoTalk.domain.search.repo.ProductSearchRepository;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +16,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import jakarta.annotation.PreDestroy;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.RefreshPolicy;
+import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -35,11 +38,14 @@ public class ProductReindexService {
 
   private static final List<SaleStatus> INDEXABLE_STATUSES =
       List.of(SaleStatus.ON_SALE, SaleStatus.OUT_OF_STOCK);
-  private static final int BATCH_SIZE = 1000;
+  private static final int BATCH_SIZE = 2000;
+  private static final String INDEX_NAME = "products";
+  private static final String DEFAULT_REFRESH_INTERVAL = "1s";
 
   private final ProductRepo productRepo;
   private final ProductOptionRepo productOptionRepo;
-  private final ProductSearchRepository searchRepository;
+  private final ElasticsearchOperations operations;
+  private final ElasticsearchClient esClient;
 
   private final AtomicBoolean isRunning = new AtomicBoolean(false);
   private volatile ReindexStatus status = new ReindexStatus("IDLE", 0, 0L, null);
@@ -98,29 +104,62 @@ public class ProductReindexService {
     int total = 0;
     long lastId = 0L;
 
-    while (!cancelled && !Thread.currentThread().isInterrupted()) {
-      List<Product> batch = productRepo.findIndexableForReindex(
-          INDEXABLE_STATUSES, lastId, PageRequest.of(0, BATCH_SIZE));
-      if (batch.isEmpty()) {
-        break;
+    // 대량 적재 동안 refresh 를 멈춰 세그먼트 양산/머지 부하를 없앤다. 종료 시 반드시 복원.
+    pauseRefresh();
+    try {
+      while (!cancelled && !Thread.currentThread().isInterrupted()) {
+        List<Product> batch = productRepo.findIndexableForReindex(
+            INDEXABLE_STATUSES, lastId, PageRequest.of(0, BATCH_SIZE));
+        if (batch.isEmpty()) {
+          break;
+        }
+
+        List<Long> ids = batch.stream().map(Product::getId).toList();
+        Map<Long, List<String>> optionsByProduct = groupOptionNames(ids);
+
+        List<ProductDocument> docs = batch.stream()
+            .map(p -> ProductDocument.from(p, optionsByProduct.getOrDefault(p.getId(), List.of())))
+            .toList();
+        // bulk 마다 refresh 를 강제하지 않도록 RefreshPolicy.NONE 으로 색인한다.
+        operations.withRefreshPolicy(RefreshPolicy.NONE)
+            .save(docs, IndexCoordinates.of(INDEX_NAME));
+
+        total += docs.size();
+        lastId = ids.get(ids.size() - 1);
+        if (progressConsumer != null) {
+          progressConsumer.accept(total, lastId);
+        }
+        log.info("상품 재색인 진행: 누적 {} 건 (마지막 id={})", total, lastId);
       }
-
-      List<Long> ids = batch.stream().map(Product::getId).toList();
-      Map<Long, List<String>> optionsByProduct = groupOptionNames(ids);
-
-      List<ProductDocument> docs = batch.stream()
-          .map(p -> ProductDocument.from(p, optionsByProduct.getOrDefault(p.getId(), List.of())))
-          .toList();
-      searchRepository.saveAll(docs); // ES bulk 색인
-
-      total += docs.size();
-      lastId = ids.get(ids.size() - 1);
-      if (progressConsumer != null) {
-        progressConsumer.accept(total, lastId);
-      }
-      log.info("상품 재색인 진행: 누적 {} 건 (마지막 id={})", total, lastId);
+    } finally {
+      resumeRefresh();
     }
     return total;
+  }
+
+  /** 재색인 동안 refresh_interval 을 -1 로 설정해 자동 refresh 를 멈춘다. 실패해도 재색인은 진행. */
+  private void pauseRefresh() {
+    try {
+      esClient.indices().putSettings(p -> p
+          .index(INDEX_NAME)
+          .settings(s -> s.refreshInterval(t -> t.time("-1"))));
+      log.info("재색인 시작: refresh_interval 비활성화(-1)");
+    } catch (Exception e) {
+      log.warn("refresh_interval 비활성화 실패 — 기본 설정으로 재색인을 진행합니다.", e);
+    }
+  }
+
+  /** refresh_interval 을 기본값으로 복원하고 1회 수동 refresh 하여 적재 문서를 검색 가능하게 만든다. */
+  private void resumeRefresh() {
+    try {
+      esClient.indices().putSettings(p -> p
+          .index(INDEX_NAME)
+          .settings(s -> s.refreshInterval(t -> t.time(DEFAULT_REFRESH_INTERVAL))));
+      esClient.indices().refresh(r -> r.index(INDEX_NAME));
+      log.info("재색인 종료: refresh_interval 복원({}) 및 수동 refresh 완료", DEFAULT_REFRESH_INTERVAL);
+    } catch (Exception e) {
+      log.error("refresh_interval 복원 실패 — 인덱스가 refresh 비활성 상태로 남을 수 있습니다. 수동 확인 필요.", e);
+    }
   }
 
   private Map<Long, List<String>> groupOptionNames(List<Long> productIds) {
