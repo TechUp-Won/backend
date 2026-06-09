@@ -35,7 +35,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
     uniqueConstraints = {
         @UniqueConstraint(
             name = "unique_user_friend",
-            columnNames = {"user_id", "friend_id"}
+            columnNames = {"user_id", "target_id"}
         )})
 public class Friend {
 
@@ -48,7 +48,7 @@ public class Friend {
   private User user;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "friend_id", nullable = false)
+  @JoinColumn(name = "target_id", nullable = false)
   private User target;
 
   @Column(length = 20)

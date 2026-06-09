@@ -27,5 +27,5 @@ public class Term {
   private String title;
 
   @Column(name = "is_required", nullable = false)
-  private boolean isRequired = true;
+  private boolean isRequired;
 }
