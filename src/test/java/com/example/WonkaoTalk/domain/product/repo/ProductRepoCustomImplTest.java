@@ -1,4 +1,4 @@
-package com.example.WonkaoTalk.domain.product.integration;
+package com.example.WonkaoTalk.domain.product.repo;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -8,7 +8,6 @@ import com.example.WonkaoTalk.domain.product.entity.Category;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.enums.ProductSortType;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
-import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
 import com.example.WonkaoTalk.domain.seller.entity.Seller;
 import com.example.WonkaoTalk.domain.store.entity.Store;
 import jakarta.persistence.EntityManager;
