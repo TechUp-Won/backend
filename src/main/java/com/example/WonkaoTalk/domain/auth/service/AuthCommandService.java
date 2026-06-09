@@ -20,6 +20,7 @@ import com.example.WonkaoTalk.domain.seller.entity.Seller;
 import com.example.WonkaoTalk.domain.seller.repo.SellerRepo;
 import com.example.WonkaoTalk.domain.user.entity.User;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -163,8 +164,10 @@ public class AuthCommandService {
   /*********** HELPER METHOD ************/
   private void processFullWithdraw(Auth auth) {
     authLocalRepo.findByAuth(auth).ifPresent(AuthLocal::withdraw);
-    authSocialRepo.findByAuth(auth).ifPresent(AuthSocial::withdraw);
+    List<AuthSocial> linkedSocials = authSocialRepo.findByAuth(auth);
+    for (AuthSocial social : linkedSocials) {
+      social.withdraw();
+    }
     auth.withdraw();
   }
-
 }

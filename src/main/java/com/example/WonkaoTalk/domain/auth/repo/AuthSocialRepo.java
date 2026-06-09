@@ -3,6 +3,7 @@ package com.example.WonkaoTalk.domain.auth.repo;
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.entity.AuthSocial;
 import com.example.WonkaoTalk.domain.auth.enums.AuthProvider;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -12,9 +13,9 @@ public interface AuthSocialRepo extends JpaRepository<AuthSocial, Long> {
 
   Optional<AuthSocial> findFirstByEmail(String email);
 
-  Optional<AuthSocial> findByAuth(Auth auth);
+  List<AuthSocial> findByAuth(Auth auth);
 
-  Optional<AuthSocial> findByAuthId(Long authId);
+  List<AuthSocial> findByAuthId(Long authId);
 
   Optional<AuthSocial> findByProviderUserId(String providerId);
 

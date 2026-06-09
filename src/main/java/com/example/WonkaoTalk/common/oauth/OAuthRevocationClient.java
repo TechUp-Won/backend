@@ -2,6 +2,7 @@ package com.example.WonkaoTalk.common.oauth;
 
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
+import com.example.WonkaoTalk.domain.auth.entity.AuthSocial;
 import com.example.WonkaoTalk.domain.auth.repo.AuthSocialRepo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,8 @@ public class OAuthRevocationClient {
   private final OAuthRevocationFailureProcessor failureProcessor;
 
   public void revokeIfSocialAccountExists(Long authId) {
-    authSocialRepo.findByAuthId(authId).ifPresent(social -> {
+    List<AuthSocial> linkedSocials = authSocialRepo.findByAuthId(authId);
+    for (AuthSocial social : linkedSocials) {
       OAuthRevocationProvider providerClient = revocationProviders.stream()
           .filter(provider -> provider.supports(social.getProvider()))
           .findFirst()
@@ -32,6 +34,6 @@ public class OAuthRevocationClient {
         // Fallback: 실패 이력 저장 (이후 스케줄러가 재시도)
         failureProcessor.saveFailureEvent(social);
       }
-    });
+    }
   }
 }
