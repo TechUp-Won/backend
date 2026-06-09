@@ -2,6 +2,7 @@ package com.example.WonkaoTalk.domain.seller.service;
 
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
+import com.example.WonkaoTalk.domain.auth.dto.AuthIntegrationResultDto;
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.enums.Role;
 import com.example.WonkaoTalk.domain.auth.repo.AuthRepo;
@@ -38,18 +39,34 @@ public class SellerService {
       throw new BusinessException(ErrorCode.SELLER_DUPLICATE_BUZNO);
     }
 
-    Auth savedAuth = authService.createAuthLocal(request.email(), request.password(), Role.SELLER);
+    AuthIntegrationResultDto result = authService.linkOrCreateLocal(request.email(),
+        request.password(), Role.SELLER);
+    Auth auth = result.auth();
+    Seller seller;
 
-    Seller seller = Seller.builder()
-        .auth(savedAuth)
-        .buzNo(request.buzNo())
-        .name(request.name())
-        .phone(request.phone())
-        .build();
-
-    sellerRepo.save(seller);
-
-    return SellerSignUpResponse.of(seller, savedAuth.getRole());
+    if (result.isNewCreated()) {
+      seller = Seller.builder()
+          .auth(auth)
+          .buzNo(request.buzNo())
+          .name(request.name())
+          .phone(request.phone())
+          .build();
+      sellerRepo.save(seller);
+    } else {
+      if (auth.getRole() == Role.USER) {
+        auth.updateRole(Role.USER_SELLER);
+      }
+      seller = sellerRepo.findByAuth(auth).orElseGet(() -> {
+        Seller newSeller = Seller.builder()
+            .auth(auth)
+            .buzNo(request.buzNo())
+            .name(request.name())
+            .phone(request.phone())
+            .build();
+        return sellerRepo.save(newSeller);
+      });
+    }
+    return SellerSignUpResponse.of(seller, auth.getRole());
   }
 
   @Transactional

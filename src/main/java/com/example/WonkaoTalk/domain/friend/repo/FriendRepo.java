@@ -1,6 +1,6 @@
-package com.example.WonkaoTalk.domain.user.friend.repo;
+package com.example.WonkaoTalk.domain.friend.repo;
 
-import com.example.WonkaoTalk.domain.user.friend.entity.Friend;
+import com.example.WonkaoTalk.domain.friend.entity.Friend;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,13 +1,11 @@
 package com.example.WonkaoTalk.application.facade;
 
-import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
 
+import com.example.WonkaoTalk.common.oauth.OAuthRevocationClient;
 import com.example.WonkaoTalk.domain.auth.service.AuthCommandService;
 import com.example.WonkaoTalk.domain.auth.service.AuthService;
-import com.example.WonkaoTalk.domain.seller.service.SellerService;
-import com.example.WonkaoTalk.domain.user.service.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,44 +19,39 @@ class AccountWithdrawTest {
   private final Long authId = 1L;
   private final String email = "test@test.com";
   private final String accessToken = "AccessTokenString";
+
   @InjectMocks
   private AccountWithdraw accountWithdraw;
-  @Mock
-  private UserService userService;
-  @Mock
-  private SellerService sellerService;
   @Mock
   private AuthService authService;
   @Mock
   private AuthCommandService authCommandService;
+  @Mock
+  private OAuthRevocationClient oAuthRevocationClient;
+  @Mock
+  private WithdrawTransactionProcessor withdrawProcessor;
 
   @Test
-  @DisplayName("일반 회원 탈퇴 시, 판매자 프로필이 없으면 auth까지 삭제된다.")
-  public void withdrawUserOnlyUser() {
-    //given
-    given(sellerService.existsActiveSeller(authId)).willReturn(false);
-
-    //when
+  @DisplayName("사용자 탈퇴 요청 시 연동 해제, 내부 트랜잭션, 토큰 무효화가 순차적으로 실행된다.")
+  public void withdrawUserSuccess() {
+    // when
     accountWithdraw.withdrawUser(authId, email, accessToken);
 
-    //then
-    then(userService).should(times(1)).withdrawUser(authId);
+    // then
+    then(oAuthRevocationClient).should(times(1)).revokeIfSocialAccountExists(authId);
+    then(withdrawProcessor).should(times(1)).withdrawUser(authId);
     then(authService).should(times(1)).invalidateToken(email, accessToken);
-    then(authCommandService).should(times(1)).handleUserWithdraw(authId, false);
   }
 
   @Test
-  @DisplayName("일반 회원 탈퇴 시, 판매자 프로필이 남아있으면 auth는 삭제되지 않는다.")
-  public void withdrawUserActiveSeller() {
-    //given
-    given(sellerService.existsActiveSeller(authId)).willReturn(true);
+  @DisplayName("판매자 탈퇴 요청 시 연동 해제, 내부 트랜잭션, 토큰 무효화가 순차적으로 실행된다.")
+  public void withdrawSellerSuccess() {
+    // when
+    accountWithdraw.withdrawSeller(authId, email, accessToken);
 
-    //when
-    accountWithdraw.withdrawUser(authId, email, accessToken);
-
-    //then
-    then(userService).should(times(1)).withdrawUser(authId);
+    // then
+    then(oAuthRevocationClient).should(times(1)).revokeIfSocialAccountExists(authId);
+    then(withdrawProcessor).should(times(1)).withdrawSeller(authId);
     then(authService).should(times(1)).invalidateToken(email, accessToken);
-    then(authCommandService).should(times(1)).handleUserWithdraw(authId, true);
   }
 }

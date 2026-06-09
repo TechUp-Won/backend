@@ -2,6 +2,7 @@ package com.example.WonkaoTalk.domain.auth.service;
 
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
+import com.example.WonkaoTalk.domain.auth.dto.AuthIntegrationResultDto;
 import com.example.WonkaoTalk.domain.auth.dto.AuthUserInfoDto;
 import com.example.WonkaoTalk.domain.auth.dto.SocialLoginDto;
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
@@ -19,6 +20,7 @@ import com.example.WonkaoTalk.domain.seller.entity.Seller;
 import com.example.WonkaoTalk.domain.seller.repo.SellerRepo;
 import com.example.WonkaoTalk.domain.user.entity.User;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,23 +42,24 @@ public class AuthCommandService {
   }
 
   @Transactional
-  public Auth saveAuthLocal(String email, String encodedPassword, Role role) {
+  public Auth saveAuth(Role role) {
+    Auth auth = Auth.builder().role(role).build();
+    return authRepo.save(auth);
+  }
+
+  @Transactional
+  public void saveAuthLocal(Auth auth, String email, String encodedPassword) {
     if (authLocalRepo.existsByEmail(email)) {
       throw new BusinessException(ErrorCode.AUTH_DUPLICATE_EMAIL);
     }
 
-    Auth auth = Auth.builder().role(role).build();
-    Auth savedAuth = authRepo.save(auth);
-
     AuthLocal authLocal = AuthLocal.builder()
-        .auth(savedAuth)
+        .auth(auth)
         .email(email)
         .passwordHash(encodedPassword)
         .failedAttemptsCount(0)
         .build();
     authLocalRepo.save(authLocal);
-
-    return savedAuth;
   }
 
   @Transactional(readOnly = true)
@@ -106,8 +109,7 @@ public class AuthCommandService {
     if (hasActiveSeller) {
       auth.updateRole(Role.SELLER);
     } else {
-      authLocalRepo.findByAuth(auth).ifPresent(AuthLocal::withdraw);
-      auth.withdraw();
+      processFullWithdraw(auth);
     }
   }
 
@@ -118,9 +120,23 @@ public class AuthCommandService {
     if (hasActiveUser) {
       auth.updateRole(Role.USER);
     } else {
-      authLocalRepo.findByAuth(auth).ifPresent(AuthLocal::withdraw);
-      auth.withdraw();
+      processFullWithdraw(auth);
     }
+  }
+
+  @Transactional
+  public AuthIntegrationResultDto linkOrCreateTransaction(String email, String encodedPassword,
+      Role role) {
+    Optional<AuthSocial> optionalSocial = getFirstAuthSocialByEmail(email);
+    if (optionalSocial.isPresent()) {
+      Auth existingAuth = optionalSocial.get().getAuth();
+      saveAuthLocal(existingAuth, email, encodedPassword);
+      return new AuthIntegrationResultDto(existingAuth, false);
+    }
+
+    Auth newAuth = saveAuth(role);
+    saveAuthLocal(newAuth, email, encodedPassword);
+    return new AuthIntegrationResultDto(newAuth, true);
   }
 
   @Transactional(readOnly = true)
@@ -138,4 +154,17 @@ public class AuthCommandService {
 
     return new SocialLoginDto(auth.getId(), userId, sellerId, auth.getRole());
   }
+
+  @Transactional(readOnly = true)
+  public Optional<AuthSocial> getFirstAuthSocialByEmail(String email) {
+    return authSocialRepo.findFirstByEmail(email);
+  }
+
+  /*********** HELPER METHOD ************/
+  private void processFullWithdraw(Auth auth) {
+    authLocalRepo.findByAuth(auth).ifPresent(AuthLocal::withdraw);
+    authSocialRepo.findByAuth(auth).ifPresent(AuthSocial::withdraw);
+    auth.withdraw();
+  }
+
 }

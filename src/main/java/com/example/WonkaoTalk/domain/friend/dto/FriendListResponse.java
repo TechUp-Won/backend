@@ -1,4 +1,4 @@
-package com.example.WonkaoTalk.domain.user.friend.dto;
+package com.example.WonkaoTalk.domain.friend.dto;
 
 import java.util.List;
 import lombok.Builder;

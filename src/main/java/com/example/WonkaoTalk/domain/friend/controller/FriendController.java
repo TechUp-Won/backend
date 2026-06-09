@@ -1,16 +1,16 @@
-package com.example.WonkaoTalk.domain.user.friend.controller;
+package com.example.WonkaoTalk.domain.friend.controller;
 
 import com.example.WonkaoTalk.common.config.OpenApiConfig;
 import com.example.WonkaoTalk.common.response.ApiResponse;
 import com.example.WonkaoTalk.domain.auth.dto.CustomUserDetails;
-import com.example.WonkaoTalk.domain.user.friend.dto.FriendAddRequest;
-import com.example.WonkaoTalk.domain.user.friend.dto.FriendAddResponse;
-import com.example.WonkaoTalk.domain.user.friend.dto.FriendInfoDTO;
-import com.example.WonkaoTalk.domain.user.friend.dto.FriendListResponse;
-import com.example.WonkaoTalk.domain.user.friend.dto.FriendStatusRequest;
-import com.example.WonkaoTalk.domain.user.friend.dto.FriendUpdateRequest;
-import com.example.WonkaoTalk.domain.user.friend.dto.FriendUpdateResponse;
-import com.example.WonkaoTalk.domain.user.friend.service.FriendService;
+import com.example.WonkaoTalk.domain.friend.dto.FriendAddRequest;
+import com.example.WonkaoTalk.domain.friend.dto.FriendAddResponse;
+import com.example.WonkaoTalk.domain.friend.dto.FriendInfoDTO;
+import com.example.WonkaoTalk.domain.friend.dto.FriendListResponse;
+import com.example.WonkaoTalk.domain.friend.dto.FriendStatusRequest;
+import com.example.WonkaoTalk.domain.friend.dto.FriendUpdateRequest;
+import com.example.WonkaoTalk.domain.friend.dto.FriendUpdateResponse;
+import com.example.WonkaoTalk.domain.friend.service.FriendService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
