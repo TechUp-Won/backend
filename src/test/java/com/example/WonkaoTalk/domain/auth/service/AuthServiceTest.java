@@ -25,13 +25,17 @@ import com.example.WonkaoTalk.domain.auth.dto.LoginRequest;
 import com.example.WonkaoTalk.domain.auth.dto.TokenDto;
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.entity.AuthLocal;
+import com.example.WonkaoTalk.domain.auth.entity.LoginHistory;
 import com.example.WonkaoTalk.domain.auth.enums.LoginStatus;
 import com.example.WonkaoTalk.domain.auth.enums.Role;
+import com.example.WonkaoTalk.domain.auth.repo.LoginHistoryRepo;
 import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -54,12 +58,18 @@ class AuthServiceTest {
   private JwtTokenProvider jwtTokenProvider;
   @Mock
   private RedisService redisService;
+  @Mock
+  private LoginHistoryRepo loginHistoryRepo;
+
+  @Captor
+  private ArgumentCaptor<LoginHistory> loginHistoryCaptor;
+
   private MockHttpServletRequest httpRequest;
 
   @BeforeEach
   void setUp() {
     httpRequest = new MockHttpServletRequest();
-    httpRequest.addHeader("User-Agent", "Test-Agent");
+    httpRequest.addHeader("User-Agent", "User-Agent");
     httpRequest.setRemoteAddr("127.0.0.1");
   }
 
@@ -155,7 +165,8 @@ class AuthServiceTest {
         .email(email).passwordHash("encoded").auth(auth).build();
 
     given(authCommandService.getAuthLocalByEmail(email)).willReturn(authLocal);
-    given(passwordEncoder.matches(password, authLocal.getPasswordHash())).willReturn(false);
+    given(passwordEncoder.matches(request.password(), authLocal.getPasswordHash())).willReturn(
+        false);
 
     //when & then
     assertThatThrownBy(() -> authService.login(request, httpRequest))
@@ -253,5 +264,68 @@ class AuthServiceTest {
 
     // 탈취 의심 시 해당 유저의 기존 Refresh Token을 즉각 삭제하는지 검증
     verify(redisService, times(1)).deleteValues("RT:" + email);
+  }
+
+  @Test
+  @DisplayName("로그인 - X-Forwarded-For 헤더에 다수의 IP가 존재할 경우 첫 번째 IP를 정확히 추출한다")
+  void loginExtractsFirstIpFromXForwardedFor() {
+    // given
+    ArgumentCaptor<String> ipAddressCaptor = ArgumentCaptor.forClass(String.class);
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.addHeader("X-Forwarded-For", "192.168.0.1, 10.0.0.1, 172.16.0.1");
+    request.setRemoteAddr("127.0.0.1");
+
+    LoginRequest loginRequest = new LoginRequest("test@test.com", "password123");
+    Auth auth = Auth.builder().role(Role.USER).build();
+    ReflectionTestUtils.setField(auth, "id", 1L);
+
+    AuthLocal authLocal = AuthLocal.builder().email("test@test.com").passwordHash("hashed")
+        .auth(auth).build();
+
+    given(authCommandService.getAuthLocalByEmail(loginRequest.email())).willReturn(authLocal);
+    given(passwordEncoder.matches(loginRequest.password(), authLocal.getPasswordHash())).willReturn(
+        true);
+    given(authCommandService.getAuthUserInfo(auth)).willReturn(
+        new AuthUserInfoDto("침착맨", 1L, null));
+    given(jwtTokenProvider.createAccessToken(any(), any(), any(), any(), any())).willReturn(
+        "access.token");
+    given(jwtTokenProvider.createRefreshToken(any())).willReturn("refresh.token");
+    given(jwtTokenProvider.getRefreshTokenValidTime()).willReturn(86400000L);
+    given(jwtTokenProvider.getAccessTokenValidTime()).willReturn(3600000L);
+
+    // when
+    authService.login(loginRequest, request);
+
+    // then
+    verify(authCommandService).saveLoginHistory(
+        eq(auth),
+        eq(LoginStatus.SUCCESS),
+        any(), // User-Agent (이 테스트에서는 중요하지 않음)
+        ipAddressCaptor.capture() // 추출된 IP가 파라미터로 잘 넘어갔는지 캡처
+    );
+    assertThat(ipAddressCaptor.getValue()).isEqualTo("192.168.0.1");
+  }
+
+  @Test
+  @DisplayName("토큰 무효화 - 이미 만료되었거나 Redis에 없는 토큰이라도 남은 시간만큼 블랙리스트에 정상 등록된다")
+  void invalidateToken_SuccessfullyAddsToBlacklist() {
+    // given
+    String email = "test@test.com";
+    String accessToken = "valid.access.token";
+    long expirationTime = 1800000L; // 30분
+
+    given(redisService.hasKey("RT:" + email)).willReturn(false);
+    given(jwtTokenProvider.getExpiration(accessToken)).willReturn(expirationTime);
+
+    // when
+    authService.invalidateToken(email, accessToken);
+
+    // then
+    verify(redisService, never()).deleteValues(anyString());
+    verify(redisService, times(1)).setValues(
+        eq("BlackList:" + accessToken),
+        eq("logout"),
+        eq(Duration.ofMillis(expirationTime))
+    );
   }
 }

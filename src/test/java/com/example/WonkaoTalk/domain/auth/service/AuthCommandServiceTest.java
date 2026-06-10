@@ -7,7 +7,6 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
-import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.entity.AuthLocal;
@@ -59,7 +58,7 @@ class AuthCommandServiceTest {
 
   @Test
   @DisplayName("유저 단일 계정 탈퇴 시, 활성화된 판매자가 없다면 연관된 인증 정보가 마스킹되고 완전 탈퇴(Soft Delete)된다.")
-  public void handleUserWithdraw_FullWithdraw_AnonymizedAndDeleted() {
+  public void handleUserWithdrawFullWithdrawAnonymizedAndDeleted() {
     // given
     Auth auth = Auth.builder().role(Role.USER).build();
     ReflectionTestUtils.setField(auth, "id", authId);
@@ -87,7 +86,7 @@ class AuthCommandServiceTest {
 
   @Test
   @DisplayName("일반/소셜 통합 계정에서 판매자 탈퇴 시, 활성화된 유저가 있다면 Role만 USER로 부분 탈퇴된다.")
-  public void handleSellerWithdraw_PartialWithdraw_RoleDowngraded() {
+  public void handleSellerWithdrawPartialWithdrawRoleDowngraded() {
     // given
     Auth auth = Auth.builder().role(Role.USER_SELLER).build();
     ReflectionTestUtils.setField(auth, "id", authId);
@@ -104,13 +103,13 @@ class AuthCommandServiceTest {
 
   @Test
   @DisplayName("존재하지 않는 계정 탈퇴 요청 시 BusinessException 예외가 발생한다.")
-  public void handleWithdraw_NotFound_ThrowsException() {
+  public void handleWithdrawNotFoundThrowsException() {
     // given
     given(authRepo.findById(authId)).willReturn(Optional.empty());
 
     // when & then
     assertThatThrownBy(() -> authCommandService.handleUserWithdraw(authId, false))
-        .isInstanceOf(BusinessException.class)
-        .hasMessageContaining(ErrorCode.AUTH_NOT_FOUND.name());
+        .extracting("errorCode")
+        .isEqualTo(ErrorCode.AUTH_NOT_FOUND);
   }
 }
