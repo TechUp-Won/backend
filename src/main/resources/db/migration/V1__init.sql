@@ -384,6 +384,8 @@ CREATE UNIQUE INDEX uk_payments_idempotency_key ON payments (idempotency_key);
 -- ==========================================
 --  Chat 도메인
 -- ==========================================
+
+-- 1. 채팅방 테이블
 CREATE TABLE chat_rooms (
     id BIGSERIAL PRIMARY KEY,
     room_type VARCHAR(20) NOT NULL,
@@ -393,12 +395,13 @@ CREATE TABLE chat_rooms (
     last_message_content TEXT,
     last_message_at TIMESTAMP,
     room_status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-    version BIGINT NOT NULL DEFAULT 0,
+    version BIGINT,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     deleted_at TIMESTAMP
 );
 
+-- 2. 메시지 테이블 (chat_rooms 참조)
 CREATE TABLE chat_messages (
     id BIGSERIAL PRIMARY KEY,
     chat_room_id BIGINT NOT NULL,
@@ -407,14 +410,16 @@ CREATE TABLE chat_messages (
     message_type VARCHAR(20) NOT NULL,
     content TEXT,
     like_count INT NOT NULL DEFAULT 0,
-    version BIGINT NOT NULL DEFAULT 0,
+    version BIGINT,
     message_status VARCHAR(20) NOT NULL DEFAULT 'NORMAL',
     created_at TIMESTAMP NOT NULL,
     deleted_at TIMESTAMP,
-    CONSTRAINT fk_chat_messages_room FOREIGN KEY (chat_room_id) REFERENCES chat_rooms(id),
-    CONSTRAINT fk_chat_messages_answer FOREIGN KEY (answer_message_id) REFERENCES chat_messages(id)
+
+    FOREIGN KEY (chat_room_id) REFERENCES chat_rooms(id),
+    FOREIGN KEY (answer_message_id) REFERENCES chat_messages(id)
 );
 
+-- 3. 채팅방 참여자 테이블
 CREATE TABLE chat_participants (
     id BIGSERIAL PRIMARY KEY,
     chat_room_id BIGINT NOT NULL,
@@ -424,10 +429,23 @@ CREATE TABLE chat_participants (
     last_read_message_id BIGINT,
     is_alarm_on BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL,
-    CONSTRAINT fk_chat_participants_room FOREIGN KEY (chat_room_id) REFERENCES chat_rooms(id),
-    CONSTRAINT fk_chat_participants_message FOREIGN KEY (last_read_message_id) REFERENCES chat_messages(id)
+
+    FOREIGN KEY (chat_room_id) REFERENCES chat_rooms(id),
+    FOREIGN KEY (last_read_message_id) REFERENCES chat_messages(id)
 );
 
+-- 4. 메시지 숨김 테이블
+CREATE TABLE message_hides (
+    id BIGSERIAL PRIMARY KEY,
+    message_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+
+    FOREIGN KEY (message_id) REFERENCES chat_messages(id),
+    CONSTRAINT uk_message_hide UNIQUE (message_id, user_id)
+);
+
+-- 5. 메시지 좋아요 테이블
 CREATE TABLE message_likes (
     id BIGSERIAL PRIMARY KEY,
     message_id BIGINT NOT NULL,
@@ -436,17 +454,9 @@ CREATE TABLE message_likes (
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     canceled_at TIMESTAMP,
-    CONSTRAINT fk_message_likes_message FOREIGN KEY (message_id) REFERENCES chat_messages(id),
-    CONSTRAINT uk_message_likes UNIQUE (message_id, user_id)
-);
 
-CREATE TABLE message_hides (
-    id BIGSERIAL PRIMARY KEY,
-    message_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
-    created_at TIMESTAMP NOT NULL,
-    CONSTRAINT fk_message_hides_message FOREIGN KEY (message_id) REFERENCES chat_messages(id),
-    CONSTRAINT uk_message_hides UNIQUE (message_id, user_id)
+    FOREIGN KEY (message_id) REFERENCES chat_messages(id),
+    CONSTRAINT uk_message_like UNIQUE (message_id, user_id)
 );
 
 -- ==========================================
