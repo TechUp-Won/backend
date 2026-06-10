@@ -3,7 +3,6 @@ package com.example.WonkaoTalk.domain.user.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
@@ -73,10 +72,8 @@ class UserServiceTest {
         LocalDate.of(1983, 12, 6), Gender.MALE
     );
     Auth auth = Auth.builder().id(1L).role(Role.USER).build();
-    given(authService.createAuthLocal(eq(request.email()), eq(request.password()),
-        eq(Role.USER))).willReturn(auth);
-
     AuthIntegrationResultDto result = new AuthIntegrationResultDto(auth, true);
+
     given(authService.linkOrCreateLocal(request.email(), request.password(), Role.USER))
         .willReturn(result);
     User newUser = User.builder().id(100L).auth(auth).build();
@@ -168,11 +165,33 @@ class UserServiceTest {
     given(userRepo.findById(userId)).willReturn(Optional.of(user));
 
     // when
-    userService.updateUserInfo(userId, request);
+    UserResponse response = userService.updateUserInfo(userId, request);
 
     // then
     assertThat(user.getNickname()).isEqualTo("침착맨");
     assertThat(user.getBirthDate()).isEqualTo(LocalDate.of(1995, 1, 1));
+  }
+
+  @Test
+  @DisplayName("사용자 정보 수정 - 성공 (부분 업데이트 시 기존 값 보존)")
+  public void updateUserInfoSuccess() {
+    // given
+    Long userId = 1L;
+
+    UserUpdateRequest request = new UserUpdateRequest(
+        "침병건", "new_image.png", null, null, null
+    );
+
+    given(userRepo.findById(userId)).willReturn(Optional.of(user));
+
+    // when
+    UserResponse response = userService.updateUserInfo(userId, request);
+
+    // then
+    assertThat(response.nickname()).isEqualTo("침병건");
+    assertThat(response.image()).isEqualTo("new_image.png");
+    assertThat(response.gender()).isEqualTo(Gender.MALE);
+    assertThat(response.birthDate()).isEqualTo(LocalDate.of(2001, 4, 13));
   }
 
   @Test
@@ -264,5 +283,35 @@ class UserServiceTest {
     assertThat(user.getName()).isNotEqualTo("이병건");
     assertThat(user.getPhone()).isNotEqualTo("010-2222-2222");
     assertThat(user.getDeletedAt()).isNotNull();
+  }
+
+  @Test
+  @DisplayName("사용자 활성 상태 확인 - 존재하는 경우")
+  public void existsActiveUserTrue() {
+    // given
+    Long authId = 100L;
+    given(userRepo.existsByAuthId(authId)).willReturn(true);
+
+    // when
+    boolean result = userService.existsActiveUser(authId);
+
+    // then
+    assertThat(result).isTrue();
+    verify(userRepo).existsByAuthId(authId);
+  }
+
+  @Test
+  @DisplayName("사용자 활성 상태 확인 - 존재하지 않는 경우")
+  public void existsActiveUserFalse() {
+    // given
+    Long authId = 999L;
+    given(userRepo.existsByAuthId(authId)).willReturn(false);
+
+    // when
+    boolean result = userService.existsActiveUser(authId);
+
+    // then
+    assertThat(result).isFalse();
+    verify(userRepo).existsByAuthId(authId);
   }
 }
