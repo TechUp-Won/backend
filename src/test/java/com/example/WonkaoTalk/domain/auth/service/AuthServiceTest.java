@@ -248,7 +248,7 @@ class AuthServiceTest {
 
   @Test
   @DisplayName("토큰 재발급 - 토큰 탈취 감지 시 강제 로그아웃")
-  void reissue_Exception_TokenTheftSuspected() {
+  void reissue_ExceptionTokenTheftSuspected() {
     // given
     String refreshToken = "stolen.refresh.token";
 
@@ -262,7 +262,6 @@ class AuthServiceTest {
         () -> authService.reissueToken(refreshToken));
     assertEquals(ErrorCode.AUTH_SUSPECT_THEFT_TOKEN, exception.getErrorCode());
 
-    // 탈취 의심 시 해당 유저의 기존 Refresh Token을 즉각 삭제하는지 검증
     verify(redisService, times(1)).deleteValues("RT:" + email);
   }
 
@@ -300,15 +299,15 @@ class AuthServiceTest {
     verify(authCommandService).saveLoginHistory(
         eq(auth),
         eq(LoginStatus.SUCCESS),
-        any(), // User-Agent (이 테스트에서는 중요하지 않음)
-        ipAddressCaptor.capture() // 추출된 IP가 파라미터로 잘 넘어갔는지 캡처
+        any(),
+        ipAddressCaptor.capture()
     );
     assertThat(ipAddressCaptor.getValue()).isEqualTo("192.168.0.1");
   }
 
   @Test
   @DisplayName("토큰 무효화 - 이미 만료되었거나 Redis에 없는 토큰이라도 남은 시간만큼 블랙리스트에 정상 등록된다")
-  void invalidateToken_SuccessfullyAddsToBlacklist() {
+  void invalidateTokenSuccessfullyAddsToBlacklist() {
     // given
     String email = "test@test.com";
     String accessToken = "valid.access.token";
@@ -327,5 +326,46 @@ class AuthServiceTest {
         eq("logout"),
         eq(Duration.ofMillis(expirationTime))
     );
+  }
+
+  @Test
+  @DisplayName("IP 추출 엣지 케이스 - X-Forwarded-For 헤더가 null, 빈 문자열, 또는 unknown일 경우 RemoteAddr을 반환한다")
+  public void extractIpAddressEdgeCasesReturnsRemoteAddress() {
+    // given
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.setRemoteAddr("10.0.0.99");
+
+    // 1. null인 경우
+    // 헤더를 추가하지 않음
+    String resultNull = ReflectionTestUtils.invokeMethod(authService, "extractIpAddress", request);
+    assertThat(resultNull).isEqualTo("10.0.0.99");
+
+    // 2. 빈 문자열인 경우
+    request.addHeader("X-Forwarded-For", "");
+    String resultEmpty = ReflectionTestUtils.invokeMethod(authService, "extractIpAddress", request);
+    assertThat(resultEmpty).isEqualTo("10.0.0.99");
+
+    // 3. unknown인 경우 (대소문자 무시)
+    request.removeHeader("X-Forwarded-For");
+    request.addHeader("X-Forwarded-For", "UnKnOwN");
+    String resultUnknown = ReflectionTestUtils.invokeMethod(authService, "extractIpAddress",
+        request);
+    assertThat(resultUnknown).isEqualTo("10.0.0.99");
+  }
+
+  @Test
+  @DisplayName("로그아웃 시 Redis에 RT 키가 존재하면 삭제 로직을 정상 수행한다 (Branch 통과)")
+  public void invalidateTokenHasKeyDeletesFromRedis() {
+    // given
+    String email = "test@test.com";
+    String accessToken = "valid.token";
+    given(redisService.hasKey("RT:" + email)).willReturn(true);
+    given(jwtTokenProvider.getExpiration(accessToken)).willReturn(1000L);
+
+    // when
+    authService.invalidateToken(email, accessToken);
+
+    // then
+    verify(redisService, times(1)).deleteValues("RT:" + email);
   }
 }

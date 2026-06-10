@@ -64,16 +64,13 @@ class OAuth2UserServiceTest {
 
   @Test
   @DisplayName("소셜 로그인 - 소셜 제공자로부터 이메일 정보를 받지 못한 경우 즉시 예외가 발생한다")
-  void processOAuth2User_NullEmail_ThrowsException() {
+  void processOAuth2UserNullEmailThrowsException() {
     // given
     OAuth2UserRequest userRequest = createMockUserRequest("google");
     OAuth2User oAuth2User = mock(OAuth2User.class);
-
-    // 이메일이 누락된 구글의 속성 맵을 모킹합니다 (sub만 존재)
     given(oAuth2User.getAttributes()).willReturn(Map.of("sub", "providerId123"));
 
     // when & then
-    // 리플렉션 없이 동일 패키지 내의 default 메서드를 직접 호출합니다.
     assertThatThrownBy(() -> oauth2UserService.processOAuth2User(userRequest, oAuth2User))
         .isInstanceOf(BusinessException.class)
         .extracting("errorCode").isEqualTo(ErrorCode.OAUTH_NULL_EMAIL);
@@ -83,13 +80,12 @@ class OAuth2UserServiceTest {
 
   @Test
   @DisplayName("소셜 로그인 - 동일한 이메일의 기존 일반 회원이 존재할 경우 기존 Auth에 소셜 계정을 연동한다")
-  void processOAuth2User_ExistingLocalUser_LinksSocialAccount() {
+  void processOAuth2UserExistingLocalUserLinksSocialAccount() {
     // given
     String email = "test@test.com";
     OAuth2UserRequest userRequest = createMockUserRequest("google");
     OAuth2User oAuth2User = mock(OAuth2User.class);
 
-    // 정상적인 이메일이 포함된 속성 맵
     given(oAuth2User.getAttributes()).willReturn(Map.of(
         "sub", "providerId123",
         "email", email,
@@ -109,17 +105,17 @@ class OAuth2UserServiceTest {
 
     // then
     assertThat(resultUser).isInstanceOf(CustomOAuth2User.class);
-    assertThat(((CustomOAuth2User) resultUser).getAuth().getId()).isEqualTo(1L); // 기존 Auth가 반환됨
+    assertThat(((CustomOAuth2User) resultUser).getAuth().getId()).isEqualTo(1L);
 
-    verify(authRepo, never()).save(any()); // 신규 Auth 생성은 일어나지 않음
-    verify(authSocialRepo, times(1)).save(any(AuthSocial.class)); // 소셜 연동 데이터만 저장됨
+    verify(authRepo, never()).save(any());
+    verify(authSocialRepo, times(1)).save(any(AuthSocial.class));
   }
 
   @Test
   @DisplayName("소셜 로그인 - 완전한 신규 사용자일 경우 새로운 Auth를 생성하고 이벤트를 발행한다")
-  void processOAuth2User_CompletelyNewUser_CreatesAuthAndPublishesEvent() {
+  void processOAuth2UserCompletelyNewUserCreatesAuthAndPublishesEvent() {
     // given
-    String email = "new@test.com";
+    String email = "test@test.com";
     OAuth2UserRequest userRequest = createMockUserRequest("google");
     OAuth2User oAuth2User = mock(OAuth2User.class);
 
@@ -140,10 +136,67 @@ class OAuth2UserServiceTest {
     // then
     assertThat(resultUser).isInstanceOf(CustomOAuth2User.class);
 
-    // 신규 Auth 및 Social 정보가 저장되었는지 검증
     verify(authRepo, times(1)).save(any(Auth.class));
     verify(authSocialRepo, times(1)).save(any(AuthSocial.class));
-    // 외부 프로필 생성을 위한 이벤트가 발행되었는지 검증
     verify(eventPublisher, times(1)).publishEvent(any(OAuth2UserCreatedEvent.class));
+  }
+
+  @Test
+  @DisplayName("제공자 식별 분기 - 네이버(naver) 로그인이 들어오면 NaverUserInfo 객체로 래핑된다")
+  public void extractUserInfoNaverProviderReturnsNaverUserInfo() {
+    // given
+    OAuth2UserRequest userRequest = createMockUserRequest("naver");
+    OAuth2User oAuth2User = mock(OAuth2User.class);
+    given(oAuth2User.getAttributes()).willReturn(
+        Map.of("response", Map.of("id", "naver_123", "email", "n@n.com")));
+
+    // when
+    Object userInfo = ReflectionTestUtils.invokeMethod(oauth2UserService, "extractUserInfo",
+        userRequest, oAuth2User);
+
+    // then
+    assertThat(userInfo.getClass().getSimpleName()).isEqualTo("NaverUserInfo");
+  }
+
+  @Test
+  @DisplayName("제공자 식별 분기 - 지원하지 않는 제공자(kakao 등)일 경우 예외가 발생한다")
+  public void extractUserInfoInvalidProviderThrowsException() {
+    // given
+    OAuth2UserRequest userRequest = createMockUserRequest("kakao");
+    OAuth2User oAuth2User = mock(OAuth2User.class);
+
+    // when & then
+    assertThatThrownBy(
+        () -> ReflectionTestUtils.invokeMethod(oauth2UserService, "extractUserInfo", userRequest,
+            oAuth2User))
+        .isInstanceOf(BusinessException.class)
+        .extracting("errorCode").isEqualTo(ErrorCode.OAUTH_INVALID_PROVIDER);
+  }
+
+  @Test
+  @DisplayName("소셜 연동 병합 분기 - AuthLocal이 없고 다른 AuthSocial만 존재할 경우 해당 Auth에 병합된다")
+  public void processOAuth2UserNoLocalButExistingSocialLinksAccount() {
+    // given
+    String email = "test@test.com";
+    OAuth2UserRequest userRequest = createMockUserRequest("naver");
+    OAuth2User oAuth2User = mock(OAuth2User.class);
+    given(oAuth2User.getAttributes()).willReturn(
+        Map.of("response", Map.of("id", "naver_123", "email", email)));
+
+    Auth existingAuth = Auth.builder().build();
+    ReflectionTestUtils.setField(existingAuth, "id", 77L);
+    AuthSocial existingSocial = AuthSocial.builder().auth(existingAuth).email(email).build();
+
+    given(authSocialRepo.findByProviderAndProviderUserIdWithAuth(any(), any())).willReturn(
+        Optional.empty());
+    given(authLocalRepo.findByEmail(email)).willReturn(Optional.empty());
+    given(authSocialRepo.findFirstByEmail(email)).willReturn(Optional.of(existingSocial));
+
+    // when
+    OAuth2User result = oauth2UserService.processOAuth2User(userRequest, oAuth2User);
+
+    // then
+    assertThat(((CustomOAuth2User) result).getAuth().getId()).isEqualTo(77L);
+    verify(authSocialRepo, times(1)).save(any(AuthSocial.class));
   }
 }
