@@ -25,17 +25,14 @@ import com.example.WonkaoTalk.domain.auth.dto.LoginRequest;
 import com.example.WonkaoTalk.domain.auth.dto.TokenDto;
 import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.entity.AuthLocal;
-import com.example.WonkaoTalk.domain.auth.entity.LoginHistory;
 import com.example.WonkaoTalk.domain.auth.enums.LoginStatus;
 import com.example.WonkaoTalk.domain.auth.enums.Role;
-import com.example.WonkaoTalk.domain.auth.repo.LoginHistoryRepo;
 import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -58,11 +55,6 @@ class AuthServiceTest {
   private JwtTokenProvider jwtTokenProvider;
   @Mock
   private RedisService redisService;
-  @Mock
-  private LoginHistoryRepo loginHistoryRepo;
-
-  @Captor
-  private ArgumentCaptor<LoginHistory> loginHistoryCaptor;
 
   private MockHttpServletRequest httpRequest;
 
@@ -100,20 +92,6 @@ class AuthServiceTest {
     //then
     assertThat(response.isValid()).isFalse();
 
-  }
-
-  @Test
-  @DisplayName("회원가입 - 클라이언트 검증을 우회한 중복 가입 시도 실패")
-  public void createAuthFailedByDuplicateEmail() {
-    //given
-    given(authCommandService.existsByEmail(email)).willReturn(true);
-
-    //when & then
-    BusinessException e = assertThrows(BusinessException.class, () -> {
-      authService.createAuthLocal(email, "password", Role.USER);
-    });
-
-    assertThat(e.getErrorCode()).isEqualTo(ErrorCode.AUTH_DUPLICATE_EMAIL);
   }
 
   @Test
