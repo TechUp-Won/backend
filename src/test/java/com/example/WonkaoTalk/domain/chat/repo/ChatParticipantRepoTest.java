@@ -23,7 +23,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 @DataJpaTest(properties = {
     "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
-    "spring.jpa.hibernate.ddl-auto=create-drop"
+    "spring.jpa.hibernate.ddl-auto=create-drop",
+    "spring.flyway.enabled=false"
 })
 @Import(JpaConfig.class)
 class ChatParticipantRepoTest {
@@ -113,6 +114,44 @@ class ChatParticipantRepoTest {
     assertThat(result).isPresent();
     assertThat(result.get().getId()).isEqualTo(room.getId());
     assertThat(result.get().getRoomType()).isEqualTo(RoomType.SINGLE);
+  }
+
+  @Test
+  @DisplayName("같은 방에 없는 유저는 조회되지 않음")
+  void findChatRoomByUsersNotFound() {
+
+    // given
+    ChatRoom room = createRoom(RoomType.SINGLE, LocalDateTime.now());
+
+    joinRoom(room, 1L);
+    joinRoom(room, 2L);
+
+    // when
+    Optional<ChatRoom> result = chatParticipantRepo.findChatRoomByUsers(1L, 3L);
+
+    // then
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  @DisplayName("내가 참여하지 않은 방은 조회되지 않는다")
+  void findMyChatRoomsOnlyMine() {
+
+    // given
+    Long myId = 1L;
+    LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
+    ChatRoom myRoom = createRoom(RoomType.SINGLE, now);
+    ChatRoom otherRoom = createRoom(RoomType.SINGLE, now.minusDays(1));
+    joinRoom(myRoom, myId);
+    joinRoom(otherRoom, 999L);
+
+    // when
+    Slice<ChatParticipant> result = chatParticipantRepo.findMyChatRooms(myId, null, null,
+        PageRequest.of(0, 10));
+
+    // then
+    assertThat(result.getContent()).hasSize(1);
+    assertThat(result.getContent().getFirst().getChatRoom().getId()).isEqualTo(myRoom.getId());
   }
 
   @Test
