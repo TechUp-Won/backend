@@ -77,7 +77,7 @@ public class AuthController {
   @Operation(summary = "로그아웃", description = "access token을 블랙리스트에 등록하고 refresh token 쿠키를 제거합니다.")
   @PostMapping("/logout")
   public ResponseEntity<ApiResponse<Void>> logout(
-      @RequestHeader("Authorization") String authHeader,
+      @RequestHeader(value = "Authorization", required = false) String authHeader,
       @AuthenticationPrincipal UserDetails userDetails
   ) {
     if (authHeader == null || !authHeader.startsWith("Bearer ")) {

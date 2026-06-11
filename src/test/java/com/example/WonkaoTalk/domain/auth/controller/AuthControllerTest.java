@@ -166,9 +166,9 @@ class AuthControllerTest {
     // when & then
     mockMvc.perform(post("/api/v1/auth/logout")
             .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isInternalServerError())
+        .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.status").value("ERROR"))
-        .andExpect(jsonPath("$.error").value("SYS-INTERNAL-ERROR"));
+        .andExpect(jsonPath("$.error").value("AUTH-INVALID-TOKEN"));
   }
 
   @Test
