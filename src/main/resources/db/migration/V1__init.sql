@@ -99,30 +99,30 @@ CREATE UNIQUE INDEX uk_friends_user_friend ON friends (user_id, target_id);
 --  Seller & Store 도메인
 -- ==========================================
 CREATE TABLE sellers (
-                         id BIGSERIAL PRIMARY KEY,
-                         auth_id BIGINT NOT NULL,
-                         buz_no VARCHAR(10) NOT NULL,
-                         name VARCHAR(255) NOT NULL,
-                         phone VARCHAR(20) NOT NULL,
-                         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                         updated_at TIMESTAMP,
-                         deleted_at TIMESTAMP,
-                         CONSTRAINT fk_sellers_auth FOREIGN KEY (auth_id) REFERENCES auths(id)
+    id BIGSERIAL PRIMARY KEY,
+    auth_id BIGINT NOT NULL,
+    buz_no VARCHAR(10) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    deleted_at TIMESTAMP,
+    CONSTRAINT fk_sellers_auth FOREIGN KEY (auth_id) REFERENCES auths(id)
 );
 CREATE UNIQUE INDEX uk_sellers_buz_no_active ON sellers (buz_no) WHERE deleted_at IS NULL;
 
 CREATE TABLE stores (
-                        id BIGSERIAL PRIMARY KEY,
-                        seller_id BIGINT NOT NULL,
-                        name VARCHAR(255) NOT NULL,
-                        description TEXT,
-                        phone VARCHAR(20) NOT NULL,
-                        thumbnail VARCHAR(255) DEFAULT 'http://default.png',
-                        status VARCHAR(50) DEFAULT 'ACTIVE',
-                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP,
-                        deleted_at TIMESTAMP,
-                        CONSTRAINT fk_stores_seller FOREIGN KEY (seller_id) REFERENCES sellers(id)
+    id BIGSERIAL PRIMARY KEY,
+    seller_id BIGINT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    phone VARCHAR(20) NOT NULL,
+    thumbnail VARCHAR(255) DEFAULT 'http://default.png',
+    status VARCHAR(50) DEFAULT 'ACTIVE',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    deleted_at TIMESTAMP,
+    CONSTRAINT fk_stores_seller FOREIGN KEY (seller_id) REFERENCES sellers(id)
 );
 CREATE UNIQUE INDEX uk_stores_seller_active ON stores (seller_id) WHERE deleted_at IS NULL;
 
