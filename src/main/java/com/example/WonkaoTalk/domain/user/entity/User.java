@@ -59,6 +59,7 @@ public class User {
   @Column(length = 13, unique = true)
   private String phone;
 
+  @Builder.Default
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private Gender gender = Gender.NONE;

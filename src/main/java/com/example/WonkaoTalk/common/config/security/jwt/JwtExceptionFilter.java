@@ -4,6 +4,8 @@ import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.common.response.ApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,11 +13,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 
-@Component
 @RequiredArgsConstructor
 public class JwtExceptionFilter extends OncePerRequestFilter {
 
@@ -29,6 +29,10 @@ public class JwtExceptionFilter extends OncePerRequestFilter {
   ) throws ServletException, IOException {
     try {
       filterChain.doFilter(request, response);
+    } catch (ExpiredJwtException e) {
+      setErrorResponse(response, ErrorCode.AUTH_EXPIRED_TOKEN);
+    } catch (JwtException | IllegalArgumentException e) {
+      setErrorResponse(response, ErrorCode.AUTH_INVALID_TOKEN);
     } catch (BusinessException e) {
       setErrorResponse(response, e.getErrorCode());
     } catch (Exception e) {

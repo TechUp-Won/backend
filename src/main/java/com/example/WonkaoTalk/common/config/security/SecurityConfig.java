@@ -3,6 +3,7 @@ package com.example.WonkaoTalk.common.config.security;
 import com.example.WonkaoTalk.common.config.security.jwt.JwtAuthenticationFilter;
 import com.example.WonkaoTalk.common.config.security.jwt.JwtExceptionFilter;
 import com.example.WonkaoTalk.domain.auth.service.OAuth2UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -36,13 +37,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
-  private final JwtExceptionFilter jwtExceptionFilter;
   private final OAuth2UserService oAuth2UserService;
   private final OAuth2SuccessHandler oAuth2SuccessHandler;
   private final ClientRegistrationRepository clientRegistrationRepository;
+  private final ObjectMapper objectMapper;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    JwtExceptionFilter jwtExceptionFilter = new JwtExceptionFilter(objectMapper);
     http
         // REST API 서버이므로 CSRF 보호 비활성화
         .csrf(AbstractHttpConfigurer::disable)
