@@ -321,7 +321,7 @@ CREATE TABLE orders (
     discount_amount BIGINT NOT NULL DEFAULT 0,
     point_used_amount BIGINT NOT NULL DEFAULT 0,
     final_amount BIGINT NOT NULL,
-    title VARCHAR(255),
+    title VARCHAR(255) NOT NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     deleted_at TIMESTAMP,
@@ -339,7 +339,8 @@ CREATE TABLE order_items (
     product_amount BIGINT NOT NULL,
     quantity INT NOT NULL,
     product_image_url TEXT,
-    CONSTRAINT fk_order_items_order FOREIGN KEY (order_id) REFERENCES orders(order_id)
+    CONSTRAINT fk_order_items_order FOREIGN KEY (order_id) REFERENCES orders(order_id),
+    CONSTRAINT fk_order_items_variant FOREIGN KEY (variant_id) REFERENCES product_variants(id)
 );
 
 CREATE TABLE deliveries (
@@ -349,7 +350,7 @@ CREATE TABLE deliveries (
     recipient_phone VARCHAR(20) NOT NULL,
     zipcode VARCHAR(20) NOT NULL,
     address VARCHAR(255) NOT NULL,
-    address_detail VARCHAR(255),
+    address_detail VARCHAR(255) NOT NULL,
     memo VARCHAR(255),
     delivery_status VARCHAR(50) NOT NULL,
     delivery_company VARCHAR(100),
@@ -380,6 +381,7 @@ CREATE TABLE payments (
 
 CREATE UNIQUE INDEX uk_payments_toss_order_id ON payments (toss_order_id);
 CREATE UNIQUE INDEX uk_payments_idempotency_key ON payments (idempotency_key);
+CREATE UNIQUE INDEX uk_payments_payment_key ON payments (payment_key) WHERE payment_key IS NOT NULL;
 
 -- ==========================================
 --  Chat 도메인
