@@ -161,6 +161,11 @@ public class AuthCommandService {
     return authSocialRepo.findFirstByEmail(email);
   }
 
+  @Transactional(readOnly = true)
+  public List<AuthSocial> getLinkedSocials(Long authId) {
+    return authSocialRepo.findByAuthId(authId);
+  }
+
   /*********** HELPER METHOD ************/
   private void processFullWithdraw(Auth auth) {
     authLocalRepo.findByAuth(auth).ifPresent(AuthLocal::withdraw);
