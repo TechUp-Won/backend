@@ -171,7 +171,10 @@ public class OrderIntegrationTest {
       assertThat(orderRepo.findAll()).isEmpty();
       assertThat(orderItemRepo.findAll()).isEmpty();
       assertThat(deliveryRepo.findAll()).isEmpty();
-      assertThat(productVariant.getStock()).isEqualTo(2);
+
+      ProductVariant savedVariant = productVariantRepo.findById(productVariant.getId())
+          .orElseThrow();
+      assertThat(savedVariant.getStock()).isEqualTo(2);
     }
 
     @Test
@@ -208,7 +211,10 @@ public class OrderIntegrationTest {
       assertThat(orderRepo.findAll()).isEmpty();
       assertThat(orderItemRepo.findAll()).isEmpty();
       assertThat(deliveryRepo.findAll()).isEmpty();
-      assertThat(productVariant.getStock()).isEqualTo(10);
+
+      ProductVariant savedVariant = productVariantRepo.findById(productVariant.getId())
+          .orElseThrow();
+      assertThat(savedVariant.getStock()).isEqualTo(10);
     }
 
     @Test
