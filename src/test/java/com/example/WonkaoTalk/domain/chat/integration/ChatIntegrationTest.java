@@ -188,8 +188,9 @@ class ChatIntegrationTest {
   private User saveUser(String nickname) {
     Auth auth = Auth.builder().build();
     em.persist(auth);
+    userSeq++;
     User user = User.builder().nickname(nickname).name("테스트")
-        .phone(String.format("010-%04d-%04d", ++userSeq, userSeq)).auth(auth).build();
+        .phone(String.format("010-%04d-%04d", userSeq, userSeq)).auth(auth).build();
     em.persist(user);
     return user;
   }
