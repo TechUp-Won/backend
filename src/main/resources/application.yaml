@@ -9,3 +9,33 @@ jwt:
   # secret: ${JWT_SECRET_KEY} # 시스템 환경변수에서 값을 주입받음
   access-expiration-time: 1800000 # 30분
   refresh-expiration-time: 1209600000 # 14일
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus,health  # 보안을 위해 필요한 엔드포인트만 노출
+  endpoint:
+    health:
+      show-details: always  # 상세한 헬스체크 정보 표시
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    enable:
+      jvm: true
+      system: true
+      tomcat: true
+      process: true
+      hikaricp: true
+      jdbc: true
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
+server:
+  address: 0.0.0.0 # LAN에서 접근 가능하도록 모든 인터페이스에 바인딩

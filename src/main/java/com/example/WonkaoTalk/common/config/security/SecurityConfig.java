@@ -72,7 +72,8 @@ public class SecurityConfig {
                 "/ws/**",
                 "/v3/api-docs/**",
                 "/swagger-ui/**",
-                "/swagger-ui.html"
+                "/swagger-ui.html",
+                "/actuator/**"
             ).permitAll() // 인증 없이 접근 허용
             .requestMatchers(
                 "/api/v1/auth/logout",
