@@ -74,6 +74,8 @@ public class SecurityConfig {
                 "/swagger-ui/**",
                 "/swagger-ui.html"
             ).permitAll() // 인증 없이 접근 허용
+            // 원활한 테스트를 위해 permitAll 설정
+            .requestMatchers("/actuator/prometheus").permitAll()
             .requestMatchers(
                 "/api/v1/auth/logout",
                 "/api/v1/sellers/register"
