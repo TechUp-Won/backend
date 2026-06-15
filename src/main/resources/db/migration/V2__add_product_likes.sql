@@ -7,5 +7,5 @@ CREATE TABLE product_likes (
     user_id BIGINT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_product_likes_product FOREIGN KEY (product_id) REFERENCES products(id),
-    CONSTRAINT uk_product_likes_product_user UNIQUE (product_id, user_id)
+    CONSTRAINT uk_product_likes_user_product UNIQUE (user_id, product_id)
 );
