@@ -32,6 +32,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -140,7 +141,7 @@ class ProductLikeServiceIntegrationTest {
     em.flush();
     em.clear();
 
-    Pageable pageable = PageRequest.of(0, 10);
+    Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
     ProductLikeListResponse response = productLikeService.getLikedProducts(testUserId, pageable);
 
     assertThat(response.likes()).hasSize(2);
@@ -157,7 +158,7 @@ class ProductLikeServiceIntegrationTest {
     em.flush();
     em.clear();
 
-    Pageable pageable = PageRequest.of(0, 10);
+    Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
     ProductLikeListResponse response = productLikeService.getLikedProducts(testUserId, pageable);
 
     LikeSummary summary = response.likes().get(0);
@@ -171,7 +172,7 @@ class ProductLikeServiceIntegrationTest {
   @Test
   @DisplayName("좋아요한 상품이 없으면 빈 목록을 반환한다")
   void getLikedProducts_returnsEmpty_whenNoLikes() {
-    Pageable pageable = PageRequest.of(0, 10);
+    Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
     ProductLikeListResponse response = productLikeService.getLikedProducts(testUserId, pageable);
 
     assertThat(response.likes()).isEmpty();
