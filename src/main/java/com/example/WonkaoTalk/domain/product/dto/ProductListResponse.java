@@ -1,5 +1,6 @@
 package com.example.WonkaoTalk.domain.product.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,6 +24,8 @@ public class ProductListResponse {
     private Integer discountedPrice;
     private Integer discountRate;
     private Integer likeCount;
+    @JsonProperty("isLiked")
+    private boolean isLiked;
     private String status;
     private StoreInfo store;
   }

@@ -20,6 +20,7 @@ import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
 import com.example.WonkaoTalk.domain.product.repo.CategoryRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductDetailRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductImageRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductLikeRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductOptionGroupRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductOptionRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
@@ -68,6 +69,9 @@ class ProductServiceTest {
   @Mock
   private VariantOptionMapRepo variantOptionMapRepository;
 
+  @Mock
+  private ProductLikeRepo productLikeRepository;
+
   @InjectMocks
   private ProductService productService;
 
@@ -80,7 +84,7 @@ class ProductServiceTest {
     request.setSize(0);
 
     BusinessException ex = assertThrows(BusinessException.class,
-        () -> productService.getProductList(request));
+        () -> productService.getProductList(request, null));
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_INVALID_PAGE_SIZE);
   }
@@ -92,7 +96,7 @@ class ProductServiceTest {
     request.setSize(101);
 
     BusinessException ex = assertThrows(BusinessException.class,
-        () -> productService.getProductList(request));
+        () -> productService.getProductList(request, null));
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_INVALID_PAGE_SIZE);
   }
@@ -105,7 +109,7 @@ class ProductServiceTest {
     request.setMaxPrice(5000);
 
     BusinessException ex = assertThrows(BusinessException.class,
-        () -> productService.getProductList(request));
+        () -> productService.getProductList(request, null));
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_INVALID_PRICE_RANGE);
   }
@@ -118,7 +122,7 @@ class ProductServiceTest {
     when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
 
     BusinessException ex = assertThrows(BusinessException.class,
-        () -> productService.getProductList(request));
+        () -> productService.getProductList(request, null));
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_CATEGORY_NOT_FOUND);
   }
@@ -130,7 +134,7 @@ class ProductServiceTest {
     request.setSort("invalid_sort");
 
     BusinessException ex = assertThrows(BusinessException.class,
-        () -> productService.getProductList(request));
+        () -> productService.getProductList(request, null));
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_INVALID_SORT);
   }
@@ -148,7 +152,7 @@ class ProductServiceTest {
         anyInt()))
         .thenReturn(products);
 
-    ProductListResponse response = productService.getProductList(request);
+    ProductListResponse response = productService.getProductList(request, null);
 
     assertThat(response.isHasNext()).isTrue();
     assertThat(response.getProducts()).hasSize(2);
@@ -167,7 +171,7 @@ class ProductServiceTest {
         anyInt()))
         .thenReturn(products);
 
-    ProductListResponse response = productService.getProductList(request);
+    ProductListResponse response = productService.getProductList(request, null);
 
     assertThat(response.isHasNext()).isFalse();
     assertThat(response.getNextCursorId()).isNull();
@@ -189,7 +193,7 @@ class ProductServiceTest {
         anyInt()))
         .thenReturn(List.of(first, second));
 
-    ProductListResponse response = productService.getProductList(request);
+    ProductListResponse response = productService.getProductList(request, null);
 
     assertThat(response.getNextCursorSortValue()).isEqualTo(42L);
   }
@@ -210,7 +214,7 @@ class ProductServiceTest {
         anyInt()))
         .thenReturn(List.of(first, second));
 
-    ProductListResponse response = productService.getProductList(request);
+    ProductListResponse response = productService.getProductList(request, null);
 
     assertThat(response.getNextCursorSortValue()).isEqualTo(expectedMillis);
   }
@@ -229,7 +233,7 @@ class ProductServiceTest {
         anyInt()))
         .thenReturn(List.of(first, second));
 
-    ProductListResponse response = productService.getProductList(request);
+    ProductListResponse response = productService.getProductList(request, null);
 
     assertThat(response.getNextCursorSortValue()).isEqualTo(8000L);
   }
@@ -242,7 +246,7 @@ class ProductServiceTest {
     when(productRepository.findById(999L)).thenReturn(Optional.empty());
 
     BusinessException ex = assertThrows(BusinessException.class,
-        () -> productService.getProductDetail(999L));
+        () -> productService.getProductDetail(999L, null));
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_NOT_FOUND);
   }
@@ -255,7 +259,7 @@ class ProductServiceTest {
     when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
     BusinessException ex = assertThrows(BusinessException.class,
-        () -> productService.getProductDetail(1L));
+        () -> productService.getProductDetail(1L, null));
 
     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROD_DELETED);
   }
@@ -266,7 +270,7 @@ class ProductServiceTest {
     Product product = mockProduct(1L, 10000, 0, 10000, 0, LocalDateTime.now());
     when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
-    ProductDetailResponse response = productService.getProductDetail(1L);
+    ProductDetailResponse response = productService.getProductDetail(1L, null);
 
     assertThat(response.isLiked()).isFalse();
   }
@@ -277,7 +281,7 @@ class ProductServiceTest {
     Product product = mockProduct(1L, 10000, 0, 10000, 0, LocalDateTime.now());
     when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
-    ProductDetailResponse response = productService.getProductDetail(1L);
+    ProductDetailResponse response = productService.getProductDetail(1L, null);
 
     assertThat(response.getStore()).isNotNull();
     assertThat(response.getStore().getStoreId()).isEqualTo(10L);
@@ -311,7 +315,7 @@ class ProductServiceTest {
     when(variantOptionMapRepository.findByProductVariantIdIn(List.of(10L))).thenReturn(
         List.of(map1, map2));
 
-    ProductDetailResponse response = productService.getProductDetail(1L);
+    ProductDetailResponse response = productService.getProductDetail(1L, null);
 
     assertThat(response.getVariants()).hasSize(1);
     assertThat(response.getVariants().get(0).getCombinationIds()).containsExactlyInAnyOrder(201L,

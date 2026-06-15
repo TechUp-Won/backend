@@ -19,6 +19,7 @@ import com.example.WonkaoTalk.domain.product.enums.ProductSortType;
 import com.example.WonkaoTalk.domain.product.repo.CategoryRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductDetailRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductImageRepo;
+import com.example.WonkaoTalk.domain.product.repo.ProductLikeRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductOptionGroupRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductOptionRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
@@ -28,6 +29,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -46,8 +48,9 @@ public class ProductService {
   private final ProductOptionRepo productOptionRepository;
   private final ProductVariantRepo productVariantRepository;
   private final VariantOptionMapRepo variantOptionMapRepository;
+  private final ProductLikeRepo productLikeRepository;
 
-  public ProductListResponse getProductList(ProductListRequest request) {
+  public ProductListResponse getProductList(ProductListRequest request, Long userId) {
     int size = request.getSize() != null ? request.getSize() : 20;
     if (size < 1 || size > 100) {
       throw new BusinessException(ErrorCode.PROD_INVALID_PAGE_SIZE);
@@ -92,8 +95,16 @@ public class ProductService {
       nextCursorSortValue = toSortValue(lastItem, sortType);
     }
 
+    Set<Long> likedProductIds;
+    if (userId != null && !products.isEmpty()) {
+      List<Long> productIds = products.stream().map(Product::getId).toList();
+      likedProductIds = Set.copyOf(productLikeRepository.findLikedProductIds(userId, productIds));
+    } else {
+      likedProductIds = Set.of();
+    }
+
     List<ProductSummary> summaries = products.stream()
-        .map(this::toSummary)
+        .map(product -> toSummary(product, likedProductIds.contains(product.getId())))
         .toList();
 
     return ProductListResponse.builder()
@@ -104,7 +115,7 @@ public class ProductService {
         .build();
   }
 
-  public ProductDetailResponse getProductDetail(Long productId) {
+  public ProductDetailResponse getProductDetail(Long productId, Long userId) {
     Product product = productRepository.findById(productId)
         .orElseThrow(() -> new BusinessException(ErrorCode.PROD_NOT_FOUND));
 
@@ -149,6 +160,9 @@ public class ProductService {
         .map(variant -> toVariantInfo(variant, combinationIdsByVariant))
         .toList();
 
+    boolean isLiked = userId != null
+        && productLikeRepository.existsByProductIdAndUserId(productId, userId);
+
     return ProductDetailResponse.builder()
         .productId(product.getId())
         .productName(product.getName())
@@ -157,7 +171,7 @@ public class ProductService {
         .discountRate(product.getDiscountRate())
         .status(product.getStatus().name())
         .likeCount(product.getLikeCount())
-        .isLiked(false) // TODO: 로그인 사용자의 좋아요 여부 반영 필요 (PRODUCT_LIKE 테이블 조회)
+        .isLiked(isLiked)
         .store(ProductDetailResponse.StoreInfo.builder()
             .storeId(product.getStore().getId())
             .storeName(product.getStore().getName())
@@ -215,7 +229,7 @@ public class ProductService {
     return result;
   }
 
-  private ProductSummary toSummary(Product product) {
+  private ProductSummary toSummary(Product product, boolean isLiked) {
     return ProductSummary.builder()
         .id(product.getId())
         .name(product.getName())
@@ -224,6 +238,7 @@ public class ProductService {
         .discountedPrice(product.getDiscountedPrice())
         .discountRate(product.getDiscountRate())
         .likeCount(product.getLikeCount())
+        .isLiked(isLiked)
         .status(product.getStatus().name())
         .store(ProductListResponse.StoreInfo.builder()
             .storeId(product.getStore().getId())

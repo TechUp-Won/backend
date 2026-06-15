@@ -73,16 +73,20 @@ public class ProductController {
   @Operation(summary = "상품 목록 조회", description = "카테고리, 정렬 조건 등을 기준으로 상품 목록을 조회합니다.")
   @GetMapping
   public ResponseEntity<ApiResponse<ProductListResponse>> getProducts(
+      @AuthenticationPrincipal(errorOnInvalidType = false) CustomUserDetails userDetails,
       @ModelAttribute ProductListRequest request) {
-    ProductListResponse response = productService.getProductList(request);
+    Long userId = userDetails != null ? userDetails.getUserId() : null;
+    ProductListResponse response = productService.getProductList(request, userId);
     return ResponseEntity.ok(ApiResponse.success("조회가 완료되었습니다", response));
   }
 
   @Operation(summary = "상품 상세 조회", description = "상품 ID로 상품 상세 정보와 옵션 정보를 조회합니다.")
   @GetMapping("/{productId}")
   public ResponseEntity<ApiResponse<ProductDetailResponse>> getProduct(
+      @AuthenticationPrincipal(errorOnInvalidType = false) CustomUserDetails userDetails,
       @PathVariable Long productId) {
-    ProductDetailResponse response = productService.getProductDetail(productId);
+    Long userId = userDetails != null ? userDetails.getUserId() : null;
+    ProductDetailResponse response = productService.getProductDetail(productId, userId);
     return ResponseEntity.ok(ApiResponse.success("조회가 완료되었습니다", response));
   }
 

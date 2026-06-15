@@ -60,7 +60,7 @@ class ProductDetailIntegrationTest {
     em.flush();
     em.clear();
 
-    ProductDetailResponse response = productService.getProductDetail(product.getId());
+    ProductDetailResponse response = productService.getProductDetail(product.getId(), null);
 
     assertThat(response.getImages()).hasSize(3);
     assertThat(response.getImages().get(0).getSortOrder()).isEqualTo(1);
@@ -80,7 +80,7 @@ class ProductDetailIntegrationTest {
     em.flush();
     em.clear();
 
-    ProductDetailResponse response = productService.getProductDetail(product.getId());
+    ProductDetailResponse response = productService.getProductDetail(product.getId(), null);
 
     assertThat(response.getOptionGroups()).hasSize(2);
     ProductDetailResponse.OptionGroupInfo color = response.getOptionGroups().stream()
@@ -103,7 +103,7 @@ class ProductDetailIntegrationTest {
     em.flush();
     em.clear();
 
-    ProductDetailResponse response = productService.getProductDetail(product.getId());
+    ProductDetailResponse response = productService.getProductDetail(product.getId(), null);
 
     assertThat(response.getVariants()).hasSize(1);
     assertThat(response.getVariants().get(0).getCombinationIds())
@@ -113,7 +113,7 @@ class ProductDetailIntegrationTest {
   @Test
   @DisplayName("상세 내용이 없으면 detail이 null이다")
   void detail_isNullWhenNotExists() {
-    ProductDetailResponse response = productService.getProductDetail(product.getId());
+    ProductDetailResponse response = productService.getProductDetail(product.getId(), null);
 
     assertThat(response.getDetail()).isNull();
   }
@@ -125,7 +125,7 @@ class ProductDetailIntegrationTest {
     em.flush();
     em.clear();
 
-    ProductDetailResponse response = productService.getProductDetail(product.getId());
+    ProductDetailResponse response = productService.getProductDetail(product.getId(), null);
 
     assertThat(response.getDetail()).isNotNull();
     assertThat(response.getDetail().getContent()).isEqualTo("<p>상품 상세 내용</p>");
