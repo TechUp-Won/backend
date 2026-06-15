@@ -20,7 +20,7 @@ public interface ProductLikeRepo extends JpaRepository<ProductLike, Long> {
   List<Long> findLikedProductIds(@Param("userId") Long userId, @Param("productIds") List<Long> productIds);
 
   @Query(value = "SELECT pl FROM ProductLike pl JOIN FETCH pl.product p JOIN FETCH p.store "
-      + "WHERE pl.userId = :userId",
+      + "WHERE pl.userId = :userId ORDER BY pl.createdAt DESC",
       countQuery = "SELECT COUNT(pl) FROM ProductLike pl WHERE pl.userId = :userId")
   Page<ProductLike> findByUserIdWithProduct(@Param("userId") Long userId, Pageable pageable);
 }
