@@ -55,6 +55,8 @@ public class SecurityConfig {
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         // HTTP 요청에 대한 접근 권한 설정
         .authorizeHttpRequests(auth -> auth
+            .requestMatchers(HttpMethod.GET, "/api/v1/products/likes").hasRole("USER")
+            .requestMatchers(HttpMethod.POST, "/api/v1/products/*/likes").hasRole("USER")
             .requestMatchers(HttpMethod.GET,
                 "/api/v1/products",
                 "/api/v1/products/*",

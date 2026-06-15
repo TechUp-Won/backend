@@ -105,4 +105,12 @@ public class Product {
   public boolean isOnSale() {
     return this.deletedAt == null && this.status == SaleStatus.ON_SALE;
   }
+
+  public void increaseLikeCount() {
+    this.likeCount++;
+  }
+
+  public void decreaseLikeCount() {
+    this.likeCount--;
+  }
 }

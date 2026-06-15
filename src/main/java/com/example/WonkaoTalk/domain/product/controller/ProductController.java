@@ -8,6 +8,8 @@ import com.example.WonkaoTalk.domain.product.dto.ProductCreateRequest;
 import com.example.WonkaoTalk.domain.product.dto.ProductCreateResponse;
 import com.example.WonkaoTalk.domain.product.dto.ProductDetailResponse;
 import com.example.WonkaoTalk.domain.product.dto.ProductEditFormResponse;
+import com.example.WonkaoTalk.domain.product.dto.ProductLikeListResponse;
+import com.example.WonkaoTalk.domain.product.dto.ProductLikeToggleResponse;
 import com.example.WonkaoTalk.domain.product.dto.ProductListRequest;
 import com.example.WonkaoTalk.domain.product.dto.ProductListResponse;
 import com.example.WonkaoTalk.domain.product.dto.ProductUpdateRequest;
@@ -17,6 +19,7 @@ import com.example.WonkaoTalk.domain.product.dto.StockAdjustResponse;
 import com.example.WonkaoTalk.domain.product.service.CategoryService;
 import com.example.WonkaoTalk.domain.product.service.ProductCreateService;
 import com.example.WonkaoTalk.domain.product.service.ProductDeleteService;
+import com.example.WonkaoTalk.domain.product.service.ProductLikeService;
 import com.example.WonkaoTalk.domain.product.service.ProductService;
 import com.example.WonkaoTalk.domain.product.service.ProductUpdateService;
 import com.example.WonkaoTalk.domain.product.service.StockAdjustService;
@@ -26,6 +29,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -51,6 +57,7 @@ public class ProductController {
   private final ProductDeleteService productDeleteService;
   private final StockAdjustService stockAdjustService;
   private final CategoryService categoryService;
+  private final ProductLikeService productLikeService;
 
   @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
   @Operation(summary = "상품 등록", description = "판매자가 상품 기본 정보, 상세 정보, 옵션, 이미지를 등록합니다.")
@@ -130,5 +137,26 @@ public class ProductController {
   public ResponseEntity<ApiResponse<List<CategoryResponse>>> getCategories() {
     List<CategoryResponse> response = categoryService.getCategoryTree();
     return ResponseEntity.ok(ApiResponse.success("조회가 완료되었습니다", response));
+  }
+
+  @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+  @Operation(summary = "상품 좋아요 토글", description = "특정 상품에 대한 좋아요를 추가하거나 취소합니다.")
+  @PostMapping("/{productId}/likes")
+  public ResponseEntity<ApiResponse<ProductLikeToggleResponse>> toggleLike(
+      @AuthenticationPrincipal CustomUserDetails userDetails,
+      @PathVariable Long productId) {
+    ProductLikeToggleResponse response = productLikeService.toggle(userDetails.getUserId(), productId);
+    String message = response.isLiked() ? "상품 좋아요가 추가되었습니다." : "상품 좋아요가 취소되었습니다.";
+    return ResponseEntity.ok(ApiResponse.success(message, response));
+  }
+
+  @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
+  @Operation(summary = "좋아요한 상품 목록 조회", description = "로그인한 사용자가 좋아요를 누른 상품 목록을 페이징하여 조회합니다.")
+  @GetMapping("/likes")
+  public ResponseEntity<ApiResponse<ProductLikeListResponse>> getLikedProducts(
+      @AuthenticationPrincipal CustomUserDetails userDetails,
+      @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+    ProductLikeListResponse response = productLikeService.getLikedProducts(userDetails.getUserId(), pageable);
+    return ResponseEntity.ok(ApiResponse.success("좋아요 상품 목록 조회 성공", response));
   }
 }
