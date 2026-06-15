@@ -26,6 +26,8 @@ public class ProductLikeService {
   private final ProductRepo productRepo;
   private final ProductLikeRepo productLikeRepo;
 
+  // TODO: 인기 상품에 좋아요가 몰릴 경우 비관적 락으로 인한 경합이 발생할 수 있음.
+  //  트래픽이 늘어나면 Redis로 likeCount/좋아요 여부를 관리하고 RDB에 비동기 동기화하는 방식 검토.
   public ProductLikeToggleResponse toggle(Long userId, Long productId) {
     Product product = productRepo.findByIdWithLock(productId)
         .orElseThrow(() -> new BusinessException(ErrorCode.PROD_NOT_FOUND));
