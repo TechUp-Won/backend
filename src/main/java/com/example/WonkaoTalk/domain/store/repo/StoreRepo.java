@@ -12,5 +12,7 @@ public interface StoreRepo extends JpaRepository<Store, Long> {
 
   boolean existsByName(String name);
 
+  boolean existsBySellerAndDeletedAtIsNull(Seller seller);
+
   List<Store> findByNameContaining(String name);
 }

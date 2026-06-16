@@ -31,7 +31,7 @@ public enum ErrorCode {
   OAUTH_NULL_TOKEN(500, "OAUTH-NULL-TOKEN", "소셜 제공자 토큰 정보를 찾을 수 없습니다."),
   OAUTH_FAILURE_ENCRYPT(500, "OAUTH-FAILURE-ENCRYPT", "토큰 암호화 실패"),
   OAUTH_FAILURE_DECRYPT(500, "OAUTH-FAILURE-DECRYPT", "토큰 복호화 실패"),
-  
+
   // 유저 도메인
   USER_NOT_FOUND(404, "USER-NOT-FOUND-ID", "해당 사용자 ID를 찾을 수 없습니다."),
   USER_SELF_REF(400, "USER-SELF-REF", "자기 자신을 참조 할 수 없습니다."),
@@ -45,6 +45,7 @@ public enum ErrorCode {
   SELLER_NOT_FOUND(404, "SELLER-NOT-FOUND", "해당 판매자 ID를 찾을 수 없습니다."),
   SELLER_REGISTERED_ACCOUNT(400, "SELLER-REGISTERED-ACCOUNT", "이미 사업자 등록된 계정입니다."),
   SELLER_DUPLICATE_BUZNO(409, "SELLER-DUPLICATE-BUZNO", "이미 등록된 사업자 번호입니다."),
+  SELLER_HAS_STORE(400, "SELLER-HAS-STORE", "등록된 스토어가 존재합니다."),
 
   // 스토어 도메인
   STORE_EXISTS_ALREADY(409, "STORE-EXISTS-ALREADY", "이미 등록된 스토어가 존재합니다."),
