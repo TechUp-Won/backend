@@ -83,7 +83,7 @@ public class UserIntegrationTest {
 
     given(googleRevocationProvider.supports(AuthProvider.GOOGLE)).willReturn(true);
 
-    validAccessToken = jwtTokenProvider.createAccessToken("test@example.com", savedAuth.getId(),
+    validAccessToken = jwtTokenProvider.createAccessToken("test@test.com", savedAuth.getId(),
         user.getId(), null, "USER");
   }
 

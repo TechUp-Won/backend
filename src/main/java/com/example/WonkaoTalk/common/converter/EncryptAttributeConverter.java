@@ -47,7 +47,7 @@ public class EncryptAttributeConverter implements AttributeConverter<String, Str
       System.arraycopy(cipherText, 0, encryptedBuffer, iv.length, cipherText.length);
       return Base64.getEncoder().encodeToString(encryptedBuffer);
     } catch (Exception e) {
-      log.error(e.getMessage());
+      log.error("Attribute encryption failed", e);
       throw new BusinessException(ErrorCode.OAUTH_FAILURE_ENCRYPT);
     }
   }
@@ -68,6 +68,7 @@ public class EncryptAttributeConverter implements AttributeConverter<String, Str
           encryptedBuffer.length - iv.length);
       return new String(plaintext, StandardCharsets.UTF_8);
     } catch (Exception e) {
+      log.error("Attribute decryption failed", e);
       throw new BusinessException(ErrorCode.OAUTH_FAILURE_DECRYPT);
     }
   }
