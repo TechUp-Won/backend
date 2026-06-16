@@ -1,5 +1,6 @@
 package com.example.WonkaoTalk.common.config.security;
 
+import com.example.WonkaoTalk.common.config.properties.FrontendProperties;
 import com.example.WonkaoTalk.common.config.security.jwt.JwtAuthenticationFilter;
 import com.example.WonkaoTalk.common.config.security.jwt.JwtExceptionFilter;
 import com.example.WonkaoTalk.domain.auth.service.OAuth2UserService;
@@ -9,6 +10,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -31,6 +33,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+@EnableConfigurationProperties(FrontendProperties.class)
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor

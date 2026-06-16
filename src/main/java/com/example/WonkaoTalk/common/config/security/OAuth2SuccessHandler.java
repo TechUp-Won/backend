@@ -1,5 +1,6 @@
 package com.example.WonkaoTalk.common.config.security;
 
+import com.example.WonkaoTalk.common.config.properties.FrontendProperties;
 import com.example.WonkaoTalk.common.config.security.jwt.JwtTokenProvider;
 import com.example.WonkaoTalk.common.redis.RedisService;
 import com.example.WonkaoTalk.domain.auth.dto.OAuth.CustomOAuth2User;
@@ -31,6 +32,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
   private final RedisService redisService;
   private final OAuth2AuthorizedClientService authorizedClientService;
   private final AuthSocialRepo authSocialRepo;
+  private final FrontendProperties frontEndProperties;
 
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -56,7 +58,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     response.addCookie(createCookie("refresh-token", refreshToken, true,
         (int) (jwtTokenProvider.getRefreshTokenValidTime() / 1000)));
-    response.addCookie(createCookie("access-token", accessToken, false, 60));
+    //response.addCookie(createCookie("access-token", accessToken, false, 60));
 
     OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
     OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
@@ -71,7 +73,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
       });
     }
 
-    getRedirectStrategy().sendRedirect(request, response, "http://localhost:3000");
+    getRedirectStrategy().sendRedirect(request, response,
+        frontEndProperties.oauthRedirectUri() + "?accessToken=" + accessToken);
   }
 
   private Cookie createCookie(String name, String value, boolean httpOnly, int maxAge) {
