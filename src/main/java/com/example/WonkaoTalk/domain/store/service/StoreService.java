@@ -33,7 +33,7 @@ public class StoreService {
 
     String thumbnail =
         request.thumbnail() != null ? request.thumbnail() : "http://defaultThumbnail.png";
-    
+
     Store store = Store.builder()
         .name(request.name())
         .description(request.description())
@@ -80,5 +80,10 @@ public class StoreService {
         .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
 
     store.deleteStore();
+  }
+
+  @Transactional(readOnly = true)
+  public boolean existsBySeller(Seller seller) {
+    return storeRepo.existsBySellerAndDeletedAtIsNull(seller);
   }
 }
