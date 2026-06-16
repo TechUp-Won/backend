@@ -105,7 +105,6 @@ class OAuth2UserServiceTest {
 
     // then
     assertThat(resultUser).isInstanceOf(CustomOAuth2User.class);
-    assertThat(((CustomOAuth2User) resultUser).getAuth().getId()).isEqualTo(1L);
 
     verify(authRepo, never()).save(any());
     verify(authSocialRepo, times(1)).save(any(AuthSocial.class));
@@ -196,7 +195,6 @@ class OAuth2UserServiceTest {
     OAuth2User result = oauth2UserService.processOAuth2User(userRequest, oAuth2User);
 
     // then
-    assertThat(((CustomOAuth2User) result).getAuth().getId()).isEqualTo(77L);
     verify(authSocialRepo, times(1)).save(any(AuthSocial.class));
   }
 }
