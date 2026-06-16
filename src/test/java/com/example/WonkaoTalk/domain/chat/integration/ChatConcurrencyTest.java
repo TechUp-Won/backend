@@ -15,7 +15,6 @@ import com.example.WonkaoTalk.domain.chat.service.ChatMessageService;
 import com.example.WonkaoTalk.domain.chat.service.ChatRoomService;
 import com.example.WonkaoTalk.domain.user.entity.User;
 import com.example.WonkaoTalk.domain.user.repo.UserRepo;
-import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -196,7 +195,9 @@ class ChatConcurrencyTest {
         User.builder()
             .nickname(nickname)
             .name("테스트")
-            .phone("010-" + UUID.randomUUID().toString().substring(0, 8))
+            .phone(String.format("010-%04d-%04d",
+                java.util.concurrent.ThreadLocalRandom.current().nextInt(1000, 10000),
+                java.util.concurrent.ThreadLocalRandom.current().nextInt(1000, 10000)))
             .auth(auth)
             .build()
     );
