@@ -23,8 +23,7 @@ public class EncryptAttributeConverter implements AttributeConverter<String, Str
   private static final int GCM_TAG_LENGTH = 128;
   private static String ALGORITHM = "AES/GCM/NoPadding";
   private byte[] KEY;
-
-  // 이부분을 수정!
+  
   @Value("${oauth.encryption.key}")
   public void setKey(String key) {
     KEY = java.util.Base64.getDecoder().decode(key);
