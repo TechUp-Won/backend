@@ -16,6 +16,7 @@ import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.query.FetchSourceFilter;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -63,7 +64,8 @@ public class ProductSearchQueryRepositoryImpl implements ProductSearchQueryRepos
 
     NativeQueryBuilder builder = NativeQuery.builder()
         .withQuery(query)
-        .withPageable(PageRequest.of(0, size + 1, sort));
+        .withPageable(PageRequest.of(0, size + 1, sort))
+        .withSourceFilter(new FetchSourceFilter(false, null, null));
 
     if (lastId != null && lastSortValue != null) {
       builder.withSearchAfter(List.of(lastSortValue, lastId));
@@ -71,14 +73,47 @@ public class ProductSearchQueryRepositoryImpl implements ProductSearchQueryRepos
 
     SearchHits<ProductDocument> hits = operations.search(builder.build(), ProductDocument.class);
 
-    List<SearchHit<ProductDocument>> hitList = hits.getSearchHits();
+    return toSearchResult(hits.getSearchHits(), size);
+  }
+
+  @Override
+  public ProductSearchResult list(
+      List<Long> categoryIds,
+      Integer minPrice,
+      Integer maxPrice,
+      ProductSortType sortType,
+      Long lastId,
+      Long lastSortValue,
+      int size
+  ) {
+    List<Query> filters = buildFilters(categoryIds, minPrice, maxPrice);
+    Query query = Query.of(q -> q.bool(b -> b.filter(filters)));
+
+    Sort sort = Sort.by(primaryDirection(sortType), sortField(sortType))
+        .and(Sort.by(Sort.Direction.DESC, "id"));
+
+    NativeQueryBuilder builder = NativeQuery.builder()
+        .withQuery(query)
+        .withPageable(PageRequest.of(0, size + 1, sort))
+        .withSourceFilter(new FetchSourceFilter(false, null, null));
+
+    if (lastId != null && lastSortValue != null) {
+      builder.withSearchAfter(List.of(lastSortValue, lastId));
+    }
+
+    SearchHits<ProductDocument> hits = operations.search(builder.build(), ProductDocument.class);
+
+    return toSearchResult(hits.getSearchHits(), size);
+  }
+
+  private ProductSearchResult toSearchResult(List<SearchHit<ProductDocument>> hitList, int size) {
     boolean hasNext = hitList.size() > size;
     if (hasNext) {
       hitList = hitList.subList(0, size);
     }
 
     List<Long> ids = hitList.stream()
-        .map(h -> h.getContent().getId())
+        .map(h -> Long.parseLong(h.getId()))
         .toList();
 
     Long nextCursorId = null;

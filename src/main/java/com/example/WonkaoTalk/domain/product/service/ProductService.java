@@ -11,6 +11,8 @@ import com.example.WonkaoTalk.domain.product.dto.ProductDetailResponse.VariantIn
 import com.example.WonkaoTalk.domain.product.dto.ProductListRequest;
 import com.example.WonkaoTalk.domain.product.dto.ProductListResponse;
 import com.example.WonkaoTalk.domain.product.dto.ProductListResponse.ProductSummary;
+import com.example.WonkaoTalk.domain.search.repo.ProductSearchQueryRepository;
+import com.example.WonkaoTalk.domain.search.repo.ProductSearchResult;
 import com.example.WonkaoTalk.domain.product.entity.Product;
 import com.example.WonkaoTalk.domain.product.entity.ProductOption;
 import com.example.WonkaoTalk.domain.product.entity.ProductOptionGroup;
@@ -28,6 +30,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -46,6 +49,7 @@ public class ProductService {
   private final ProductOptionRepo productOptionRepository;
   private final ProductVariantRepo productVariantRepository;
   private final VariantOptionMapRepo variantOptionMapRepository;
+  private final ProductSearchQueryRepository searchQueryRepository;
 
   public ProductListResponse getProductList(ProductListRequest request) {
     int size = request.getSize() != null ? request.getSize() : 20;
@@ -68,16 +72,28 @@ public class ProductService {
       categoryIds = getAllCategoryIds(request.getCategoryId());
     }
 
+    if (request.getStoreId() != null) {
+      return getProductListFromDb(categoryIds, request.getStoreId(), request.getMinPrice(),
+          request.getMaxPrice(), sortType, request.getLastId(), request.getLastSortValue(), size);
+    }
+
+    try {
+      ProductSearchResult esResult = searchQueryRepository.list(
+          categoryIds, request.getMinPrice(), request.getMaxPrice(),
+          sortType, request.getLastId(), request.getLastSortValue(), size);
+      return buildEsResponse(esResult);
+    } catch (Exception e) {
+      return getProductListFromDb(categoryIds, null, request.getMinPrice(),
+          request.getMaxPrice(), sortType, request.getLastId(), request.getLastSortValue(), size);
+    }
+  }
+
+  private ProductListResponse getProductListFromDb(
+      List<Long> categoryIds, Long storeId, Integer minPrice, Integer maxPrice,
+      ProductSortType sortType, Long lastId, Long lastSortValue, int size
+  ) {
     List<Product> products = productRepository.findWithFilters(
-        categoryIds,
-        request.getStoreId(),
-        request.getMinPrice(),
-        request.getMaxPrice(),
-        sortType,
-        request.getLastId(),
-        request.getLastSortValue(),
-        size
-    );
+        categoryIds, storeId, minPrice, maxPrice, sortType, lastId, lastSortValue, size);
 
     boolean hasNext = products.size() > size;
     if (hasNext) {
@@ -92,15 +108,39 @@ public class ProductService {
       nextCursorSortValue = toSortValue(lastItem, sortType);
     }
 
-    List<ProductSummary> summaries = products.stream()
+    return ProductListResponse.builder()
+        .products(products.stream().map(this::toSummary).toList())
+        .hasNext(hasNext)
+        .nextCursorId(nextCursorId)
+        .nextCursorSortValue(nextCursorSortValue)
+        .build();
+  }
+
+  private ProductListResponse buildEsResponse(ProductSearchResult esResult) {
+    if (esResult.ids().isEmpty()) {
+      return ProductListResponse.builder()
+          .products(List.of())
+          .hasNext(false)
+          .nextCursorId(null)
+          .nextCursorSortValue(null)
+          .build();
+    }
+
+    List<Product> products = productRepository.findWithStoreByIdIn(esResult.ids());
+    Map<Long, Product> productMap = products.stream()
+        .collect(Collectors.toMap(Product::getId, p -> p));
+
+    List<ProductSummary> summaries = esResult.ids().stream()
+        .map(productMap::get)
+        .filter(Objects::nonNull)
         .map(this::toSummary)
         .toList();
 
     return ProductListResponse.builder()
         .products(summaries)
-        .hasNext(hasNext)
-        .nextCursorId(nextCursorId)
-        .nextCursorSortValue(nextCursorSortValue)
+        .hasNext(esResult.hasNext())
+        .nextCursorId(esResult.nextCursorId())
+        .nextCursorSortValue(esResult.nextCursorSortValue())
         .build();
   }
 
