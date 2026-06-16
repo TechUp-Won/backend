@@ -29,6 +29,7 @@ public class OAuthRevocationClient {
 
       try {
         // 외부 API 호출 시도
+        log.info("RevocationClient: 소셜 연동 해제 요청. 외부 API를 호출합니다.");
         providerClient.revoke(social.getProviderUserId(), social.getProviderRefreshToken());
       } catch (Exception e) {
         log.error("소셜 연동 해제 통신 실패. Outbox에 실패 이력을 기록합니다. AuthId: {}", authId, e);
