@@ -81,6 +81,12 @@ public class AuthCommandService {
   }
 
   @Transactional(readOnly = true)
+  public Auth getAuthById(Long authId) {
+    return authRepo.findById(authId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_NOT_FOUND));
+  }
+
+  @Transactional(readOnly = true)
   public AuthUserInfoDto getAuthUserInfo(Auth auth) {
     Role role = auth.getRole();
     String profileName = "Unknown";
@@ -105,8 +111,7 @@ public class AuthCommandService {
 
   @Transactional
   public void handleUserWithdraw(Long authId, boolean hasActiveSeller) {
-    Auth auth = authRepo.findById(authId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_NOT_FOUND));
+    Auth auth = getAuthById(authId);
     if (hasActiveSeller) {
       auth.updateRole(Role.SELLER);
     } else {
@@ -116,8 +121,7 @@ public class AuthCommandService {
 
   @Transactional
   public void handleSellerWithdraw(Long authId, boolean hasActiveUser) {
-    Auth auth = authRepo.findById(authId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_NOT_FOUND));
+    Auth auth = getAuthById(authId);
     if (hasActiveUser) {
       auth.updateRole(Role.USER);
     } else {
@@ -159,6 +163,11 @@ public class AuthCommandService {
   @Transactional(readOnly = true)
   public Optional<AuthSocial> getFirstAuthSocialByEmail(String email) {
     return authSocialRepo.findFirstByEmail(email);
+  }
+
+  @Transactional(readOnly = true)
+  public List<AuthSocial> getLinkedSocials(Long authId) {
+    return authSocialRepo.findByAuthId(authId);
   }
 
   /*********** HELPER METHOD ************/

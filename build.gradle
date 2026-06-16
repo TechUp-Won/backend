@@ -69,6 +69,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
 
     // --- Testing
+    testImplementation 'org.springframework.boot:spring-boot-starter-jdbc'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-websocket-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
