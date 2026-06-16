@@ -52,7 +52,8 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
     String providerId = userInfo.getProviderId();
     String email = userInfo.getEmail();
 
-    return new CustomOAuth2User(auth, oAuth2User.getAttributes(), provider, providerId, email);
+    return new CustomOAuth2User(auth.getRole().name(), oAuth2User.getAttributes(), provider,
+        providerId, email);
   }
 
   private OAuth2UserInfo extractUserInfo(OAuth2UserRequest userRequest, OAuth2User oAuth2User) {

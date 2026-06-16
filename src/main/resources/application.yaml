@@ -22,7 +22,7 @@ jwt:
   access-expiration-time: 1800000 # 30분
   refresh-expiration-time: 1209600000 # 14일
 
-  app:
-    frontend:
-      base-uri: "http://localhost:3000"
-      oauth-redirect-uri: "http://localhost:3000/oauth2/redirect"
+app:
+  frontend:
+    base-uri: "http://localhost:3000"
+    oauth-redirect-uri: "http://localhost:3000/oauth2/redirect"

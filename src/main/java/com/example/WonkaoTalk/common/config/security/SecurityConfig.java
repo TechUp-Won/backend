@@ -179,7 +179,7 @@ public class SecurityConfig {
     // 구글에 오프라인 접근(RT 발급) 요청
     if ("google".equals(req.getAttribute(OAuth2ParameterNames.REGISTRATION_ID))) {
       extraParams.put("access_type", "offline");
-      // extraParams.put("prompt", "consent");
+      extraParams.put("prompt", "consent");
     }
     return OAuth2AuthorizationRequest.from(req).additionalParameters(extraParams).build();
   }
