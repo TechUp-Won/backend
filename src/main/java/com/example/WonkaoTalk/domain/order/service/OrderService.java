@@ -20,6 +20,8 @@ import com.example.WonkaoTalk.domain.order.dto.PageInfoDto;
 import com.example.WonkaoTalk.domain.order.entity.Delivery;
 import com.example.WonkaoTalk.domain.order.entity.Order;
 import com.example.WonkaoTalk.domain.order.entity.OrderItem;
+import com.example.WonkaoTalk.domain.order.entity.OrderStatus;
+import com.example.WonkaoTalk.domain.order.event.OrderStockRestoreRequestEvent;
 import com.example.WonkaoTalk.domain.order.repo.DeliveryRepo;
 import com.example.WonkaoTalk.domain.order.repo.OrderItemRepo;
 import com.example.WonkaoTalk.domain.order.repo.OrderRepo;
@@ -41,6 +43,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -60,6 +63,8 @@ public class OrderService {
   private final PaymentRepo paymentRepo;
 
   private final OrderStockService orderStockService;
+
+  private final ApplicationEventPublisher eventPublisher;
 
   // 주문 생성 로직 작성
   // 응답값으로 Order로 생성 요청한 값들의 성공적으로 생성 되었는지만 전달해주면됨.
@@ -226,6 +231,25 @@ public class OrderService {
         .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
     orderRepo.delete(order);
+  }
+
+  // 주문 취소 메서드
+  @Transactional
+  public void cancelOrder(Long userId, Long orderId) {
+    Order order = orderRepo.findByUserIdAndOrderId(userId, orderId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+
+    // 주문 상태 검증
+    if (order.getOrderStatus() != OrderStatus.PAYMENT_PENDING) {
+      throw new BusinessException(ErrorCode.ORDER_INVALID_STATUS);
+    }
+
+    order.markCanceled();
+
+    // 이벤트 호출
+    eventPublisher.publishEvent(
+        new OrderStockRestoreRequestEvent(orderId)
+    );
   }
 
   // 옵션 중복 검증 메서드

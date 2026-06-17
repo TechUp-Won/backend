@@ -30,4 +30,18 @@ public class OrderStockService {
       }
     }
   }
+
+  // 재고 증가 처리
+  public void increaseStocks(List<OrderItem> orderItems) {
+    for (OrderItem orderItem : orderItems) {
+      int updatedCount = productVariantRepo.increaseStockAtomic(
+          orderItem.getProductVariant().getId(),
+          orderItem.getQuantity()
+      );
+      if (updatedCount != 1) {
+        throw new BusinessException(ErrorCode.PROD_STOCK_UPDATE_FAILED);
+      }
+    }
+  }
+
 }

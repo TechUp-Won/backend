@@ -24,7 +24,7 @@ public interface ProductVariantRepo extends JpaRepository<ProductVariant, Long> 
       @Param("productId") Long productId
   );
 
-  @Modifying(clearAutomatically = true)
+  @Modifying(flushAutomatically = true, clearAutomatically = true)
   @Query("UPDATE ProductVariant pv " +
       "SET pv.stock = pv.stock - :quantity, " +
       "pv.status = CASE WHEN (pv.stock - :quantity) = 0 AND pv.status = :onSale THEN :outOfStock ELSE pv.status END "
@@ -37,7 +37,7 @@ public interface ProductVariantRepo extends JpaRepository<ProductVariant, Long> 
       @Param("outOfStock") SaleStatus outOfStock
   );
 
-  @Modifying(clearAutomatically = true)
+  @Modifying(flushAutomatically = true, clearAutomatically = true)
   @Query("UPDATE ProductVariant pv " +
       "SET pv.stock = pv.stock + :quantity, " +
       "pv.status = CASE WHEN pv.status = :outOfStock THEN :onSale ELSE pv.status END " +
