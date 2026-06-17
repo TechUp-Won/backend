@@ -82,7 +82,7 @@ public class OrderController {
     return ResponseEntity.ok(ApiResponse.success("주문 상세 조회가 완료되었습니다.", orderDetailResponse));
   }
 
-  @PatchMapping("/{orderId}/cancle")
+  @PatchMapping("/{orderId}/cancel")
   public ResponseEntity<ApiResponse<Void>> cancelOrder(
       @AuthenticationPrincipal CustomUserDetails userDetails,
       @PathVariable Long orderId
