@@ -27,6 +27,21 @@ public class TestContainerConfig {
   }
 
   @Bean
+  public RedisContainer cacheRedisContainer(ConfigurableEnvironment environment) {
+    RedisContainer cacheRedis = new RedisContainer("redis:7.4");
+    cacheRedis.start();
+
+    Map<String, Object> properties = Map.of(
+        "cache.redis.host", cacheRedis.getHost(),
+        "cache.redis.port", cacheRedis.getMappedPort(6379)
+    );
+    environment.getPropertySources()
+        .addFirst(new MapPropertySource("cache-redis-test-properties", properties));
+
+    return cacheRedis;
+  }
+
+  @Bean
   @ServiceConnection
   public KafkaContainer kafkaContainer() {
     return new KafkaContainer("apache/kafka:4.0.0");

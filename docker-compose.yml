@@ -18,6 +18,13 @@ services:
     ports:
       - "6379:6379"
 
+  redis-cache:
+    image: redis:7.4
+    container_name: wonkao-talk-redis-cache
+    ports:
+      - "6380:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+
   #카프카 설정은 나중에 수정해주세요!
   kafka:
     image: apache/kafka:4.0.0 # 공식 Apache Kafka 이미지 사용

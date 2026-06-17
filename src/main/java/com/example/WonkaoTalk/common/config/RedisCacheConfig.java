@@ -7,12 +7,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.Duration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.SerializationException;
@@ -21,8 +23,17 @@ import org.springframework.data.redis.serializer.SerializationException;
 @EnableCaching
 public class RedisCacheConfig {
 
+  @Value("${cache.redis.host}")
+  private String cacheRedisHost;
+
+  @Value("${cache.redis.port}")
+  private int cacheRedisPort;
+
   @Bean
-  public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+  public RedisCacheManager cacheManager() {
+    LettuceConnectionFactory connectionFactory = new LettuceConnectionFactory(
+        new RedisStandaloneConfiguration(cacheRedisHost, cacheRedisPort));
+    connectionFactory.afterPropertiesSet();
     ObjectMapper om = new ObjectMapper()
         .registerModule(new JavaTimeModule())
         .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
