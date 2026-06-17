@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -133,6 +134,7 @@ public class ProductUpdateService {
         .build();
   }
 
+  @CacheEvict(value = "productDetail", key = "#productId")
   @Transactional
   public ProductUpdateResponse update(Long authId, Long productId, ProductUpdateRequest request) {
     Store store = resolveStore(authId);
