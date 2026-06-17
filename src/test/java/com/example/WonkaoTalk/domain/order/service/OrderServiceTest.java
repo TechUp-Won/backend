@@ -730,8 +730,6 @@ public class OrderServiceTest {
       //given
       Order order = mockOrder();
 
-      OrderItem orderItem1 = mockOrderItem(order, 1L, "테스트 상품");
-      OrderItem orderItem2 = mockOrderItem(order, 2L, "테스트 상품2");
       when(orderRepo.findByUserIdAndOrderId(1L, order.getOrderId())).thenReturn(Optional.of(order));
 
       //when

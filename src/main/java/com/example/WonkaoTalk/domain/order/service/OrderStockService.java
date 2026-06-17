@@ -26,7 +26,7 @@ public class OrderStockService {
       );
 
       if (updatedCount != 1) {
-        throw new BusinessException(ErrorCode.PROD_STOCK_UPDATE_FAILED);
+        throw new BusinessException(ErrorCode.PROD_STOCK_INSUFFICIENT);
       }
     }
   }
