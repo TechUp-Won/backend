@@ -11,6 +11,8 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -21,6 +23,7 @@ public class OrderStockRestoreEventHandler {
   private final OrderStockService orderStockService;
 
   @EventListener
+  @Transactional(propagation = Propagation.MANDATORY)
   public void handle(OrderStockRestoreRequestEvent event) {
     Order order = orderRepo.findById(event.orderId())
         .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
