@@ -9,22 +9,16 @@ import static org.mockito.Mockito.when;
 
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
+import com.example.WonkaoTalk.domain.product.dto.ProductDetailCacheDto;
 import com.example.WonkaoTalk.domain.product.dto.ProductDetailResponse;
 import com.example.WonkaoTalk.domain.product.dto.ProductListRequest;
 import com.example.WonkaoTalk.domain.product.dto.ProductListResponse;
+import com.example.WonkaoTalk.domain.product.dto.VariantStockDto;
 import com.example.WonkaoTalk.domain.product.entity.Product;
-import com.example.WonkaoTalk.domain.product.entity.ProductOption;
-import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
-import com.example.WonkaoTalk.domain.product.entity.VariantOptionMap;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
 import com.example.WonkaoTalk.domain.product.repo.CategoryRepo;
-import com.example.WonkaoTalk.domain.product.repo.ProductDetailRepo;
-import com.example.WonkaoTalk.domain.product.repo.ProductImageRepo;
-import com.example.WonkaoTalk.domain.product.repo.ProductOptionGroupRepo;
-import com.example.WonkaoTalk.domain.product.repo.ProductOptionRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductRepo;
 import com.example.WonkaoTalk.domain.product.repo.ProductVariantRepo;
-import com.example.WonkaoTalk.domain.product.repo.VariantOptionMapRepo;
 import com.example.WonkaoTalk.domain.store.entity.Store;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -51,22 +45,10 @@ class ProductServiceTest {
   private CategoryRepo categoryRepository;
 
   @Mock
-  private ProductImageRepo productImageRepository;
-
-  @Mock
-  private ProductDetailRepo productDetailRepository;
-
-  @Mock
-  private ProductOptionGroupRepo productOptionGroupRepository;
-
-  @Mock
-  private ProductOptionRepo productOptionRepository;
-
-  @Mock
   private ProductVariantRepo productVariantRepository;
 
   @Mock
-  private VariantOptionMapRepo variantOptionMapRepository;
+  private ProductCacheService productCacheService;
 
   @InjectMocks
   private ProductService productService;
@@ -239,7 +221,8 @@ class ProductServiceTest {
   @Test
   @DisplayName("존재하지 않는 상품 ID면 PROD_NOT_FOUND 예외를 던진다")
   void throwsException_whenProductIdNotFound() {
-    when(productRepository.findById(999L)).thenReturn(Optional.empty());
+    when(productCacheService.getProductDetailBase(999L))
+        .thenThrow(new BusinessException(ErrorCode.PROD_NOT_FOUND));
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> productService.getProductDetail(999L));
@@ -250,9 +233,8 @@ class ProductServiceTest {
   @Test
   @DisplayName("논리 삭제된 상품이면 PROD_DELETED 예외를 던진다")
   void throwsException_whenProductIsDeleted() {
-    Product product = mockProduct(1L, 10000, 0, 10000, 0, LocalDateTime.now());
-    when(product.getDeletedAt()).thenReturn(LocalDateTime.now());
-    when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+    when(productCacheService.getProductDetailBase(1L))
+        .thenThrow(new BusinessException(ErrorCode.PROD_DELETED));
 
     BusinessException ex = assertThrows(BusinessException.class,
         () -> productService.getProductDetail(1L));
@@ -263,8 +245,8 @@ class ProductServiceTest {
   @Test
   @DisplayName("isLiked는 항상 false를 반환한다")
   void isLiked_isAlwaysFalse() {
-    Product product = mockProduct(1L, 10000, 0, 10000, 0, LocalDateTime.now());
-    when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+    when(productCacheService.getProductDetailBase(1L)).thenReturn(mockCacheDto(1L));
+    when(productVariantRepository.findStocksByProductId(1L)).thenReturn(List.of());
 
     ProductDetailResponse response = productService.getProductDetail(1L);
 
@@ -274,8 +256,8 @@ class ProductServiceTest {
   @Test
   @DisplayName("store 정보가 응답에 포함된다")
   void store_isIncludedInResponse() {
-    Product product = mockProduct(1L, 10000, 0, 10000, 0, LocalDateTime.now());
-    when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+    when(productCacheService.getProductDetailBase(1L)).thenReturn(mockCacheDto(1L));
+    when(productVariantRepository.findStocksByProductId(1L)).thenReturn(List.of());
 
     ProductDetailResponse response = productService.getProductDetail(1L);
 
@@ -285,40 +267,66 @@ class ProductServiceTest {
   }
 
   @Test
-  @DisplayName("variant의 combinationIds는 VariantOptionMap에 연결된 productOptionId 목록이다")
-  void variantCombinationIds_mappedFromVariantOptionMap() {
-    Product product = mockProduct(1L, 10000, 0, 10000, 0, LocalDateTime.now());
-    when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+  @DisplayName("variant의 combinationIds는 캐시에서 조회된 productOptionId 목록이다")
+  void variantCombinationIds_mappedFromCache() {
+    ProductDetailCacheDto.VariantCacheInfo variantCache = ProductDetailCacheDto.VariantCacheInfo.builder()
+        .variantId(10L)
+        .variantName("화이트 / M")
+        .combinationIds(List.of(201L, 301L))
+        .status(SaleStatus.ON_SALE.name())
+        .build();
 
-    ProductVariant variant = mock(ProductVariant.class);
-    when(variant.getId()).thenReturn(10L);
-    when(variant.getName()).thenReturn("화이트 / M");
-    when(variant.getStock()).thenReturn(50);
-    when(variant.getStatus()).thenReturn(SaleStatus.ON_SALE);
-    when(productVariantRepository.findByProductId(1L)).thenReturn(List.of(variant));
+    ProductDetailCacheDto cacheDto = ProductDetailCacheDto.builder()
+        .productId(1L)
+        .productName("상품1")
+        .price(10000)
+        .discountedPrice(10000)
+        .discountRate(0)
+        .status(SaleStatus.ON_SALE.name())
+        .likeCount(0)
+        .isLiked(false)
+        .store(ProductDetailCacheDto.StoreInfo.builder()
+            .storeId(10L).storeName("테스트스토어").build())
+        .images(List.of())
+        .detail(null)
+        .optionGroups(List.of())
+        .variants(List.of(variantCache))
+        .build();
 
-    ProductOption option1 = mock(ProductOption.class);
-    when(option1.getId()).thenReturn(201L);
-    ProductOption option2 = mock(ProductOption.class);
-    when(option2.getId()).thenReturn(301L);
-
-    VariantOptionMap map1 = mock(VariantOptionMap.class);
-    when(map1.getProductVariant()).thenReturn(variant);
-    when(map1.getProductOption()).thenReturn(option1);
-    VariantOptionMap map2 = mock(VariantOptionMap.class);
-    when(map2.getProductVariant()).thenReturn(variant);
-    when(map2.getProductOption()).thenReturn(option2);
-    when(variantOptionMapRepository.findByProductVariantIdIn(List.of(10L))).thenReturn(
-        List.of(map1, map2));
+    when(productCacheService.getProductDetailBase(1L)).thenReturn(cacheDto);
+    when(productVariantRepository.findStocksByProductId(1L))
+        .thenReturn(List.of(new VariantStockDto(10L, 50)));
 
     ProductDetailResponse response = productService.getProductDetail(1L);
 
     assertThat(response.getVariants()).hasSize(1);
-    assertThat(response.getVariants().get(0).getCombinationIds()).containsExactlyInAnyOrder(201L,
-        301L);
+    assertThat(response.getVariants().get(0).getCombinationIds())
+        .containsExactlyInAnyOrder(201L, 301L);
+    assertThat(response.getVariants().get(0).getStock()).isEqualTo(50);
   }
 
   // ── 헬퍼 ────────────────────────────────────────────────────────────────────
+
+  private ProductDetailCacheDto mockCacheDto(Long productId) {
+    return ProductDetailCacheDto.builder()
+        .productId(productId)
+        .productName("상품" + productId)
+        .price(10000)
+        .discountedPrice(10000)
+        .discountRate(0)
+        .status(SaleStatus.ON_SALE.name())
+        .likeCount(0)
+        .isLiked(false)
+        .store(ProductDetailCacheDto.StoreInfo.builder()
+            .storeId(10L)
+            .storeName("테스트스토어")
+            .build())
+        .images(List.of())
+        .detail(null)
+        .optionGroups(List.of())
+        .variants(List.of())
+        .build();
+  }
 
   private ProductListRequest defaultRequest() {
     ProductListRequest request = new ProductListRequest();
