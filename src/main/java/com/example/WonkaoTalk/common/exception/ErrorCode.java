@@ -31,7 +31,7 @@ public enum ErrorCode {
   OAUTH_NULL_TOKEN(500, "OAUTH-NULL-TOKEN", "소셜 제공자 토큰 정보를 찾을 수 없습니다."),
   OAUTH_FAILURE_ENCRYPT(500, "OAUTH-FAILURE-ENCRYPT", "토큰 암호화 실패"),
   OAUTH_FAILURE_DECRYPT(500, "OAUTH-FAILURE-DECRYPT", "토큰 복호화 실패"),
-  
+
   // 유저 도메인
   USER_NOT_FOUND(404, "USER-NOT-FOUND-ID", "해당 사용자 ID를 찾을 수 없습니다."),
   USER_SELF_REF(400, "USER-SELF-REF", "자기 자신을 참조 할 수 없습니다."),
@@ -72,6 +72,7 @@ public enum ErrorCode {
   PROD_INVALID_IMAGE_ID(400, "PROD-INVALID-IMAGE-ID", "해당 상품에 속하지 않는 이미지입니다."),
   PROD_HAS_ACTIVE_ORDER(409, "PROD-HAS-ACTIVE-ORDER", "진행 중인 주문이 있어 상품을 삭제할 수 없습니다."),
   PROD_VARIANT_NOT_FOUND(404, "PROD-NOT-FOUND-VARIANT", "해당 상품 옵션을 찾을 수 없습니다."),
+  PROD_STOCK_UPDATE_FAILED(409, "PROD-STOCK-UPDATE-FAILED", "재고 변경 처리에 실패했습니다."),
 
   // 이미지 도메인
   IMAGE_INVALID_TYPE(400, "IMAGE-INVALID-TYPE", "허용되지 않는 파일 형식입니다. (jpg, jpeg, png, webp)"),

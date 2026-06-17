@@ -27,6 +27,7 @@ import com.example.WonkaoTalk.domain.order.entity.DeliveryStatus;
 import com.example.WonkaoTalk.domain.order.entity.Order;
 import com.example.WonkaoTalk.domain.order.entity.OrderItem;
 import com.example.WonkaoTalk.domain.order.entity.OrderStatus;
+import com.example.WonkaoTalk.domain.order.event.OrderStockRestoreRequestEvent;
 import com.example.WonkaoTalk.domain.order.repo.DeliveryRepo;
 import com.example.WonkaoTalk.domain.order.repo.OrderItemRepo;
 import com.example.WonkaoTalk.domain.order.repo.OrderRepo;
@@ -53,6 +54,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -81,6 +83,9 @@ public class OrderServiceTest {
 
   @Mock
   private OrderStockService orderStockService;
+
+  @Mock
+  private ApplicationEventPublisher eventPublisher;
 
   @InjectMocks
   private OrderService orderService;
@@ -712,6 +717,47 @@ public class OrderServiceTest {
 
       //then
       assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PROD_STOCK_INSUFFICIENT);
+    }
+  }
+
+  @Nested
+  @DisplayName("주문 취소 테스트")
+  class OrderCancelTest {
+
+    @Test
+    @DisplayName("재고 복구 이벤트를 받으면 주문 상품 기준으로 재고 복구를 요청한다.")
+    public void success_cancelOrder() {
+      //given
+      Order order = mockOrder();
+
+      OrderItem orderItem1 = mockOrderItem(order, 1L, "테스트 상품");
+      OrderItem orderItem2 = mockOrderItem(order, 2L, "테스트 상품2");
+      when(orderRepo.findByUserIdAndOrderId(1L, order.getOrderId())).thenReturn(Optional.of(order));
+
+      //when
+
+      orderService.cancelOrder(1L, order.getOrderId());
+
+      //then
+      verify(order).markCanceled();
+      verify(eventPublisher).publishEvent(new OrderStockRestoreRequestEvent(order.getOrderId()));
+    }
+
+    @Test
+    @DisplayName("PAYMENT_PENDING 상태가 아니면 예외가 발생한다.")
+    public void fail_canceledOrder_validate_orderStatus() {
+      //given
+      Order order = mockOrder();
+      
+      when(orderRepo.findByUserIdAndOrderId(1L, order.getOrderId())).thenReturn(Optional.of(order));
+      when(order.getOrderStatus()).thenReturn(OrderStatus.CANCELED);
+
+      //when
+      BusinessException exception = assertThrows(BusinessException.class,
+          () -> orderService.cancelOrder(1L, order.getOrderId()));
+
+      //then
+      assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ORDER_INVALID_STATUS);
     }
   }
 
