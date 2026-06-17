@@ -1,13 +1,16 @@
 package com.example.WonkaoTalk.common.config.security;
 
+import com.example.WonkaoTalk.common.config.properties.FrontendProperties;
 import com.example.WonkaoTalk.common.config.security.jwt.JwtAuthenticationFilter;
 import com.example.WonkaoTalk.common.config.security.jwt.JwtExceptionFilter;
 import com.example.WonkaoTalk.domain.auth.service.OAuth2UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -30,19 +33,21 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+@EnableConfigurationProperties(FrontendProperties.class)
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
-  private final JwtExceptionFilter jwtExceptionFilter;
   private final OAuth2UserService oAuth2UserService;
   private final OAuth2SuccessHandler oAuth2SuccessHandler;
   private final ClientRegistrationRepository clientRegistrationRepository;
+  private final ObjectMapper objectMapper;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    JwtExceptionFilter jwtExceptionFilter = new JwtExceptionFilter(objectMapper);
     http
         // REST API 서버이므로 CSRF 보호 비활성화
         .csrf(AbstractHttpConfigurer::disable)
@@ -72,6 +77,8 @@ public class SecurityConfig {
                 "/swagger-ui/**",
                 "/swagger-ui.html"
             ).permitAll() // 인증 없이 접근 허용
+            // 원활한 테스트를 위해 permitAll 설정
+            .requestMatchers("/actuator/prometheus").permitAll()
             .requestMatchers(
                 "/api/v1/auth/logout",
                 "/api/v1/sellers/register"
@@ -172,7 +179,7 @@ public class SecurityConfig {
     // 구글에 오프라인 접근(RT 발급) 요청
     if ("google".equals(req.getAttribute(OAuth2ParameterNames.REGISTRATION_ID))) {
       extraParams.put("access_type", "offline");
-      // extraParams.put("prompt", "consent");
+      extraParams.put("prompt", "consent");
     }
     return OAuth2AuthorizationRequest.from(req).additionalParameters(extraParams).build();
   }

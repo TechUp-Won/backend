@@ -10,21 +10,23 @@ import java.util.Base64;
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 @Converter
+@Slf4j
 public class EncryptAttributeConverter implements AttributeConverter<String, String> {
 
   private static final int GCM_IV_LENGTH = 12;
   private static final int GCM_TAG_LENGTH = 128;
   private static String ALGORITHM = "AES/GCM/NoPadding";
   private byte[] KEY;
-
+  
   @Value("${oauth.encryption.key}")
   public void setKey(String key) {
-    KEY = key.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    KEY = java.util.Base64.getDecoder().decode(key);
   }
 
   @Override
@@ -44,6 +46,7 @@ public class EncryptAttributeConverter implements AttributeConverter<String, Str
       System.arraycopy(cipherText, 0, encryptedBuffer, iv.length, cipherText.length);
       return Base64.getEncoder().encodeToString(encryptedBuffer);
     } catch (Exception e) {
+      log.error("Attribute encryption failed", e);
       throw new BusinessException(ErrorCode.OAUTH_FAILURE_ENCRYPT);
     }
   }
@@ -64,6 +67,7 @@ public class EncryptAttributeConverter implements AttributeConverter<String, Str
           encryptedBuffer.length - iv.length);
       return new String(plaintext, StandardCharsets.UTF_8);
     } catch (Exception e) {
+      log.error("Attribute decryption failed", e);
       throw new BusinessException(ErrorCode.OAUTH_FAILURE_DECRYPT);
     }
   }

@@ -35,18 +35,6 @@ public class AuthService {
     return EmailCheckResponse.from(!authCommandService.existsByEmail(request.email()));
   }
 
-  public Auth createAuthLocal(String email, String password, Role role) {
-    if (authCommandService.existsByEmail(email)) {
-      throw new BusinessException(ErrorCode.AUTH_DUPLICATE_EMAIL);
-    }
-    String encodedPassword = passwordEncoder.encode(password);
-
-    Auth auth = authCommandService.saveAuth(role);
-    authCommandService.saveAuthLocal(auth, email, encodedPassword);
-
-    return auth;
-  }
-
   public TokenDto login(LoginRequest request, HttpServletRequest httpRequest) {
     // TODO: 로그인 실패 횟수에 따른 계정 잠금이나 추가인증 기능 구현
     AuthLocal authLocal = authCommandService.getAuthLocalByEmail(request.email());

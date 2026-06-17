@@ -45,6 +45,7 @@ public enum ErrorCode {
   SELLER_NOT_FOUND(404, "SELLER-NOT-FOUND", "해당 판매자 ID를 찾을 수 없습니다."),
   SELLER_REGISTERED_ACCOUNT(400, "SELLER-REGISTERED-ACCOUNT", "이미 사업자 등록된 계정입니다."),
   SELLER_DUPLICATE_BUZNO(409, "SELLER-DUPLICATE-BUZNO", "이미 등록된 사업자 번호입니다."),
+  SELLER_HAS_STORE(400, "SELLER-HAS-STORE", "등록된 스토어가 존재합니다."),
 
   // 스토어 도메인
   STORE_EXISTS_ALREADY(409, "STORE-EXISTS-ALREADY", "이미 등록된 스토어가 존재합니다."),

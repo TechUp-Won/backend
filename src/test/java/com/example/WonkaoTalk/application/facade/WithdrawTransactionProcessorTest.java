@@ -1,6 +1,7 @@
 package com.example.WonkaoTalk.application.facade;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
@@ -8,6 +9,7 @@ import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.auth.service.AuthCommandService;
 import com.example.WonkaoTalk.domain.auth.service.AuthService;
+import com.example.WonkaoTalk.domain.seller.service.SellerService;
 import com.example.WonkaoTalk.domain.user.service.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,11 +33,15 @@ class WithdrawTransactionProcessorTest {
   @Mock
   private AuthCommandService authCommandService;
 
+  @Mock
+  private SellerService sellerService;
+
   @Test
   @DisplayName("회원 탈퇴 DB 트랜잭션 - 일반 사용자 회원 탈퇴 성공")
   public void processWithdrawSuccessGeneralUser() {
     // given
     Long authId = 1L;
+    given(sellerService.existsActiveSeller(authId)).willReturn(false);
 
     // when
     withdrawTransactionProcessor.withdrawUser(authId);
@@ -50,6 +56,7 @@ class WithdrawTransactionProcessorTest {
   public void processWithdrawSuccessUserSeller() {
     // given
     Long authId = 1L;
+    given(sellerService.existsActiveSeller(authId)).willReturn(true);
 
     // when
     withdrawTransactionProcessor.withdrawUser(authId);

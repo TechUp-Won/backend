@@ -27,12 +27,12 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "shipping_address")
+@Table(name = "shipping_addresses")
 public class ShippingAddress {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "shipping_address_id")
+  @Column(name = "id")
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -71,10 +71,18 @@ public class ShippingAddress {
 
   public void update(String recipientName, String recipientPhone, String zipCode,
       String address1, String address2, String memo) {
-    if (recipientName != null) this.recipientName = recipientName;
-    if (recipientPhone != null) this.recipientPhone = recipientPhone;
-    if (zipCode != null) this.zipCode = zipCode;
-    if (address1 != null) this.address1 = address1;
+    if (recipientName != null) {
+      this.recipientName = recipientName;
+    }
+    if (recipientPhone != null) {
+      this.recipientPhone = recipientPhone;
+    }
+    if (zipCode != null) {
+      this.zipCode = zipCode;
+    }
+    if (address1 != null) {
+      this.address1 = address1;
+    }
     this.address2 = address2;
     this.memo = memo;
   }

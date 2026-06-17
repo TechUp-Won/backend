@@ -34,10 +34,10 @@ public class OAuthRevocationFailure {
   @Column(nullable = false)
   private AuthProvider provider;
 
-  @Column(nullable = false)
+  @Column(nullable = false, name = "provider_id")
   private String providerUserId;
 
-  @Column(length = 500)
+  @Column(length = 500, name = "provider_refresh_token")
   private String providerRefreshToken;
 
   @Enumerated(EnumType.STRING)

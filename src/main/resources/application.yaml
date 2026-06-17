@@ -4,8 +4,25 @@ spring:
   profiles:
     active: local, secret
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
 jwt:
   # TODO: 배포 시 환경변수로 jwt secret key 주입 필요
   # secret: ${JWT_SECRET_KEY} # 시스템 환경변수에서 값을 주입받음
   access-expiration-time: 1800000 # 30분
   refresh-expiration-time: 1209600000 # 14일
+
+app:
+  frontend:
+    base-uri: "http://localhost:3000"
+    oauth-redirect-uri: "http://localhost:3000/oauth2/redirect"

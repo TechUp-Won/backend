@@ -19,7 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -76,14 +77,19 @@ public class AuthController {
   @Operation(summary = "로그아웃", description = "access token을 블랙리스트에 등록하고 refresh token 쿠키를 제거합니다.")
   @PostMapping("/logout")
   public ResponseEntity<ApiResponse<Void>> logout(
-      @RequestHeader("Authorization") String authHeader,
-      Authentication authentication
+      @RequestHeader(value = "Authorization", required = false) String authHeader,
+      @AuthenticationPrincipal UserDetails userDetails
   ) {
     if (authHeader == null || !authHeader.startsWith("Bearer ")) {
       throw new BusinessException(ErrorCode.AUTH_INVALID_TOKEN);
     }
+
+    if (userDetails == null) {
+      throw new BusinessException(ErrorCode.UNAUTHORIZED);
+    }
+
     String accessToken = authHeader.substring(7);
-    String email = authentication.getName();
+    String email = userDetails.getUsername();
 
     authService.invalidateToken(email, accessToken);
 

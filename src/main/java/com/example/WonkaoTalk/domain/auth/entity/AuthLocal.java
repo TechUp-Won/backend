@@ -47,6 +47,7 @@ public class AuthLocal {
   @Column(name = "password_hash", nullable = false)
   private String passwordHash;
 
+  @Builder.Default
   @Column(name = "failed_attempts_count")
   private int failedAttemptsCount = 0;
 

@@ -3,7 +3,6 @@ package com.example.WonkaoTalk.common.oauth;
 import com.example.WonkaoTalk.common.exception.BusinessException;
 import com.example.WonkaoTalk.common.exception.ErrorCode;
 import com.example.WonkaoTalk.domain.auth.entity.AuthSocial;
-import com.example.WonkaoTalk.domain.auth.repo.AuthSocialRepo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,11 +14,13 @@ import org.springframework.stereotype.Component;
 public class OAuthRevocationClient {
 
   private final List<OAuthRevocationProvider> revocationProviders;
-  private final AuthSocialRepo authSocialRepo;
   private final OAuthRevocationFailureProcessor failureProcessor;
 
-  public void revokeIfSocialAccountExists(Long authId) {
-    List<AuthSocial> linkedSocials = authSocialRepo.findByAuthId(authId);
+  public void revokeIfSocialAccountExists(Long authId, List<AuthSocial> linkedSocials) {
+    if (linkedSocials == null || linkedSocials.isEmpty()) {
+      log.debug("연동된 소셜 계정이 없으므로 외부 해지 API 호출을 생략합니다. authId: {}", authId);
+      return;
+    }
     for (AuthSocial social : linkedSocials) {
       OAuthRevocationProvider providerClient = revocationProviders.stream()
           .filter(provider -> provider.supports(social.getProvider()))

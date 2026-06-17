@@ -53,7 +53,7 @@ public class UserService {
           .birthDate(request.birthDate())
           .gender(request.gender())
           .build();
-      userRepo.save(user);
+      user = userRepo.save(user);
     } else {
       if (auth.getRole() == Role.SELLER) {
         auth.updateRole(Role.USER_SELLER);
