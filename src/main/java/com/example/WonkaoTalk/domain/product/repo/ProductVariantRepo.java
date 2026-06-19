@@ -1,5 +1,6 @@
 package com.example.WonkaoTalk.domain.product.repo;
 
+import com.example.WonkaoTalk.domain.product.dto.VariantStockDto;
 import com.example.WonkaoTalk.domain.product.entity.ProductVariant;
 import com.example.WonkaoTalk.domain.product.enums.SaleStatus;
 import jakarta.persistence.LockModeType;
@@ -14,6 +15,9 @@ import org.springframework.data.repository.query.Param;
 public interface ProductVariantRepo extends JpaRepository<ProductVariant, Long> {
 
   List<ProductVariant> findByProductId(Long productId);
+
+  @Query("SELECT new com.example.WonkaoTalk.domain.product.dto.VariantStockDto(pv.id, pv.stock) FROM ProductVariant pv WHERE pv.product.id = :productId")
+  List<VariantStockDto> findStocksByProductId(@Param("productId") Long productId);
 
   Optional<ProductVariant> findByIdAndProductId(Long id, Long productId);
 

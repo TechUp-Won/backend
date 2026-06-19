@@ -13,6 +13,10 @@ search:
   product:
     engine: database
 
+app:
+  frontend:
+    oauth-redirect-uri: http://localhost:3000/oauth/callback
+
 jwt:
   # TODO: 배포 시 환경변수로 jwt secret key 주입 필요
   # secret: ${JWT_SECRET_KEY} # 시스템 환경변수에서 값을 주입받음

@@ -13,9 +13,12 @@ import com.example.WonkaoTalk.domain.store.entity.Store;
 import com.example.WonkaoTalk.domain.store.repo.StoreRepo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.CacheManager;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +32,7 @@ public class ProductDeleteService {
   private final ProductRepo productRepo;
   private final OrderItemRepo orderItemRepo;
   private final ApplicationEventPublisher eventPublisher;
+  private final CacheManager cacheManager;
 
   @Transactional
   public void delete(Long authId, Long productId) {
@@ -41,6 +45,13 @@ public class ProductDeleteService {
 
     product.softDelete();
     eventPublisher.publishEvent(ProductIndexRequestedEvent.delete(productId));
+
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+      @Override
+      public void afterCommit() {
+        cacheManager.getCache("productDetail").evict(productId);
+      }
+    });
   }
 
   private Store resolveStore(Long authId) {
