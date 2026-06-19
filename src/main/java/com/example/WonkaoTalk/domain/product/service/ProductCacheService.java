@@ -62,25 +62,29 @@ public class ProductCacheService {
         .orElse(null);
 
     List<ProductOptionGroup> groups = productOptionGroupRepo.findByProductId(productId);
-    List<Long> groupIds = groups.stream().map(ProductOptionGroup::getId).toList();
-    Map<Long, List<ProductOption>> optionsByGroup = productOptionRepo
-        .findByProductOptionGroupIdIn(groupIds)
-        .stream()
-        .collect(Collectors.groupingBy(opt -> opt.getProductOptionGroup().getId()));
+    final Map<Long, List<ProductOption>> optionsByGroup = groups.isEmpty()
+        ? Map.of()
+        : productOptionRepo
+            .findByProductOptionGroupIdIn(
+                groups.stream().map(ProductOptionGroup::getId).toList())
+            .stream()
+            .collect(Collectors.groupingBy(opt -> opt.getProductOptionGroup().getId()));
 
     List<OptionGroupInfo> optionGroups = groups.stream()
         .map(group -> toOptionGroupInfo(group, optionsByGroup))
         .toList();
 
     List<ProductVariant> variantList = productVariantRepo.findByProductId(productId);
-    List<Long> variantIds = variantList.stream().map(ProductVariant::getId).toList();
-    Map<Long, List<Long>> combinationIdsByVariant = variantOptionMapRepo
-        .findByProductVariantIdIn(variantIds)
-        .stream()
-        .collect(Collectors.groupingBy(
-            map -> map.getProductVariant().getId(),
-            Collectors.mapping(map -> map.getProductOption().getId(), Collectors.toList())
-        ));
+    final Map<Long, List<Long>> combinationIdsByVariant = variantList.isEmpty()
+        ? Map.of()
+        : variantOptionMapRepo
+            .findByProductVariantIdIn(
+                variantList.stream().map(ProductVariant::getId).toList())
+            .stream()
+            .collect(Collectors.groupingBy(
+                map -> map.getProductVariant().getId(),
+                Collectors.mapping(map -> map.getProductOption().getId(), Collectors.toList())
+            ));
 
     List<VariantCacheInfo> variants = variantList.stream()
         .map(variant -> VariantCacheInfo.builder()

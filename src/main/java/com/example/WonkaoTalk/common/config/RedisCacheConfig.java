@@ -63,13 +63,17 @@ public class RedisCacheConfig {
       }
     };
 
-    RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+    RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
+        .entryTtl(Duration.ofMinutes(30));
+
+    RedisCacheConfiguration productCacheConfig = RedisCacheConfiguration.defaultCacheConfig()
         .entryTtl(Duration.ofMinutes(30))
         .serializeValuesWith(
             RedisSerializationContext.SerializationPair.fromSerializer(serializer));
 
     return RedisCacheManager.builder(connectionFactory)
-        .cacheDefaults(config)
+        .cacheDefaults(defaultConfig)
+        .withCacheConfiguration("productDetail", productCacheConfig)
         .build();
   }
 }

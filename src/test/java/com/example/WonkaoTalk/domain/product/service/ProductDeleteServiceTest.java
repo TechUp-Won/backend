@@ -21,7 +21,7 @@ import com.example.WonkaoTalk.domain.store.entity.Store;
 import com.example.WonkaoTalk.domain.store.repo.StoreRepo;
 import java.time.LocalDateTime;
 import java.util.Optional;
-import org.springframework.context.ApplicationEventPublisher;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,6 +31,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -45,14 +49,24 @@ class ProductDeleteServiceTest {
   @Mock private ProductRepo productRepo;
   @Mock private OrderItemRepo orderItemRepo;
   @Mock private ApplicationEventPublisher eventPublisher;
+  @Mock private CacheManager cacheManager;
 
   @InjectMocks private ProductDeleteService productDeleteService;
 
   private Store store;
   private Product product;
 
+  @AfterEach
+  void tearDown() {
+    TransactionSynchronizationManager.clearSynchronization();
+  }
+
   @BeforeEach
   void setUp() {
+    TransactionSynchronizationManager.initSynchronization();
+    Cache cache = mock(Cache.class);
+    when(cacheManager.getCache("productDetail")).thenReturn(cache);
+
     Seller seller = mock(Seller.class);
     store = mock(Store.class);
     product = mock(Product.class);

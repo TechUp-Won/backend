@@ -44,10 +44,12 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
-import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.CacheManager;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -65,6 +67,7 @@ public class ProductUpdateService {
   private final CategoryRepo categoryRepo;
   private final ImageService imageService;
   private final ApplicationEventPublisher eventPublisher;
+  private final CacheManager cacheManager;
 
   @Transactional(readOnly = true)
   public ProductEditFormResponse getEditForm(Long authId, Long productId) {
@@ -134,7 +137,6 @@ public class ProductUpdateService {
         .build();
   }
 
-  @CacheEvict(value = "productDetail", key = "#productId")
   @Transactional
   public ProductUpdateResponse update(Long authId, Long productId, ProductUpdateRequest request) {
     Store store = resolveStore(authId);
@@ -178,6 +180,13 @@ public class ProductUpdateService {
       eventPublisher.publishEvent(new ProductCreatedEvent(objectKeysToMove));
     }
     eventPublisher.publishEvent(ProductIndexRequestedEvent.upsert(product.getId()));
+
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+      @Override
+      public void afterCommit() {
+        cacheManager.getCache("productDetail").evict(productId);
+      }
+    });
 
     return new ProductUpdateResponse(
         product.getId(),
