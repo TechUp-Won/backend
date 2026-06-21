@@ -68,6 +68,8 @@ public class SecurityConfig {
                 "/api/v1/auth/check-email",
                 "/api/v1/auth/login",
                 "/api/v1/auth/reissue",
+                "/api/v1/auth/social-login", // local 프로필 전용 Mock 엔드포인트(MockAuthController)
+
                 "/api/v1/users/signup",
                 "/api/v1/sellers/signup",
                 "/api/v1/search",
