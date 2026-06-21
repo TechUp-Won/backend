@@ -10,6 +10,9 @@ management:
       exposure:
         include: prometheus
   metrics:
+    export:
+      prometheus:
+        enabled: true
     tags:
       application: ${spring.application.name}
     distribution:
