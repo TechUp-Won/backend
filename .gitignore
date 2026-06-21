@@ -62,3 +62,4 @@ src/test/java/com/example/WonkaoTalk/domain/product/datagen/
 ### AI CLI ###
 .claude
 .antigravitycli
+k6-seed-data.js
