@@ -1,13 +1,17 @@
 package com.example.WonkaoTalk.domain.auth.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.WonkaoTalk.common.config.JacksonConfig;
@@ -26,17 +30,21 @@ import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.service.AuthService;
 import com.example.WonkaoTalk.domain.auth.service.OAuth2UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
+import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 @WebMvcTest(controllers = AuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -115,15 +123,67 @@ class AuthControllerTest {
   void loginSuccess() throws Exception {
     //given
     LoginRequest request = new LoginRequest("test@example.com", "Qwer1234");
-    given(authService.login(any(LoginRequest.class), any(HttpServletRequest.class))).willReturn(
-        mockToken);
+    given(authService.login(any(LoginRequest.class), any(), any())).willReturn(
+        CompletableFuture.completedFuture(mockToken));
 
     //when & then
-    mockMvc.perform(post("/api/v1/auth/login")
+    MvcResult mvcResult = mockMvc.perform(post("/api/v1/auth/login")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
+        .andExpect(request().asyncStarted())
+        .andReturn();
+
+    mockMvc.perform(asyncDispatch(mvcResult))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.tokenInfo.accessToken").exists());
+  }
+
+  @Test
+  @DisplayName("로그인 - X-Forwarded-For 헤더에 다수의 IP가 존재할 경우 첫 번째 IP를 서비스에 전달한다")
+  void loginExtractsFirstIpFromXForwardedFor() throws Exception {
+    //given
+    LoginRequest request = new LoginRequest("test@example.com", "Qwer1234");
+    given(authService.login(any(LoginRequest.class), any(), any())).willReturn(
+        CompletableFuture.completedFuture(mockToken));
+
+    //when
+    MvcResult mvcResult = mockMvc.perform(post("/api/v1/auth/login")
+            .header("X-Forwarded-For", "192.168.0.1, 10.0.0.1, 172.16.0.1")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
+        .andExpect(request().asyncStarted())
+        .andReturn();
+    mockMvc.perform(asyncDispatch(mvcResult)).andExpect(status().isOk());
+
+    //then
+    ArgumentCaptor<String> ipAddressCaptor = ArgumentCaptor.forClass(String.class);
+    verify(authService).login(any(LoginRequest.class), any(), ipAddressCaptor.capture());
+    assertThat(ipAddressCaptor.getValue()).isEqualTo("192.168.0.1");
+  }
+
+  @Test
+  @DisplayName("IP 추출 엣지 케이스 - X-Forwarded-For 헤더가 null, 빈 문자열, 또는 unknown일 경우 RemoteAddr을 반환한다")
+  void extractIpAddressEdgeCasesReturnsRemoteAddress() {
+    // given
+    AuthController controller = new AuthController(authService);
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.setRemoteAddr("10.0.0.99");
+
+    // 1. null인 경우 (헤더를 추가하지 않음)
+    String resultNull = ReflectionTestUtils.invokeMethod(controller, "extractIpAddress", request);
+    assertThat(resultNull).isEqualTo("10.0.0.99");
+
+    // 2. 빈 문자열인 경우
+    request.addHeader("X-Forwarded-For", "");
+    String resultEmpty = ReflectionTestUtils.invokeMethod(controller, "extractIpAddress", request);
+    assertThat(resultEmpty).isEqualTo("10.0.0.99");
+
+    // 3. unknown인 경우 (대소문자 무시)
+    request.removeHeader("X-Forwarded-For");
+    request.addHeader("X-Forwarded-For", "UnKnOwN");
+    String resultUnknown = ReflectionTestUtils.invokeMethod(controller, "extractIpAddress",
+        request);
+    assertThat(resultUnknown).isEqualTo("10.0.0.99");
   }
 
   @Test
@@ -228,7 +288,7 @@ class AuthControllerTest {
   void loginPasswordMismatchReturnsErrorResponse() throws Exception {
     // given
     LoginRequest request = new LoginRequest("test@test.com", "wrong_password");
-    given(authService.login(any(LoginRequest.class), any()))
+    given(authService.login(any(LoginRequest.class), any(), any()))
         .willThrow(new BusinessException(ErrorCode.AUTH_MISMATCH_PASSWORD));
 
     // when & then

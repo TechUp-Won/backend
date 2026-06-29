@@ -14,10 +14,11 @@ import com.example.WonkaoTalk.domain.auth.entity.Auth;
 import com.example.WonkaoTalk.domain.auth.entity.AuthLocal;
 import com.example.WonkaoTalk.domain.auth.enums.LoginStatus;
 import com.example.WonkaoTalk.domain.auth.enums.Role;
-import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -35,13 +36,13 @@ public class AuthService {
     return EmailCheckResponse.from(!authCommandService.existsByEmail(request.email()));
   }
 
-  public TokenDto login(LoginRequest request, HttpServletRequest httpRequest) {
+  // BCrypt 검증은 CPU 비용이 커서 톰캣 워커 스레드를 점유하지 않도록 별도 풀(bcryptExecutor)에서 처리한다.
+  @Async("bcryptExecutor")
+  public CompletableFuture<TokenDto> login(LoginRequest request, String userAgent,
+      String ipAddress) {
     // TODO: 로그인 실패 횟수에 따른 계정 잠금이나 추가인증 기능 구현
     AuthLocal authLocal = authCommandService.getAuthLocalByEmail(request.email());
     Auth auth = authLocal.getAuth();
-
-    String userAgent = httpRequest.getHeader("User-Agent");
-    String ipAddress = extractIpAddress(httpRequest);
 
     if (!passwordEncoder.matches(request.password(), authLocal.getPasswordHash())) {
       authCommandService.saveLoginHistory(auth, LoginStatus.FAILURE, userAgent, ipAddress);
@@ -52,7 +53,7 @@ public class AuthService {
 
     authCommandService.saveLoginHistory(auth, LoginStatus.SUCCESS, userAgent, ipAddress);
 
-    return dto;
+    return CompletableFuture.completedFuture(dto);
   }
 
   public TokenDto reissueToken(String refreshToken) {
@@ -111,13 +112,5 @@ public class AuthService {
     log.info("블랙리스트 등록 토큰: {}", accessToken);
     log.info("남은 만료 시간: {}", expiration);
     redisService.setValues("BlackList:" + accessToken, "logout", Duration.ofMillis(expiration));
-  }
-
-  private String extractIpAddress(HttpServletRequest request) {
-    String ipAddress = request.getHeader("X-Forwarded-For");
-    if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
-      return request.getRemoteAddr();
-    }
-    return ipAddress.split(",")[0].trim();
   }
 }

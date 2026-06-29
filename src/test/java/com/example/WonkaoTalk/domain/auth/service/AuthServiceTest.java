@@ -28,15 +28,12 @@ import com.example.WonkaoTalk.domain.auth.entity.AuthLocal;
 import com.example.WonkaoTalk.domain.auth.enums.LoginStatus;
 import com.example.WonkaoTalk.domain.auth.enums.Role;
 import java.time.Duration;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -55,15 +52,6 @@ class AuthServiceTest {
   private JwtTokenProvider jwtTokenProvider;
   @Mock
   private RedisService redisService;
-
-  private MockHttpServletRequest httpRequest;
-
-  @BeforeEach
-  void setUp() {
-    httpRequest = new MockHttpServletRequest();
-    httpRequest.addHeader("User-Agent", "User-Agent");
-    httpRequest.setRemoteAddr("127.0.0.1");
-  }
 
   @Test
   @DisplayName("이메일 중복 검사 - 미가입 이메일 검사 성공")
@@ -116,7 +104,7 @@ class AuthServiceTest {
     given(jwtTokenProvider.getAccessTokenValidTime()).willReturn(1800000L);
 
     //when
-    TokenDto response = authService.login(request, httpRequest);
+    TokenDto response = authService.login(request, "User-Agent", "127.0.0.1").join();
 
     //then
     assertThat(response).isNotNull();
@@ -147,7 +135,7 @@ class AuthServiceTest {
         false);
 
     //when & then
-    assertThatThrownBy(() -> authService.login(request, httpRequest))
+    assertThatThrownBy(() -> authService.login(request, "User-Agent", "127.0.0.1"))
         .isInstanceOf(BusinessException.class)
         .hasMessageContaining(ErrorCode.AUTH_MISMATCH_PASSWORD.getMessage());
     then(authCommandService).should(times(1))
@@ -244,46 +232,6 @@ class AuthServiceTest {
   }
 
   @Test
-  @DisplayName("로그인 - X-Forwarded-For 헤더에 다수의 IP가 존재할 경우 첫 번째 IP를 정확히 추출한다")
-  void loginExtractsFirstIpFromXForwardedFor() {
-    // given
-    ArgumentCaptor<String> ipAddressCaptor = ArgumentCaptor.forClass(String.class);
-    MockHttpServletRequest request = new MockHttpServletRequest();
-    request.addHeader("X-Forwarded-For", "192.168.0.1, 10.0.0.1, 172.16.0.1");
-    request.setRemoteAddr("127.0.0.1");
-
-    LoginRequest loginRequest = new LoginRequest("test@test.com", "password123");
-    Auth auth = Auth.builder().role(Role.USER).build();
-    ReflectionTestUtils.setField(auth, "id", 1L);
-
-    AuthLocal authLocal = AuthLocal.builder().email("test@test.com").passwordHash("hashed")
-        .auth(auth).build();
-
-    given(authCommandService.getAuthLocalByEmail(loginRequest.email())).willReturn(authLocal);
-    given(passwordEncoder.matches(loginRequest.password(), authLocal.getPasswordHash())).willReturn(
-        true);
-    given(authCommandService.getAuthUserInfo(auth)).willReturn(
-        new AuthUserInfoDto("침착맨", 1L, null));
-    given(jwtTokenProvider.createAccessToken(any(), any(), any(), any(), any())).willReturn(
-        "access.token");
-    given(jwtTokenProvider.createRefreshToken(any())).willReturn("refresh.token");
-    given(jwtTokenProvider.getRefreshTokenValidTime()).willReturn(86400000L);
-    given(jwtTokenProvider.getAccessTokenValidTime()).willReturn(3600000L);
-
-    // when
-    authService.login(loginRequest, request);
-
-    // then
-    verify(authCommandService).saveLoginHistory(
-        eq(auth),
-        eq(LoginStatus.SUCCESS),
-        any(),
-        ipAddressCaptor.capture()
-    );
-    assertThat(ipAddressCaptor.getValue()).isEqualTo("192.168.0.1");
-  }
-
-  @Test
   @DisplayName("토큰 무효화 - 이미 만료되었거나 Redis에 없는 토큰이라도 남은 시간만큼 블랙리스트에 정상 등록된다")
   void invalidateTokenSuccessfullyAddsToBlacklist() {
     // given
@@ -304,31 +252,6 @@ class AuthServiceTest {
         eq("logout"),
         eq(Duration.ofMillis(expirationTime))
     );
-  }
-
-  @Test
-  @DisplayName("IP 추출 엣지 케이스 - X-Forwarded-For 헤더가 null, 빈 문자열, 또는 unknown일 경우 RemoteAddr을 반환한다")
-  public void extractIpAddressEdgeCasesReturnsRemoteAddress() {
-    // given
-    MockHttpServletRequest request = new MockHttpServletRequest();
-    request.setRemoteAddr("10.0.0.99");
-
-    // 1. null인 경우
-    // 헤더를 추가하지 않음
-    String resultNull = ReflectionTestUtils.invokeMethod(authService, "extractIpAddress", request);
-    assertThat(resultNull).isEqualTo("10.0.0.99");
-
-    // 2. 빈 문자열인 경우
-    request.addHeader("X-Forwarded-For", "");
-    String resultEmpty = ReflectionTestUtils.invokeMethod(authService, "extractIpAddress", request);
-    assertThat(resultEmpty).isEqualTo("10.0.0.99");
-
-    // 3. unknown인 경우 (대소문자 무시)
-    request.removeHeader("X-Forwarded-For");
-    request.addHeader("X-Forwarded-For", "UnKnOwN");
-    String resultUnknown = ReflectionTestUtils.invokeMethod(authService, "extractIpAddress",
-        request);
-    assertThat(resultUnknown).isEqualTo("10.0.0.99");
   }
 
   @Test

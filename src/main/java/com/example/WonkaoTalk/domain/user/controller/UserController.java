@@ -17,7 +17,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -38,19 +41,22 @@ public class UserController {
 
   private final UserService userService;
   private final AccountWithdraw accountWithdraw;
+  @Qualifier("bcryptExecutor")
+  private final Executor bcryptExecutor;
 
   @Operation(
       summary = "일반 사용자 회원가입",
       description = "이메일, 비밀번호, 이름, 닉네임, 전화번호, 생년월일, 성별 정보를 입력해 일반 사용자 계정을 생성합니다."
   )
   @PostMapping("/signup")
-  public ResponseEntity<ApiResponse<UserSignUpResponse>> signUp(
+  public CompletableFuture<ResponseEntity<ApiResponse<UserSignUpResponse>>> signUp(
       @Valid @RequestBody UserSignUpRequest request
   ) {
-    UserSignUpResponse response = userService.signUpAsUser(request);
-
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(ApiResponse.success("일반 회원가입이 완료되었습니다.", response));
+    // signUpAsUser는 @Transactional 메서드이므로 @Async로 감싸지 않고,
+    // 벌크헤드 풀에서 트랜잭션 전체(BCrypt 해싱 포함)를 한 스레드에서 실행한 뒤 결과만 받는다.
+    return CompletableFuture.supplyAsync(() -> userService.signUpAsUser(request), bcryptExecutor)
+        .thenApply(response -> ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.success("일반 회원가입이 완료되었습니다.", response)));
   }
 
   @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)

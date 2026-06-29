@@ -68,6 +68,8 @@ public class SecurityConfig {
                 "/api/v1/auth/check-email",
                 "/api/v1/auth/login",
                 "/api/v1/auth/reissue",
+                "/api/v1/auth/social-login", // local 프로필 전용 Mock 엔드포인트(MockAuthController)
+
                 "/api/v1/users/signup",
                 "/api/v1/sellers/signup",
                 "/api/v1/search",
@@ -179,7 +181,7 @@ public class SecurityConfig {
     // 구글에 오프라인 접근(RT 발급) 요청
     if ("google".equals(req.getAttribute(OAuth2ParameterNames.REGISTRATION_ID))) {
       extraParams.put("access_type", "offline");
-      extraParams.put("prompt", "consent");
+      // extraParams.put("prompt", "consent");
     }
     return OAuth2AuthorizationRequest.from(req).additionalParameters(extraParams).build();
   }

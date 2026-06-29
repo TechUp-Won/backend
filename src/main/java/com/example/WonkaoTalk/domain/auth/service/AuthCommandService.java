@@ -165,6 +165,55 @@ public class AuthCommandService {
     return authSocialRepo.findFirstByEmail(email);
   }
 
+  /**
+   * local 프로필 전용 Mock 소셜 로그인. 실제 OAuth2 핸드셰이크 없이 provider/providerId/email만으로
+   * {@link com.example.WonkaoTalk.domain.auth.service.OAuth2UserService#processOAuth2User}와 동일한
+   * find-or-create 흐름을 흉내낸다. 처음 보는 소셜 계정이면 Auth/AuthSocial/User를 새로 생성한다.
+   */
+  @Transactional
+  public SocialLoginDto getOrCreateMockSocialLogin(AuthProvider provider, String providerId,
+      String email) {
+    Optional<AuthSocial> optionalSocial = authSocialRepo.findByProviderAndProviderUserIdWithAuth(
+        provider, providerId);
+
+    Auth auth;
+    if (optionalSocial.isPresent()) {
+      auth = optionalSocial.get().getAuth();
+    } else {
+      Auth linkedAuth = authLocalRepo.findByEmail(email).map(AuthLocal::getAuth)
+          .or(() -> authSocialRepo.findFirstByEmail(email).map(AuthSocial::getAuth))
+          .orElse(null);
+
+      if (linkedAuth != null) {
+        auth = linkedAuth;
+      } else {
+        auth = saveAuth(Role.USER);
+        User user = User.builder()
+            .auth(auth)
+            .name(providerId)
+            .nickname(providerId)
+            .build();
+        userRepo.save(user);
+      }
+
+      AuthSocial authSocial = AuthSocial.builder()
+          .auth(auth)
+          .providerUserId(providerId)
+          .provider(provider)
+          .email(email)
+          .build();
+      authSocialRepo.save(authSocial);
+    }
+
+    Long userId = userRepo.findByAuth(auth).map(User::getId).orElse(null);
+    Long sellerId = null;
+    if (auth.getRole().name().contains("SELLER")) {
+      sellerId = sellerRepo.findByAuth(auth).map(Seller::getId).orElse(null);
+    }
+
+    return new SocialLoginDto(auth.getId(), userId, sellerId, auth.getRole());
+  }
+
   @Transactional(readOnly = true)
   public List<AuthSocial> getLinkedSocials(Long authId) {
     return authSocialRepo.findByAuthId(authId);

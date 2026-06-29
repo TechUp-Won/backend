@@ -70,7 +70,7 @@ services:
     volumes:
       - ./minio/data:/data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: [ "CMD", "mc", "ready", "local" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -89,14 +89,14 @@ services:
       mc anonymous set download local/wonkao-talk;
       "
 
-  elasticsearch:
-    build:
-      context: .
-      dockerfile: elasticsearch.Dockerfile
-    container_name: wonkao-talk-es
-    ports:
-      - "9200:9200"
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-
+#  elasticsearch:
+#    build:
+#      context: .
+#      dockerfile: elasticsearch.Dockerfile
+#    container_name: wonkao-talk-es
+#    ports:
+#      - "9200:9200"
+#    environment:
+#      - discovery.type=single-node
+#      - xpack.security.enabled=false
+#

@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -51,26 +52,40 @@ public class AuthController {
 
   @Operation(summary = "로그인", description = "이메일과 비밀번호로 로그인하고 access token과 refresh token을 발급합니다.")
   @PostMapping("/login")
-  public ResponseEntity<ApiResponse<LoginResponse>> login(
+  public CompletableFuture<ResponseEntity<ApiResponse<LoginResponse>>> login(
       @Valid @RequestBody LoginRequest request,
       HttpServletRequest httpRequest
   ) {
-    TokenDto dto = authService.login(request, httpRequest);
+    // BCrypt 검증은 별도 풀(bcryptExecutor)에서 비동기로 처리되므로,
+    // 톰캣 워커 스레드에 묶여 있는 요청 정보는 핸드오프 전에 미리 추출해 둔다.
+    String userAgent = httpRequest.getHeader("User-Agent");
+    String ipAddress = extractIpAddress(httpRequest);
 
-    ResponseCookie refreshCookie = ResponseCookie.from("refresh-token", dto.refreshToken())
-        .httpOnly(true)
-        .secure(true)
-        .path("/")
-        .maxAge(dto.refreshExpirationTime())
-        .sameSite("Strict")
-        .build();
+    return authService.login(request, userAgent, ipAddress)
+        .thenApply(dto -> {
+          ResponseCookie refreshCookie = ResponseCookie.from("refresh-token", dto.refreshToken())
+              .httpOnly(true)
+              .secure(true)
+              .path("/")
+              .maxAge(dto.refreshExpirationTime())
+              .sameSite("Strict")
+              .build();
 
-    LoginResponse responseBody = LoginResponse.of(dto.accessToken(), dto.accessExpirationTime(),
-        dto.auth(), dto.profileName());
+          LoginResponse responseBody = LoginResponse.of(dto.accessToken(),
+              dto.accessExpirationTime(), dto.auth(), dto.profileName());
 
-    return ResponseEntity.ok()
-        .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-        .body(ApiResponse.success("로그인에 성공하였습니다.", responseBody));
+          return ResponseEntity.ok()
+              .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+              .body(ApiResponse.success("로그인에 성공하였습니다.", responseBody));
+        });
+  }
+
+  private String extractIpAddress(HttpServletRequest request) {
+    String ipAddress = request.getHeader("X-Forwarded-For");
+    if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+      return request.getRemoteAddr();
+    }
+    return ipAddress.split(",")[0].trim();
   }
 
   @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
