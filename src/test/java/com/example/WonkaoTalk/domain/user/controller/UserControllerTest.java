@@ -19,6 +19,7 @@ import com.example.WonkaoTalk.domain.user.dto.UserSearchResponse;
 import com.example.WonkaoTalk.domain.user.service.UserService;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -60,6 +61,9 @@ class UserControllerTest {
 
   @MockitoBean
   private AccountWithdraw accountWithdraw;
+
+  @MockitoBean(name = "bcryptExecutor")
+  private Executor bcryptExecutor;
 
   private CustomUserDetails userDetails;
 

@@ -1,10 +1,12 @@
 package com.example.WonkaoTalk.domain.auth.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.WonkaoTalk.common.integration.BaseIntegrationTest;
@@ -31,6 +33,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
@@ -78,9 +81,14 @@ public class AuthIntegrationTest extends BaseIntegrationTest {
     LoginRequest request = new LoginRequest(testEmail, testPassword);
 
     // when & then
-    mockMvc.perform(post("/api/v1/auth/login")
+    // 로그인은 별도 스레드풀(bcryptExecutor)에서 비동기로 처리되므로 비동기 디스패치를 거쳐 결과를 확인한다.
+    MvcResult mvcResult = mockMvc.perform(post("/api/v1/auth/login")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
+        .andExpect(request().asyncStarted())
+        .andReturn();
+
+    mockMvc.perform(asyncDispatch(mvcResult))
         .andDo(print())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.tokenInfo.accessToken").exists())
