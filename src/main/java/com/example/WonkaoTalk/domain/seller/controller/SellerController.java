@@ -16,7 +16,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -37,16 +40,20 @@ public class SellerController {
 
   private final SellerService sellerService;
   private final AccountWithdraw accountWithdraw;
+  @Qualifier("bcryptExecutor")
+  private final Executor bcryptExecutor;
 
   @Operation(summary = "판매자 회원가입", description = "이메일, 비밀번호, 사업자 정보를 입력해 판매자 계정을 생성합니다.")
   @PostMapping("/signup")
-  public ResponseEntity<ApiResponse<SellerSignUpResponse>> signUp(
+  public CompletableFuture<ResponseEntity<ApiResponse<SellerSignUpResponse>>> signUp(
       @Valid @RequestBody SellerSignUpRequest request
   ) {
-    SellerSignUpResponse response = sellerService.signUpAsSeller(request);
-
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(ApiResponse.success("판매자 회원가입이 완료되었습니다.", response));
+    // signUpAsSeller는 @Transactional 메서드이므로 @Async로 감싸지 않고,
+    // 벌크헤드 풀에서 트랜잭션 전체(BCrypt 해싱 포함)를 한 스레드에서 실행한 뒤 결과만 받는다.
+    return CompletableFuture.supplyAsync(() -> sellerService.signUpAsSeller(request),
+            bcryptExecutor)
+        .thenApply(response -> ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.success("판매자 회원가입이 완료되었습니다.", response)));
   }
 
   @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
