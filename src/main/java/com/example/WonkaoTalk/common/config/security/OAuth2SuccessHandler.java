@@ -58,7 +58,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     response.addCookie(createCookie("refresh-token", refreshToken, true,
         (int) (jwtTokenProvider.getRefreshTokenValidTime() / 1000)));
-    // response.addCookie(createCookie("access-token", accessToken, false, 60));
+    response.addCookie(createCookie("access-token", accessToken, false, 60));
 
     OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
     OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
@@ -73,12 +73,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
       });
     }
 
-    String targetUrl = org.springframework.web.util.UriComponentsBuilder
-        .fromUriString(frontEndProperties.oauthRedirectUri())
-        .queryParam("accessToken", accessToken)
-        .build().toUriString();
-
-    getRedirectStrategy().sendRedirect(request, response, targetUrl);
+    getRedirectStrategy().sendRedirect(request, response, frontEndProperties.oauthRedirectUri());
   }
 
   private Cookie createCookie(String name, String value, boolean httpOnly, int maxAge) {

@@ -41,6 +41,7 @@ public class AccountWithdraw {
 
   private void revokeSocialConnectionSafely(Long authId, List<AuthSocial> linkedSocials) {
     try {
+      log.info("Facade: 회원탈퇴 로직 수행. RevocationClient를 호출합니다.");
       oAuthRevocationClient.revokeIfSocialAccountExists(authId, linkedSocials);
     } catch (Exception e) {
       log.warn("소셜 연동 해제 실패, 내부 DB 탈퇴 로직은 계속 진행됩니다. authId: {}", authId, e);
